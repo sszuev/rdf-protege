@@ -3,7 +3,7 @@ package org.protege.editor.owl.model.hierarchy;
 import org.junit.Before;
 import org.junit.Test;
 import org.protege.editor.owl.util.JunitUtil;
-import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.io.OWLRendererException;
 import org.semanticweb.owlapi.model.*;
 

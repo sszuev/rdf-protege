@@ -1,11 +1,13 @@
 package org.protege.editor.owl.model.io;
 
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.protege.editor.owl.model.IOListenerManager;
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.ui.util.ProgressDialog;
-import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;

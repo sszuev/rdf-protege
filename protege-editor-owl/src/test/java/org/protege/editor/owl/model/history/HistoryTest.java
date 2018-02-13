@@ -2,7 +2,7 @@ package org.protege.editor.owl.model.history;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.*;
 
 import java.util.ArrayList;

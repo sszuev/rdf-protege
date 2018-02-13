@@ -2,7 +2,7 @@ package org.protege.editor.owl.ui.frame;
 
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.*;
 

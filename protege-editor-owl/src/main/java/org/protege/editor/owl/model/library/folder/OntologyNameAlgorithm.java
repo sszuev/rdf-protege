@@ -1,6 +1,6 @@
 package org.protege.editor.owl.model.library.folder;
 
-import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.*;
 
 import java.io.File;

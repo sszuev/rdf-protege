@@ -1,17 +1,18 @@
 package org.protege.editor.owl.ui.ontology.imports;
 
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.protege.editor.core.log.LogBanner;
 import org.protege.editor.core.ui.util.UIUtil;
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.io.*;
+import org.protege.editor.owl.model.io.ProgressDialogOntologyLoaderListener;
 import org.protege.editor.owl.model.library.OntologyCatalogManager;
 import org.protege.editor.owl.ui.ontology.imports.wizard.ImportInfo;
 import org.protege.editor.owl.ui.util.ProgressDialog;
 import org.protege.xmlcatalog.CatalogUtilities;
 import org.protege.xmlcatalog.XMLCatalog;
 import org.protege.xmlcatalog.entry.UriEntry;
-import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;

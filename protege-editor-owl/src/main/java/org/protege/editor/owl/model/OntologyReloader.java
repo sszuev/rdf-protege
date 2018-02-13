@@ -1,10 +1,12 @@
 package org.protege.editor.owl.model;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.protege.editor.core.log.LogBanner;
 import org.protege.editor.owl.ui.util.ProgressDialog;
-import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.PriorityCollection;
 import org.slf4j.Logger;
