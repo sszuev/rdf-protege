@@ -32,9 +32,9 @@ public class Launcher {
 
     private final Logger logger = LoggerFactory.getLogger(Launcher.class.getCanonicalName());
 
-    private final Map<String, String> frameworkProperties = new HashMap<>();
+    private final Map<String, String> frameworkProperties;
 
-    private final List<BundleSearchPath> searchPaths = new ArrayList<>();
+    private final List<BundleSearchPath> searchPaths;
 
     private final File frameworkDir;
 
@@ -44,24 +44,34 @@ public class Launcher {
 
 
     public Launcher(File config) throws IOException, ParserConfigurationException, SAXException {
-        parseConfig(config);
-        factoryClass = locateOSGi();
-        frameworkDir = new File(System.getProperty("java.io.tmpdir"), "ProtegeCache-" + UUID.randomUUID().toString());
-        frameworkProperties.put(Constants.FRAMEWORK_STORAGE, frameworkDir.getCanonicalPath());
-        frameworkProperties.put(Constants.FRAMEWORK_BEGINNING_STARTLEVEL, Integer.toString(searchPaths.size()));
+        this(parseConfig(config));
+    }
+
+    public Launcher(Parser parser) throws IOException {
+        this(parser.getSearchPaths(), parser.getSystemProperties(), parser.getFrameworkProperties());
+    }
+
+    public Launcher(List<BundleSearchPath> searchPaths, Map<String, String> systemProperties, Map<String, String> frameworkProperties) throws IOException {
+        this.searchPaths = new ArrayList<>();
+        this.frameworkProperties = new HashMap<>();
+        setSystemProperties(systemProperties);
+        setLogger(this.frameworkProperties);
+        this.searchPaths.addAll(searchPaths);
+        this.frameworkProperties.putAll(frameworkProperties);
+        this.factoryClass = locateOSGi();
+        this.frameworkDir = new File(System.getProperty("java.io.tmpdir"), "ProtegeCache-" + UUID.randomUUID().toString());
+        this.frameworkProperties.put(Constants.FRAMEWORK_STORAGE, this.frameworkDir.getCanonicalPath());
+        this.frameworkProperties.put(Constants.FRAMEWORK_BEGINNING_STARTLEVEL, Integer.toString(this.searchPaths.size()));
     }
 
     public Framework getFramework() {
         return framework;
     }
 
-    private void parseConfig(File config) throws ParserConfigurationException, SAXException, IOException {
+    public static Parser parseConfig(File file) throws IOException, SAXException, ParserConfigurationException {
         Parser p = new Parser();
-        p.parse(config);
-        setSystemProperties(p);
-        setLogger(frameworkProperties);
-        searchPaths.addAll(p.getSearchPaths());
-        frameworkProperties.putAll(p.getFrameworkProperties());
+        p.parse(file);
+        return p;
     }
 
     private static String locateOSGi() throws IOException {
@@ -72,8 +82,7 @@ public class Launcher {
         }
     }
 
-    private void setSystemProperties(Parser p) {
-        Map<String, String> systemProperties = p.getSystemProperties();
+    private void setSystemProperties(Map<String, String> systemProperties) {
         System.setProperty("org.protege.osgi.launcherHandlesExit", "True");
         for (Entry<String, String> entry : systemProperties.entrySet()) {
             System.setProperty(entry.getKey(), entry.getValue());

@@ -63,27 +63,31 @@ public class Parser {
                 break;
             }
         }
+        if (topNode == null) {
+            throw new ParserConfigurationException("Can't find <launch>");
+        }
         NodeList nodes = topNode.getChildNodes();
+        List<Element> bundles = new ArrayList<>();
         for (int i = 0; i < nodes.getLength(); i++) {
             Node job = nodes.item(i);
             if (job instanceof Element && job.getNodeName().equals("systemProperties")) {
                 systemProperties = readProperties(job.getChildNodes());
-            }
-            else if (job instanceof Element && job.getNodeName().equals("frameworkProperties")) {
+            } else if (job instanceof Element && job.getNodeName().equals("frameworkProperties")) {
                 frameworkProperties = readProperties(job.getChildNodes());
+            } else if (job instanceof Element && job.getNodeName().equals("bundles")) {
+                bundles.add((Element) job);
             }
-            else if (job instanceof Element && job.getNodeName().equals("bundles")) {
-                BundleSearchPath directory = readDirectories(job);
-                if (directory != null) {
-                    searchPaths.add(directory);
-                    LoggerFactory.getLogger(Parser.class).debug("Added bundle search path: {}", directory);
-                }
-            }
-
         }
+        bundles.forEach(e -> {
+            BundleSearchPath directory = readDirectories(e, systemProperties);
+            if (directory != null) {
+                searchPaths.add(directory);
+                LoggerFactory.getLogger(Parser.class).debug("Added bundle search path: {}", directory);
+            }
+        });
     }
 
-    private Map<String, String> readProperties(NodeList nodes) {
+    protected Map<String, String> readProperties(NodeList nodes) {
         Map<String, String> properties = new TreeMap<>();
         for (int i = 0; i < nodes.getLength(); i++) {
             Node propertyNode = nodes.item(i);
@@ -99,7 +103,7 @@ public class Parser {
         return properties;
     }
 
-    private BundleSearchPath readDirectories(Node node) {
+    protected BundleSearchPath readDirectories(Node node, Map<String, String> properties) {
         BundleSearchPath directories = new BundleSearchPath();
         NodeList children = node.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -109,11 +113,10 @@ public class Parser {
                 if (bundleNameNode != null) {
                     directories.addAllowedBundle(bundleNameNode.getNodeValue());
                 }
-            }
-            else if (child instanceof Element && child.getNodeName().equals("search")) {
+            } else if (child instanceof Element && child.getNodeName().equals("search")) {
                 Node searchPathNode = child.getAttributes().getNamedItem("path");
                 if (searchPathNode != null) {
-                    directories.addSearchPath(searchPathNode.getNodeValue());
+                    directories.addSearchPath(searchPathNode.getNodeValue(), key -> System.getProperty(key, properties.get(key)));
                 }
             }
         }

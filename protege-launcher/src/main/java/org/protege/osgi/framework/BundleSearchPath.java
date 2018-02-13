@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.UnaryOperator;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -20,11 +22,6 @@ public class BundleSearchPath {
 
     private Logger logger = LoggerFactory.getLogger(BundleSearchPath.class.getCanonicalName());
 
-    public static final String USER_HOME = "user.home";
-
-    public static final String USER_HOME_VAR = "${" + USER_HOME + "}/";
-
-
     private List<File> path = new ArrayList<>();
 
     private List<String> allowedBundles = new ArrayList<>();
@@ -32,15 +29,34 @@ public class BundleSearchPath {
     public BundleSearchPath() {
     }
 
-    public void addSearchPath(String dir) {
-        if (dir.startsWith(USER_HOME_VAR)) {
-            String homeDirectory = System.getProperty(USER_HOME);
-            dir = dir.substring(USER_HOME_VAR.length());
-            path.add(new File(homeDirectory, dir));
+
+    /**
+     * Sets path.
+     * The input may content reference to the system properties, e.g. "${user.home}/.Protege/bundles"
+     *
+     * @param dir string path to directory, not null
+     * @throws NullPointerException     if arg is null
+     * @throws IllegalArgumentException if arg contains reference to non-existing system property
+     */
+    public void addSearchPath(String dir) throws NullPointerException, IllegalArgumentException {
+        addSearchPath(dir, System::getProperty);
+    }
+
+    /**
+     * @param dir path to directory, not null
+     * @throws NullPointerException     if arg is null
+     * @throws IllegalArgumentException if {@code map} returns null for the arg
+     */
+    protected void addSearchPath(String dir, UnaryOperator<String> map) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(dir, "Null directory path!");
+        while (dir.matches(".*\\$\\{[^}]+}.*")) {
+            String var = dir.replaceFirst(".*(\\$\\{[^}]+}).*", "$1");
+            String key = var.substring(2, var.length() - 1);
+            String value = map.apply(key);
+            if (value == null) throw new IllegalArgumentException("Unable to find '" + key + "'");
+            dir = dir.replace(var, value);
         }
-        else {
-            path.add(new File(dir));
-        }
+        path.add(Paths.get(dir).toFile());
     }
 
 
@@ -96,8 +112,7 @@ public class BundleSearchPath {
                             "Using the latest version, {} and ignoring the previous version, {}.",
                     bundleInfo.getBundleFile().getName(),
                     existingBundleInfo.getBundleFile().getName());
-        }
-        else if (bundleInfo.isNewerTimestampThan(existingBundleInfo)) {
+        } else if (bundleInfo.isNewerTimestampThan(existingBundleInfo)) {
             nameToFileMap.put(symbolicName, bundleInfo);
             logger.warn("Found duplicate plugin/bundle. " +
                             "Using the most recent, {} (modified {}) " +
@@ -108,8 +123,7 @@ public class BundleSearchPath {
                     String.format("%tc", existingBundleInfo.getBundleFile().lastModified())
 
             );
-        }
-        else {
+        } else {
             logger.warn(
                     "Ignoring plugin/bundle ({}) because it is a duplicate of {}.",
                     existingBundleInfo.getBundleFile().getName(),
@@ -122,7 +136,7 @@ public class BundleSearchPath {
     private Optional<BundleInfo> toBundleInfo(File file) {
         try (JarInputStream is = new JarInputStream(new FileInputStream(file))) {
             Manifest mf = is.getManifest();
-            if(mf == null) {
+            if (mf == null) {
                 logger.warn("Could not parse {} as plugin/bundle because the manifest.mf file is not present.", file);
                 return Optional.empty();
             }
@@ -145,10 +159,10 @@ public class BundleSearchPath {
     @Override
     public String toString() {
         MoreObjects.ToStringHelper ts = toStringHelper("BundleSearchPath");
-        for(File path : getPath()) {
+        for (File path : getPath()) {
             ts.add("path", path.getAbsolutePath());
         }
-        for(String allowedBundle : allowedBundles) {
+        for (String allowedBundle : allowedBundles) {
             ts.add("allowedBundle", allowedBundle);
         }
         return ts.toString();
