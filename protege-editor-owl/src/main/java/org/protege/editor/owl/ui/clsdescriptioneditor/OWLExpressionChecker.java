@@ -1,6 +1,10 @@
 package org.protege.editor.owl.ui.clsdescriptioneditor;
 
 import org.protege.editor.owl.model.classexpression.OWLExpressionParserException;
+import org.ru.avicomp.ontapi.OWLManager;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OntologyConfigurator;
+import org.semanticweb.owlapi.util.mansyntax.ManchesterOWLSyntaxParser;
 
 
 /**
@@ -14,7 +18,15 @@ import org.protege.editor.owl.model.classexpression.OWLExpressionParserException
  */
 public interface OWLExpressionChecker<O> {
 
-    public void check(String text) throws OWLExpressionParserException;
+    void check(String text) throws OWLExpressionParserException;
 
     O createObject(String text) throws OWLExpressionParserException;
+
+    default ManchesterOWLSyntaxParser getParser(OntologyConfigurator conf, OWLDataFactory factory) {
+        return OWLManager.createManchesterParser(conf, factory);
+    }
+
+    default ManchesterOWLSyntaxParser getParser(OWLDataFactory factory) {
+        return getParser(new OntologyConfigurator(), factory);
+    }
 }

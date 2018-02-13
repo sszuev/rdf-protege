@@ -1,6 +1,5 @@
 package org.protege.editor.owl.model;
 
-import org.semanticweb.owlapi.formats.RioTurtleDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 
@@ -18,12 +17,18 @@ public class DocumentFormatMapper {
     @Nonnull
     public OWLDocumentFormat mapFormat(@Nonnull OWLDocumentFormat format) {
         checkNotNull(format);
-        if(format instanceof RioTurtleDocumentFormat) {
+        // todo: need to fix correctly.
+        if ("org.semanticweb.owlapi.formats.RioTurtleDocumentFormat".equals(format.getClass().getName())) {
+            TurtleDocumentFormat turtleDocumentFormat = new TurtleDocumentFormat();
+            turtleDocumentFormat.copyPrefixesFrom(format.asPrefixOWLDocumentFormat());
+            return turtleDocumentFormat;
+        }
+        /*if(format instanceof RioTurtleDocumentFormat) {
             RioTurtleDocumentFormat rioTurtleDocumentFormat = (RioTurtleDocumentFormat) format;
             TurtleDocumentFormat turtleDocumentFormat = new TurtleDocumentFormat();
             turtleDocumentFormat.copyPrefixesFrom(rioTurtleDocumentFormat);
             return turtleDocumentFormat;
-        }
+        }*/
         return format;
     }
 }

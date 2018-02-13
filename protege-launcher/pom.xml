@@ -17,9 +17,30 @@
 	<description>The Protege Launcher</description>
 	
 	<dependencies>
+
+		<!--	<dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-api</artifactId>
+            </dependency>-->
+		<dependency>
+			<groupId>ru.avicomp</groupId>
+			<artifactId>ontapi</artifactId>
+		</dependency>
+
+		<!-- todo: must be removed -->
 		<dependency>
 			<groupId>net.sourceforge.owlapi</groupId>
-			<artifactId>owlapi-osgidistribution</artifactId>
+			<artifactId>owlapi-parsers</artifactId>
+		</dependency>
+		<!-- todo: must be removed -->
+		<dependency>
+			<groupId>net.sourceforge.owlapi</groupId>
+			<artifactId>owlapi-tools</artifactId>
+		</dependency>
+		<!-- todo: must be removed -->
+		<dependency>
+			<groupId>net.sourceforge.owlapi</groupId>
+			<artifactId>owlapi-oboformat</artifactId>
 		</dependency>
 
 		<dependency>

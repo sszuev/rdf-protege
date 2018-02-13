@@ -3,6 +3,7 @@ package org.protege.editor.owl.ui;
 import org.protege.editor.owl.OWLEditorKit;
 import org.semanticweb.owlapi.formats.*;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import ru.avicomp.ontapi.OntFormat;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,7 @@ public class OntologyFormatPanel extends JPanel {
         formats.add(new OBODocumentFormat());
         formats.add(new LatexDocumentFormat());
 
-        formats.add(new RDFJsonLDDocumentFormat());
+        formats.add(OntFormat.JSON_LD.createOwlFormat());
 
         formatComboBox = new JComboBox<>(formats.toArray(new OWLDocumentFormat [formats.size()]));
         setLayout(new BorderLayout(12, 12));

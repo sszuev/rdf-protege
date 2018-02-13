@@ -1,10 +1,10 @@
 package org.protege.editor.owl.ui.renderer;
 
 import org.protege.editor.owl.model.OWLModelManager;
+import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.OntologyIRIShortFormProvider;
 import org.semanticweb.owlapi.util.ShortFormProvider;
-import uk.ac.manchester.cs.owl.owlapi.mansyntaxrenderer.ManchesterOWLSyntaxObjectRenderer;
 
 import java.io.IOException;
 import java.io.StringWriter;
