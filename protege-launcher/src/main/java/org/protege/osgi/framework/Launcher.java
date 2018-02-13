@@ -14,6 +14,8 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -255,4 +257,18 @@ public class Launcher {
     }
 
 
+    /**
+     * Just test.
+     * NOTE: need to build before (e.g. {@code mvn clean package -DskipTests})
+     */
+    public static class TestRunApplication {
+        public static void main(String... args) throws Exception {
+            Path dir = Paths.get(".")
+                    .resolve("protege-desktop\\target\\protege-5.2.1-SNAPSHOT-platform-independent\\Protege-5.2.1-SNAPSHOT\\")
+                    .toRealPath();
+            System.out.println("Desktop dir: " + dir);
+            System.setProperty("desktop.work.dir", dir.toString());
+            Launcher.main(null);
+        }
+    }
 }
