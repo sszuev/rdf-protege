@@ -18,29 +18,9 @@
 	
 	<dependencies>
 
-		<!--	<dependency>
-                <groupId>net.sourceforge.owlapi</groupId>
-                <artifactId>owlapi-api</artifactId>
-            </dependency>-->
 		<dependency>
 			<groupId>ru.avicomp</groupId>
-			<artifactId>ontapi</artifactId>
-		</dependency>
-
-		<!-- todo: must be removed -->
-		<dependency>
-			<groupId>net.sourceforge.owlapi</groupId>
-			<artifactId>owlapi-parsers</artifactId>
-		</dependency>
-		<!-- todo: must be removed -->
-		<dependency>
-			<groupId>net.sourceforge.owlapi</groupId>
-			<artifactId>owlapi-tools</artifactId>
-		</dependency>
-		<!-- todo: must be removed -->
-		<dependency>
-			<groupId>net.sourceforge.owlapi</groupId>
-			<artifactId>owlapi-oboformat</artifactId>
+			<artifactId>owlapi-osgidistribution</artifactId>
 		</dependency>
 
 		<dependency>

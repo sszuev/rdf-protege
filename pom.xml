@@ -119,50 +119,16 @@
 		<maven.javadoc.failOnError>false</maven.javadoc.failOnError>
 		<slf4j.version>1.7.22</slf4j.version>
 		<logback.version>1.1.3</logback.version>
-		<!-- todo: owlapi parts must be removed -->
-		<version.owlapi>5.1.4</version.owlapi>
 		<lib.location>target/lib</lib.location>
-		<!-- todo: temporary skip test -->
-		<skipTests>true</skipTests>
 	</properties>
 	
 	<dependencyManagement>
 		<dependencies>
 
-			<!--			<dependency>
-                            <groupId>net.sourceforge.owlapi</groupId>
-                            <artifactId>owlapi-api</artifactId>
-                            <version>${version.owlapi}</version>
-                        </dependency>-->
 			<dependency>
 				<groupId>ru.avicomp</groupId>
-				<artifactId>ontapi</artifactId>
-				<version>1.1.0-SNAPSHOT</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-log4j12</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>
-
-			<!-- todo: must be removed -->
-			<dependency>
-				<groupId>net.sourceforge.owlapi</groupId>
-				<artifactId>owlapi-parsers</artifactId>
-				<version>${version.owlapi}</version>
-			</dependency>
-			<!-- todo: must be removed -->
-			<dependency>
-				<groupId>net.sourceforge.owlapi</groupId>
-				<artifactId>owlapi-tools</artifactId>
-				<version>${version.owlapi}</version>
-			</dependency>
-			<!-- todo: must be removed -->
-			<dependency>
-				<groupId>net.sourceforge.owlapi</groupId>
-				<artifactId>owlapi-oboformat</artifactId>
-				<version>${version.owlapi}</version>
+				<artifactId>owlapi-osgidistribution</artifactId>
+				<version>1.0-SNAPSHOT</version>
 			</dependency>
 
 			<dependency>

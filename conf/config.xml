@@ -1,5 +1,8 @@
 <?xml version = "1.0" encoding = "UTF-8"?>
-<!-- @szuev: for test. used in org.protege.osgi.framework.Launcher$TestRunApplication -->
+<!--
+@szuev: for test. used in org.protege.osgi.framework.Launcher$TestRunApplication .
+todo: will be remove
+-->
 <launch>
     <systemProperties>
         <property name="file.encoding" value="utf-8"/>
