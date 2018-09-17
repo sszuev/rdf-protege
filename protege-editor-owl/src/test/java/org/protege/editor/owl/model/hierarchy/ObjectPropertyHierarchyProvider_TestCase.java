@@ -17,7 +17,6 @@ import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.semanticweb.owlapi.apibinding.OWLFunctionalSyntaxFactory.*;
 
 /**
  * Matthew Horridge
@@ -31,23 +30,21 @@ public class ObjectPropertyHierarchyProvider_TestCase {
 
     private OWLObjectProperty subProperty;
 
-    private Set<OWLOntology> ontologies;
-
     private OWLObjectPropertyHierarchyProvider hierarchyProvider;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         PrefixManager pm = new DefaultPrefixManager();
         pm.setDefaultPrefix("http://www.ontologies.com/ontology/");
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-        OWLOntology ontology = Ontology(
+        OWLOntology ontology = OWLFunctionalSyntaxFactory.createOntology(
                 manager,
-                SubObjectPropertyOf(
-                        subProperty = ObjectProperty("subProperty", pm),
-                        superProperty = ObjectProperty("superProperty", pm)
+                OWLFunctionalSyntaxFactory.createSubObjectPropertyOf(
+                        subProperty = OWLFunctionalSyntaxFactory.createObjectProperty("subProperty", pm),
+                        superProperty = OWLFunctionalSyntaxFactory.createObjectProperty("superProperty", pm)
                 )
         );
-        ontologies = Collections.singleton(ontology);
+        Set<OWLOntology> ontologies = Collections.singleton(ontology);
         hierarchyProvider = new OWLObjectPropertyHierarchyProvider(manager);
         hierarchyProvider.setOntologies(ontologies);
     }
