@@ -32,6 +32,11 @@
         </dependency>
 
         <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>edu.stanford.protege</groupId>
             <artifactId>protege-editor-core</artifactId>
             <version>${project.parent.version}</version>
@@ -47,13 +52,13 @@
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-apibinding</artifactId>
-            <version>5.1.4</version>
+            <version>5.1.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-rio</artifactId>
-            <version>5.1.4</version>
+            <version>5.1.7</version>
             <scope>test</scope>
         </dependency>
 
