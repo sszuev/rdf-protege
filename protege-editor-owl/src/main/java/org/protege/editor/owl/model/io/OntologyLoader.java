@@ -10,7 +10,6 @@ import org.protege.editor.owl.ui.util.ProgressDialog;
 import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.util.PriorityCollection;
 import org.semanticweb.owlapi.util.SimpleIRIMapper;
 import org.slf4j.Logger;
@@ -19,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.net.URI;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -70,11 +70,10 @@ public class OntologyLoader {
         } catch (InterruptedException e) {
             return Optional.empty();
         } catch (ExecutionException e) {
-            if(e.getCause() instanceof OWLOntologyCreationException) {
+            if (e.getCause() instanceof OWLOntologyCreationException) {
                 throw (OWLOntologyCreationException) e.getCause();
-            }
-            else {
-                logger.error("An error occurred whilst loading the ontology at {}. Cause: {}", e.getCause().getMessage());
+            } else {
+                logger.error("An error occurred whilst loading the ontology at {}. Cause: '{}'", uri, e.getCause().getMessage());
             }
             return Optional.empty();
         }
@@ -86,9 +85,8 @@ public class OntologyLoader {
 
     private Optional<OWLOntology> loadOntologyInternal(URI documentURI) throws OWLOntologyCreationException {
 
-        // I think the loading manager needs to be a concurrent manager because we
-        // copy over the ontologies and the ontologies have to be concurrent ontology implementations
-        OWLOntologyManager loadingManager = OWLManager.createConcurrentOWLOntologyManager();
+        // manager no need to be a concurrent
+        OWLOntologyManager loadingManager = OWLManager.createOWLOntologyManager();
 
         PriorityCollection<OWLOntologyIRIMapper> iriMappers = loadingManager.getIRIMappers();
         iriMappers.clear();
@@ -97,33 +95,32 @@ public class OntologyLoader {
         iriMappers.add(new AutoMappedRepositoryIRIMapper(modelManager.getOntologyCatalogManager()));
 
         loadingManager.addOntologyLoaderListener(new ProgressDialogOntologyLoaderListener(dlg, logger));
-        OWLOntologyLoaderConfiguration configuration = new OWLOntologyLoaderConfiguration();
-        configuration = configuration.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+        OWLOntologyLoaderConfiguration configuration = new OWLOntologyLoaderConfiguration()
+                .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
         IRIDocumentSource documentSource = new IRIDocumentSource(IRI.create(documentURI));
-        OWLOntology ontology = loadingManager.loadOntologyFromOntologyDocument(documentSource, configuration);
+        OWLOntologyID id = loadingManager.loadOntologyFromOntologyDocument(documentSource, configuration).getOntologyID();
         Set<OWLOntology> alreadyLoadedOntologies = new HashSet<>();
-        for (OWLOntology loadedOntology : loadingManager.getOntologies()) {
+        loadingManager.ontologies().forEach(loadedOntology -> {
             if (!modelManager.getOntologies().contains(loadedOntology)) {
                 OWLOntologyManager modelManager = getOntologyManager();
                 fireBeforeLoad(loadedOntology, documentURI);
-                modelManager.copyOntology(loadedOntology, OntologyCopy.MOVE);
+                OWLManager.copy(loadedOntology, modelManager);
                 fireAfterLoad(loadedOntology, documentURI);
-            }
-            else {
+            } else {
                 alreadyLoadedOntologies.add(loadedOntology);
             }
-        }
-        if(!alreadyLoadedOntologies.isEmpty()) {
+        });
+        if (!alreadyLoadedOntologies.isEmpty()) {
             displayOntologiesAlreadyLoadedMessage(alreadyLoadedOntologies);
         }
 
+        OWLOntology ontology = Objects.requireNonNull(getOntologyManager().getOntology(id));
 
         modelManager.setActiveOntology(ontology);
         modelManager.fireEvent(EventType.ONTOLOGY_LOADED);
-        OWLOntologyID id = ontology.getOntologyID();
-        if (!id.isAnonymous()) {
-            getOntologyManager().getIRIMappers().add(new SimpleIRIMapper(id.getDefaultDocumentIRI().get(), IRI.create(documentURI)));
-        }
+        id.getDefaultDocumentIRI()
+                .ifPresent(iri -> getOntologyManager().getIRIMappers()
+                        .add(new SimpleIRIMapper(iri, IRI.create(documentURI))));
         return Optional.of(ontology);
     }
 

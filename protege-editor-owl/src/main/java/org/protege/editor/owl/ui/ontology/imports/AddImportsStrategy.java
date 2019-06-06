@@ -15,7 +15,6 @@ import org.protege.xmlcatalog.entry.UriEntry;
 import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.util.SimpleIRIMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,9 +94,9 @@ public class AddImportsStrategy {
             OWLImportsDeclaration decl = man.getOWLDataFactory().getOWLImportsDeclaration(importedOntologyDocumentIRI);
             if (!man.contains(importParameters.getOntologyID())) {
                 try {
-                    OWLOntologyManager loadingManager = OWLManager.createConcurrentOWLOntologyManager();
-                    loadingManager.getIRIMappers()
-                            .add(man.getIRIMappers());
+                    // manager no need to be a concurrent
+                    OWLOntologyManager loadingManager = OWLManager.createOWLOntologyManager();
+                    loadingManager.getIRIMappers().add(man.getIRIMappers());
                     ProgressDialogOntologyLoaderListener listener = new ProgressDialogOntologyLoaderListener(dlg, logger);
                     loadingManager.addOntologyLoaderListener(listener);
                     loadingManager.loadOntologyFromOntologyDocument(
@@ -105,16 +104,15 @@ public class AddImportsStrategy {
                             new OWLOntologyLoaderConfiguration().setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT));
                     loadingManager.removeOntologyLoaderListener(listener);
 //                        editorKit.getModelManager().fireEvent(EventType.ONTOLOGY_LOADED);
-                    for(OWLOntology importedOntology : loadingManager.getOntologies()) {
+                    loadingManager.ontologies().forEach(importedOntology -> {
                         IRI ontologyDocumentIRI = loadingManager.getOntologyDocumentIRI(importedOntology);
                         if (!man.contains(importedOntology.getOntologyID())) {
                             logger.info("Copying imported ontology: {}", ontologyDocumentIRI);
-                            man.copyOntology(importedOntology, OntologyCopy.MOVE);
-                        }
-                        else {
+                            OWLManager.copy(importedOntology, man);
+                        } else {
                             logger.info("Not copying ontology {} as it is already loaded", ontologyDocumentIRI);
                         }
-                    }
+                    });
                     if (importParameters.getOntologyID() != null && !importParameters.getOntologyID().isAnonymous()) {
                         OWLOntology importedOnt = man.getOntology(importParameters.getOntologyID());
                         if (importedOnt == null) {
