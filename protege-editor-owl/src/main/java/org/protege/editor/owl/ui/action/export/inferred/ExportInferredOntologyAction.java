@@ -1,12 +1,12 @@
 package org.protege.editor.owl.ui.action.export.inferred;
 
+import org.github.owlcs.ontapi.OWLManager;
 import org.protege.editor.core.ui.wizard.Wizard;
 import org.protege.editor.owl.model.inference.OWLReasonerManager;
 import org.protege.editor.owl.model.inference.ReasonerStatus;
 import org.protege.editor.owl.model.inference.ReasonerUtilities;
 import org.protege.editor.owl.model.inference.VacuousAxiomVisitor;
 import org.protege.editor.owl.ui.action.ProtegeOWLAction;
-import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;

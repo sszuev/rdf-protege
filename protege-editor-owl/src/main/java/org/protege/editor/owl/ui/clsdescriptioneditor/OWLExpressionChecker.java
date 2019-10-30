@@ -1,7 +1,7 @@
 package org.protege.editor.owl.ui.clsdescriptioneditor;
 
+import org.github.owlcs.ontapi.OWLManager;
 import org.protege.editor.owl.model.classexpression.OWLExpressionParserException;
-import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OntologyConfigurator;
 import org.semanticweb.owlapi.util.mansyntax.ManchesterOWLSyntaxParser;

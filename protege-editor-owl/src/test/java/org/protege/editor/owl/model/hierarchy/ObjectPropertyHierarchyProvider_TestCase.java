@@ -1,10 +1,10 @@
 package org.protege.editor.owl.model.hierarchy;
 
+import org.github.owlcs.ontapi.OWLManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;

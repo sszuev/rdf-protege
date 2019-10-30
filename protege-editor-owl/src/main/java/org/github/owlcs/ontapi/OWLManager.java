@@ -1,4 +1,4 @@
-package org.ru.avicomp.ontapi;
+package org.github.owlcs.ontapi;
 
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxParserImpl;
 import org.semanticweb.owlapi.model.*;

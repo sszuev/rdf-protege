@@ -1,8 +1,8 @@
 package org.protege.editor.owl.ui.frame;
 
+import org.github.owlcs.ontapi.OWLManager;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.*;
 

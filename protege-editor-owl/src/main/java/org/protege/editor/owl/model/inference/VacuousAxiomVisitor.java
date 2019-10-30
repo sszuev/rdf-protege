@@ -1,6 +1,6 @@
 package org.protege.editor.owl.model.inference;
 
-import org.ru.avicomp.ontapi.OWLManager;
+import org.github.owlcs.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.*;
 
 

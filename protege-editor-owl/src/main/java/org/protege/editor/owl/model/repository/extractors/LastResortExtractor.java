@@ -1,7 +1,7 @@
 package org.protege.editor.owl.model.repository.extractors;
 
 import com.google.common.base.Optional;
-import org.ru.avicomp.ontapi.OWLManager;
+import org.github.owlcs.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyID;

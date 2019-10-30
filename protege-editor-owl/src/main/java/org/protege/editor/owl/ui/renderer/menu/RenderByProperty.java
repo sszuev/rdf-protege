@@ -1,5 +1,6 @@
 package org.protege.editor.owl.ui.renderer.menu;
 
+import org.github.owlcs.ontapi.OWLManager;
 import org.protege.editor.core.ui.action.ProtegeDynamicAction;
 import org.protege.editor.core.ui.util.Icons;
 import org.protege.editor.owl.model.OWLModelManager;
@@ -9,7 +10,6 @@ import org.protege.editor.owl.ui.renderer.OWLEntityAnnotationValueRenderer;
 import org.protege.editor.owl.ui.renderer.OWLEntityRendererImpl;
 import org.protege.editor.owl.ui.renderer.OWLRendererPreferences;
 import org.protege.editor.owl.ui.renderer.plugin.RendererPlugin;
-import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLOntology;

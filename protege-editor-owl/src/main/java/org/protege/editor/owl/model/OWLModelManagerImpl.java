@@ -1,6 +1,7 @@
 package org.protege.editor.owl.model;
 
 import com.google.common.base.Stopwatch;
+import org.github.owlcs.ontapi.OWLManager;
 import org.protege.editor.core.AbstractModelManager;
 import org.protege.editor.core.log.LogBanner;
 import org.protege.editor.core.ui.error.ErrorLogPanel;
@@ -37,7 +38,6 @@ import org.protege.editor.owl.ui.explanation.ExplanationManager;
 import org.protege.editor.owl.ui.renderer.*;
 import org.protege.editor.owl.ui.renderer.plugin.RendererPlugin;
 import org.protege.xmlcatalog.XMLCatalog;
-import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -283,7 +283,7 @@ public class OWLModelManagerImpl extends AbstractModelManager implements OWLMode
             logger.info(LogBanner.end());
             return loadedOntology.isPresent();
         } catch (OWLOntologyCreationException e) {
-            OWLOntologyID id = new OWLOntologyID(java.util.Optional.of(IRI.create(uri)), java.util.Optional.<IRI>empty());
+            OWLOntologyID id = new OWLOntologyID(java.util.Optional.of(IRI.create(uri)), java.util.Optional.empty());
             handleLoadError(id, uri, e);
             return false;
         }

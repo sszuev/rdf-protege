@@ -1,9 +1,9 @@
 package org.protege.editor.owl.model.hierarchy;
 
+import org.github.owlcs.ontapi.OWLManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.protege.editor.owl.util.JunitUtil;
-import org.ru.avicomp.ontapi.OWLManager;
 import org.semanticweb.owlapi.io.OWLRendererException;
 import org.semanticweb.owlapi.model.*;
 
