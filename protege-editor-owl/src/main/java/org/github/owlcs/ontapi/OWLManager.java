@@ -1,14 +1,14 @@
 package org.github.owlcs.ontapi;
 
+import com.github.owlcs.ontapi.OntApiException;
+import com.github.owlcs.ontapi.OntManagers;
+import com.github.owlcs.ontapi.OntologyManager;
 import org.semanticweb.owlapi.manchestersyntax.parser.ManchesterOWLSyntaxParserImpl;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.util.mansyntax.ManchesterOWLSyntaxParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.avicomp.ontapi.OntApiException;
-import ru.avicomp.ontapi.OntManagers;
-import ru.avicomp.ontapi.OntologyManager;
 
 /**
  * Created by @szuev on 13.02.2018.

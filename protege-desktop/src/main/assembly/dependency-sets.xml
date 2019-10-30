@@ -21,7 +21,7 @@
                 <include>org.eclipse.equinox:org.eclipse.equinox.supplement:jar</include>
                 <include>org.eclipse.equinox:org.eclipse.equinox.common:jar</include>
 
-                <include>ru.avicomp:owlapi-osgidistribution:jar</include>
+                <include>com.github.sszuev:ontapi-osgidistribution:jar</include>
 
                 <include>edu.stanford.protege:protege-editor-owl:jar</include>
                 <include>ch.qos.logback:logback-core:jar</include>
@@ -29,7 +29,7 @@
                 <include>com.google.code.findbugs:jsr305:jar</include>
                 <include>com.google.guava:guava:jar</include>
                 <include>org.slf4j:slf4j-api:jar</include>
-                <include>org.slf4j:jcl-over-slf4j:jar</include>
+                <!--                <include>org.slf4j:jcl-over-slf4j:jar</include>-->
                 <include>org.slf4j:log4j-over-slf4j:jar</include>
                 <include>org.slf4j:jul-to-slf4j:jar</include>
                 <include>commons-io:commons-io:jar</include>

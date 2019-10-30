@@ -2,7 +2,6 @@ package org.protege.editor.owl.ui.metrics;
 
 import org.protege.editor.owl.ui.OWLIcons;
 import org.semanticweb.owlapi.util.Construct;
-import org.semanticweb.owlapi.util.DLExpressivityChecker;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -29,7 +28,7 @@ public class ExpressivityIcons {
         //  In version v4, v5(since 5.1.8) and v6 instead of {@code org.semanticweb.owlapi.util.DLExpressivityChecker.Construct}
         //  there are {@code org.semanticweb.owlapi.util.Construct} and {@org.semanticweb.owlapi.util.Languages}.
         //  Please fix according to the newly adopted logic
-        //  (or remove this place at all if it is not important for avicomp version of Protege).
+        //  (or remove this place at all if it is not really important for RDF version of Protege).
         //  Note: since these changes affect v4,
         //  i suppose it is better to wait until the correct patch is available in the original repo
         //  (see <https://github.com/protegeproject/protege>).

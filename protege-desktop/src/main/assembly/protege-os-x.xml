@@ -32,7 +32,7 @@
                 <include>org.eclipse.equinox:org.eclipse.equinox.supplement:jar</include>
                 <include>org.eclipse.equinox:org.eclipse.equinox.common:jar</include>
 
-                <include>ru.avicomp:owlapi-osgidistribution:jar</include>
+                <include>com.github.sszuev:ontapi-osgidistribution:jar</include>
 
                 <include>edu.stanford.protege:protege-editor-owl:jar</include>
                 <include>com.google.code.findbugs:jsr305</include>

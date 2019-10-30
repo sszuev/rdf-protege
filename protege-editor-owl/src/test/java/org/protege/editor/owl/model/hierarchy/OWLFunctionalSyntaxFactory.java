@@ -1,10 +1,10 @@
 package org.protege.editor.owl.model.hierarchy;
 
+import com.github.owlcs.ontapi.DataFactory;
+import com.github.owlcs.ontapi.OntApiException;
+import com.github.owlcs.ontapi.OntManagers;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.CollectionFactory;
-import ru.avicomp.ontapi.DataFactory;
-import ru.avicomp.ontapi.OntApiException;
-import ru.avicomp.ontapi.OntManagers;
 
 /**
  * Created by @ssz on 17.09.2018.

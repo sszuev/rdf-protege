@@ -1,9 +1,9 @@
 package org.protege.editor.owl.ui;
 
+import com.github.owlcs.ontapi.OntFormat;
 import org.protege.editor.owl.OWLEditorKit;
 import org.semanticweb.owlapi.formats.*;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import ru.avicomp.ontapi.OntFormat;
 
 import javax.swing.*;
 import java.awt.*;

@@ -19,8 +19,8 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>ru.avicomp</groupId>
-			<artifactId>owlapi-osgidistribution</artifactId>
+			<groupId>com.github.sszuev</groupId>
+			<artifactId>ontapi-osgidistribution</artifactId>
 		</dependency>
 
 		<dependency>
