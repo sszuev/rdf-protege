@@ -1,6 +1,6 @@
 <?xml version = "1.0" encoding = "UTF-8"?>
 <!--
-@szuev: for test. used in org.protege.osgi.framework.Launcher$TestRunApplication .
+@ssz: for debug. used in org.protege.osgi.framework.Launcher$NoArg .
 todo: will be remove
 -->
 <launch>
@@ -9,7 +9,7 @@ todo: will be remove
         <property name="apple.laf.useScreenMenuBar" value="true"/>
         <property name="com.apple.mrj.application.growbox.intrudes" value="true"/>
         <property name="org.protege.plugin.dir" value="plugins"/>
-        <!-- @szuev: 'desktop.work.dir' is new system property -->
+        <!-- @ssz: 'desktop.work.dir' is a new system property -->
         <property name="desktop.work.dir" value="."/>
     </systemProperties>
     <frameworkProperties>

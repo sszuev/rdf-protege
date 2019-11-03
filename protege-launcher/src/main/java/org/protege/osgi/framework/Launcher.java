@@ -14,12 +14,15 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 
 
+@SuppressWarnings("WeakerAccess")
 public class Launcher {
 
     public static final String ARG_PROPERTY = "command.line.arg.";
@@ -32,7 +35,7 @@ public class Launcher {
 
     public static String PROTEGE_DIR = System.getProperty(PROTEGE_DIR_PROPERTY);
 
-    private final Logger logger = LoggerFactory.getLogger(Launcher.class.getCanonicalName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Launcher.class.getCanonicalName());
 
     private final Map<String, String> frameworkProperties;
 
@@ -53,7 +56,9 @@ public class Launcher {
         this(parser.getSearchPaths(), parser.getSystemProperties(), parser.getFrameworkProperties());
     }
 
-    public Launcher(List<BundleSearchPath> searchPaths, Map<String, String> systemProperties, Map<String, String> frameworkProperties) throws IOException {
+    public Launcher(List<BundleSearchPath> searchPaths,
+                    Map<String, String> systemProperties,
+                    Map<String, String> frameworkProperties) throws IOException {
         this.searchPaths = new ArrayList<>();
         this.frameworkProperties = new HashMap<>();
         setSystemProperties(systemProperties);
@@ -79,6 +84,7 @@ public class Launcher {
     private static String locateOSGi() throws IOException {
         InputStream frameworkFactory = Launcher.class.getClassLoader()
                 .getResourceAsStream("META-INF/services/org.osgi.framework.launch.FrameworkFactory");
+        Objects.requireNonNull(frameworkFactory, "Unable to get FrameworkFactory InputStream");
         try (BufferedReader factoryReader = new BufferedReader(new InputStreamReader(frameworkFactory))) {
             return factoryReader.readLine().trim();
         }
@@ -105,17 +111,18 @@ public class Launcher {
         configurationMap.put("felix.log.logger", logger);
     }
 
-    public void start(final boolean exitOnOSGiShutDown) throws InstantiationException, IllegalAccessException, ClassNotFoundException, BundleException, IOException, InterruptedException {
+    public void start(final boolean exitOnOSGiShutDown)
+            throws InstantiationException, IllegalAccessException, ClassNotFoundException, BundleException {
         printBanner();
-        logger.info("----------------- Initialising and Starting the OSGi Framework -----------------");
-        logger.info("FrameworkFactory Class: {}", factoryClass);
-        logger.info("");
-        
+        LOGGER.info("----------------- Initialising and Starting the OSGi Framework -----------------");
+        LOGGER.info("FrameworkFactory Class: {}", factoryClass);
+        LOGGER.info("");
+
         FrameworkFactory factory = (FrameworkFactory) Class.forName(factoryClass).newInstance();
 
         framework = factory.newFramework(frameworkProperties);
         framework.init();
-        logger.info("The OSGi framework has been initialised");
+        LOGGER.info("The OSGi framework has been initialised");
         BundleContext context = framework.getBundleContext();
         List<Bundle> bundles = new ArrayList<>();
         int startLevel = 1;
@@ -125,10 +132,10 @@ public class Launcher {
         startBundles(bundles);
         try {
             framework.start();
-            logger.info("The OSGi framework has been started");
-            logger.info("");
+            LOGGER.info("The OSGi framework has been started");
+            LOGGER.info("");
         } catch (BundleException e) {
-            logger.error("An error occurred when starting the OSGi framework: {}", e.getMessage(), e);
+            LOGGER.error("An error occurred when starting the OSGi framework: {}", e.getMessage(), e);
         }
         addShutdownHook();
         addCleanupOnExit(exitOnOSGiShutDown);
@@ -136,18 +143,17 @@ public class Launcher {
     }
 
 
-
     private void addShutdownHook() {
         Thread hook = new Thread(() -> {
             try {
-                logger.info("----------------------- Shutting down Protege -----------------------");
+                LOGGER.info("----------------------- Shutting down Protege -----------------------");
                 if (framework.getState() == Bundle.ACTIVE) {
                     framework.stop();
                     framework.waitForStop(0);
                 }
                 cleanup();
             } catch (Throwable t) {
-                logger.error("Error shutting down OSGi session: {}", t.getMessage(), t);
+                LOGGER.error("Error shutting down OSGi session: {}", t.getMessage(), t);
             }
         }, "Close OSGi Session");
         Runtime.getRuntime().addShutdownHook(hook);
@@ -161,46 +167,45 @@ public class Launcher {
                     System.exit(0);
                 }
             } catch (Throwable t) {
-                logger.error("Error on shutdown: {}", t.getMessage(), t);
+                LOGGER.error("Error on shutdown: {}", t.getMessage(), t);
             }
         }, "OSGi Shutdown Thread");
         shutdownThread.start();
     }
 
-    private List<Bundle> installBundles(BundleContext context, BundleSearchPath searchPath, int startLevel) throws BundleException {
+    private List<Bundle> installBundles(BundleContext context, BundleSearchPath searchPath, int startLevel) {
         Collection<File> bundles = searchPath.search();
         List<Bundle> core = new ArrayList<>();
         for (File bundleFile : bundles) {
             try {
                 String bundleURI = bundleFile.getAbsoluteFile().toURI().toString();
-                logger.debug("Installing bundle.  StartLevel: {}; Bundle: {}", startLevel, bundleFile.getAbsolutePath());
+                LOGGER.debug("Installing bundle.  StartLevel: {}; Bundle: {}", startLevel, bundleFile.getAbsolutePath());
                 Bundle newBundle = context.installBundle(bundleURI);
                 // the cast to BundleStartLevel is not needed in Java 6 but it is in Java 7
-                ((BundleStartLevel) newBundle.adapt(BundleStartLevel.class)).setStartLevel(startLevel);
+                newBundle.adapt(BundleStartLevel.class).setStartLevel(startLevel);
                 core.add(newBundle);
             } catch (Throwable t) {
-                logger.warn("Bundle {} failed to install: {}", bundleFile, t);
+                LOGGER.warn("Bundle {} failed to install: {}", bundleFile, t);
             }
         }
         return core;
     }
 
-    private void startBundles(List<Bundle> bundles) throws BundleException {
-        logger.info("------------------------------- Starting Bundles -------------------------------");
+    private void startBundles(List<Bundle> bundles) {
+        LOGGER.info("------------------------------- Starting Bundles -------------------------------");
         for (Bundle b : bundles) {
             try {
                 if (!isFragmentBundle(b)) {
                     b.start();
-                    logger.info("Starting bundle {}", b.getSymbolicName());
-                }
-                else {
-                    logger.info("Not starting bundle {} explicitly because it is a fragment bundle.", b.getSymbolicName());
+                    LOGGER.info("Starting bundle {}", b.getSymbolicName());
+                } else {
+                    LOGGER.info("Not starting bundle {} explicitly because it is a fragment bundle.", b.getSymbolicName());
                 }
             } catch (Throwable t) {
-                logger.error("Core Bundle {} failed to start: {}", b.getBundleId(), t);
+                LOGGER.error("Core Bundle {} failed to start: {}", b.getBundleId(), t);
             }
         }
-        logger.debug("-------------------------------------------------------------------------------");
+        LOGGER.debug("-------------------------------------------------------------------------------");
     }
 
     private static boolean isFragmentBundle(Bundle b) {
@@ -208,7 +213,7 @@ public class Launcher {
     }
 
     protected void cleanup() {
-        logger.info("Cleaning up temporary directories");
+        LOGGER.info("Cleaning up temporary directories");
         delete(frameworkDir);
     }
 
@@ -222,7 +227,7 @@ public class Launcher {
             }
         }
         if (!f.delete()) {
-            logger.warn("File could not be deleted ({})", f.getAbsolutePath());
+            LOGGER.warn("File could not be deleted ({})", f.getAbsolutePath());
         }
     }
 
@@ -236,10 +241,10 @@ public class Launcher {
     }
 
     private void printBanner() {
-        logger.info("********************************************************************************");
-        logger.info("**                                  Protege                                   **");
-        logger.info("********************************************************************************");
-        logger.info("");
+        LOGGER.info("********************************************************************************");
+        LOGGER.info("**                                  Protege                                   **");
+        LOGGER.info("********************************************************************************");
+        LOGGER.info("");
     }
 
     public static void main(String[] args) throws Exception {
@@ -248,8 +253,7 @@ public class Launcher {
         File configFile;
         if (PROTEGE_DIR != null) {
             configFile = new File(PROTEGE_DIR, config);
-        }
-        else {
+        } else {
             configFile = new File(config);
         }
         Launcher launcher = new Launcher(configFile);
@@ -258,17 +262,30 @@ public class Launcher {
 
 
     /**
-     * Just test.
-     * NOTE: need to build before (e.g. {@code mvn clean package -DskipTests})
+     * This is a simplified no-arg launcher which can be used to run application from IDE.
+     * NOTE: need to build the project first (e.g. {@code mvn clean package -DskipTests}).
      */
-    public static class TestRunApplication {
+    public static class NoArg {
+
         public static void main(String... args) throws Exception {
-            Path dir = Paths.get(".")
-                    .resolve("protege-desktop\\target\\protege-5.2.1-SNAPSHOT-platform-independent\\Protege-5.2.1-SNAPSHOT\\")
-                    .toRealPath();
-            System.out.println("Desktop dir: " + dir);
+            Path dir = getWorkDir();
+            LOGGER.debug("Desktop dir: {}", dir);
             System.setProperty("desktop.work.dir", dir.toString());
             Launcher.main(null);
+        }
+
+        private static Path getWorkDir() throws IOException {
+            Path target = Paths.get(".")
+                    .resolve("protege-desktop")
+                    .resolve("target").toRealPath();
+            Path platformIndependentDir = Files.list(target).filter(x -> startsWith(x, "protege"))
+                    .findFirst().orElseThrow(() -> new NoSuchFileException("Can't find platform-independent dir"));
+            return Files.list(platformIndependentDir).filter(x -> startsWith(x, "Protege"))
+                    .findFirst().orElseThrow(() -> new NoSuchFileException("Can't find Protege dir"));
+        }
+
+        private static boolean startsWith(Path path, String prefix) {
+            return path.getFileName().toString().startsWith(prefix);
         }
     }
 }
