@@ -103,13 +103,14 @@
     </extension>
 
 
-    <extension id="menu.plugins" point="org.protege.editor.core.application.EditorKitMenuAction">
+    <!-- todo: this version of protege does not support plugins based on OWL-API v4 -->
+    <!--<extension id="menu.plugins" point="org.protege.editor.core.application.EditorKitMenuAction">
         <name value="Check for plugins..."/>
         <toolTip value="Search for plugin downloads and updates"/>
         <class value="org.protege.editor.core.ui.action.CheckPluginsAction"/>
         <path value="org.protege.editor.core.application.menu.FileMenu/SlotP-A"/>
         <editorKitId value="any"/>
-    </extension>
+    </extension>-->
 
     <!-- Edit menu -->
 
@@ -267,15 +268,16 @@
         <label value="Plugins"/>
         <class value="org.protege.editor.core.update.PluginPreferencesPanel"/>
     </extension>
-    
-    <!-- Other startup actions --> 
-    
-    <extension id ="AltCheckForPluginsAction"
+
+    <!-- Other startup actions -->
+
+    <!-- todo: this version of protege does not support plugins based on OWL-API v4 -->
+    <!--<extension id ="AltCheckForPluginsAction"
                point="org.protege.editor.core.application.OtherStartupActions">
        <name value="Check for plugins..."/>
        <class value="org.protege.editor.core.ui.action.start.CheckPluginsAction"/>
        <sortIndex value="B"/>
-    </extension>
+    </extension>-->
     
     <extension id="ResetPreferencesAction"
                point="org.protege.editor.core.application.OtherStartupActions">
