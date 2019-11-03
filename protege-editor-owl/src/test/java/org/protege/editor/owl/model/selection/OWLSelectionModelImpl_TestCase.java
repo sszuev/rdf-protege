@@ -1,5 +1,6 @@
 package org.protege.editor.owl.model.selection;
 
+import com.github.owlcs.ontapi.owlapi.objects.entity.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,7 +8,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.protege.editor.owl.model.util.OWLAxiomInstance;
 import org.semanticweb.owlapi.model.*;
-import uk.ac.manchester.cs.owl.owlapi.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

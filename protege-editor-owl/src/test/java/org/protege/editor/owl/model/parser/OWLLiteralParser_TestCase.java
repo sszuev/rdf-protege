@@ -1,13 +1,12 @@
 package org.protege.editor.owl.model.parser;
 
+import org.github.owlcs.ontapi.OWLManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
-import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -19,13 +18,11 @@ import static org.hamcrest.core.IsEqual.equalTo;
 @RunWith(MockitoJUnitRunner.class)
 public class OWLLiteralParser_TestCase {
 
-    private OWLDataFactory dataFactory;
     private OWLLiteralParser parser;
 
     @Before
     public void setUp() {
-        dataFactory = new OWLDataFactoryImpl();
-        parser = new OWLLiteralParser(dataFactory);
+        parser = new OWLLiteralParser(OWLManager.getOWLDataFactory());
     }
 
 
