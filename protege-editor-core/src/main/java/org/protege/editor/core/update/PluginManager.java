@@ -4,8 +4,6 @@ import org.protege.editor.core.ProtegeApplication;
 import org.protege.editor.core.prefs.Preferences;
 import org.protege.editor.core.prefs.PreferencesManager;
 import org.protege.editor.core.ui.progress.BackgroundTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -25,11 +23,54 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
+@SuppressWarnings("WeakerAccess")
 public class PluginManager {
 
     private static final String LAST_RUN_PREFS_KEY = "last.run";
 
-    private static final PluginManager instance = new PluginManager();
+    @SuppressWarnings("unused")
+    private static final PluginManager INSTANCE = new PluginManager();
+
+    /**
+     * No plugins are aLLowed now due to incompatibility with OWL-API v5
+     */
+    private static final PluginManager NO_PLUGINS = new PluginManager() {
+
+        @Override
+        public void setAutoUpdateEnabled(boolean b) {
+            // ignore
+        }
+
+        @Override
+        public boolean isAutoUpdateEnabled() {
+            return false;
+        }
+
+        @Override
+        public URL getPluginRegistryLocation() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setPluginRegistryLocation(URL url) {
+            // nothing
+        }
+
+        @Override
+        public Date getLastAutoUpdateDate() {
+            return new Date(Long.MAX_VALUE); // future
+        }
+
+        @Override
+        public void runAutoUpdate() {
+            // nothing
+        }
+
+        @Override
+        public void runCheckForPlugins() {
+            // nothing
+        }
+    };
 
     public static final String AUTO_UPDATE_KEY = "CheckForUpdates";
 
@@ -37,9 +78,7 @@ public class PluginManager {
 
     public static final String DEFAULT_REGISTRY = "https://raw.githubusercontent.com/protegeproject/autoupdate/master/update-info/5.0.0/plugins.repository";
 
-    private final Logger logger = LoggerFactory.getLogger(PluginManager.class);
-
-    private static enum SearchType {
+    private enum SearchType {
         UPDATES_ONLY,
         UPDATES_AND_INSTALLS
     }
@@ -48,11 +87,9 @@ public class PluginManager {
 
     }
 
-
     public static synchronized PluginManager getInstance() {
-        return instance;
+        return NO_PLUGINS;
     }
-
 
     private Preferences getPrefs() {
         PreferencesManager man = PreferencesManager.getInstance();
@@ -69,7 +106,6 @@ public class PluginManager {
         return getPrefs().getBoolean(AUTO_UPDATE_KEY, true);
     }
 
-
     public URL getPluginRegistryLocation() {
         String pluginRegistryLoc = getPrefs().getString(PLUGIN_REGISTRY_KEY, DEFAULT_REGISTRY);
         try {
@@ -78,7 +114,6 @@ public class PluginManager {
             throw new RuntimeException(e);
         }
     }
-
 
     public void setPluginRegistryLocation(URL url) {
         String oldPluginRegistryLoc = getPrefs().getString(PLUGIN_REGISTRY_KEY, DEFAULT_REGISTRY);
