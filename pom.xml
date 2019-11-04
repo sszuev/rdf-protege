@@ -3,7 +3,7 @@
 
     <groupId>edu.stanford.protege</groupId>
     <artifactId>protege-parent</artifactId>
-    <version>5.2.1-SNAPSHOT</version>
+    <version>1.0.0-RDF-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>protege-parent</name>
