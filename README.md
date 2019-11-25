@@ -6,10 +6,22 @@ Protege Desktop is a free and open source ontology editor.
 The main difference between this Protege and the official one is that this fork has [ONT-API](https://github.com/owlcs/ont-api) at its core, while the original Protege Desktop is based on [OWL-API (v4)](https://github.com/owlcs/owlapi/tree/version4).
 This has the following two important consequences:
 - Since ONT-API is an implementation of OWL-API v5, not v4, no existing native Protege plugins are compatible with this fork.
-- Since ONT-API is a RDF-centric OWL-API implementation (and the RDF-Graph is a main protagonist there), this opens up great opportunities to support all RDF-related things natively, including SPARQL, triple-stores, SHACL, etc. Unfortunately right now all these things are only in roadmap, no changes in this direction, with the exception of the platform preparation, have yet been made. So, currently, this project is some kind of demonstration and test-stand for ONT-API. In order to distinguish with the official Protege, the version has been changed.
+- Since ONT-API is a RDF-centric OWL-API implementation (and the RDF-Graph is a main protagonist there), this opens up great opportunities to support all RDF-related things natively, including SPARQL, triple-stores, SHACL, etc. The roadmap approximately is as follows:
+
+    * RDF view (a read-only triples-tree is added)
+    * RDF editor (not done)
+    * SPARQL tab (not done)
+    * Jena TDB support (not done)
+    * RDB through [ONT-D2RQ](https://github.com/owlcs/ont-d2rq) (discussable) 
+    * SPIN mapping through [ONT-MAP](https://github.com/owlcs/ont-map) (discussable)
+    * etc  
+        
+Since most of these interesting things have not yet been done, right now this project is just a kind of demonstration and test-stand for ONT-API. Any contributions in these directions are welcome.
+
+In order to distinguish with the official Protege, the artifact version is changed.
      
 ## Requirements
-- Java8
+Java8
 
 ## License 
 BSD 2-Clause License
