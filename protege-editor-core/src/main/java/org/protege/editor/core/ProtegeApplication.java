@@ -28,13 +28,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
-import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /*
  * Copyright (C) 2007, University of Manchester
@@ -208,7 +207,6 @@ public class ProtegeApplication implements BundleActivator {
         return (Runtime.getRuntime().maxMemory() / 1000000);
     }
 
-
     private boolean pluginSanityCheck(Bundle b) {
         boolean passed = true;
         boolean hasPluginXml = (b.getResource("/plugin.xml") != null);
@@ -233,16 +231,12 @@ public class ProtegeApplication implements BundleActivator {
     }
 
     public static boolean isSingleton(Bundle b) {
-        StringBuffer singleton1 = new StringBuffer(Constants.SINGLETON_DIRECTIVE);
-        singleton1.append(":=true");
-        StringBuffer singleton2 = new StringBuffer(Constants.SINGLETON_DIRECTIVE);
-        singleton2.append(":=\"true\"");
-        return ((String) b.getHeaders().get(Constants.BUNDLE_SYMBOLICNAME)).contains(singleton1.toString()) ||
-                ((String) b.getHeaders().get(Constants.BUNDLE_SYMBOLICNAME)).contains(singleton2.toString());
+        return b.getHeaders().get(Constants.BUNDLE_SYMBOLICNAME).contains(Constants.SINGLETON_DIRECTIVE + ":=true") ||
+                b.getHeaders().get(Constants.BUNDLE_SYMBOLICNAME).contains(Constants.SINGLETON_DIRECTIVE + ":=\"true\"");
     }
 
     public static String getNiceBundleName(Bundle b) {
-        String name = (String) b.getHeaders().get(Constants.BUNDLE_NAME);
+        String name = b.getHeaders().get(Constants.BUNDLE_NAME);
         if (name == null) {
             name = b.getSymbolicName();
         }
@@ -283,6 +277,9 @@ public class ProtegeApplication implements BundleActivator {
         ProtegeProperties.getInstance().put(ProtegeProperties.ONTOLOGY_VIEW_CATEGORY, "Ontology");
         ProtegeProperties.getInstance().put(ProtegeProperties.QUERY_VIEW_CATEGORY, "Query");
         ProtegeProperties.getInstance().put(ProtegeProperties.DIFF_VIEW_CATEGORY, "Ontology comparison");
+
+        ProtegeProperties.getInstance().put(ProtegeProperties.RDF_COLOR_KEY, "CC0000");
+        ProtegeProperties.getInstance().put(ProtegeProperties.RDF_VIEW_CATEGORY, "RDF");
     }
 
 

@@ -1656,4 +1656,23 @@
     </extension>
 
 
+    <extension id="RDFTab"
+               point="org.protege.editor.core.application.WorkspaceTab">
+        <label value="RDF Triples"/>
+        <class value="org.protege.editor.owl.ui.OWLWorkspaceViewsTab"/>
+        <editorKitId value="OWLEditorKit"/>
+        <index value="R"/>
+        <defaultViewConfigFileName value="viewconfig-rdftab.xml"/>
+        <help value="https://www.w3.org/TR/rdf11-concepts/"/>
+    </extension>
+    <extension id="RDFTripleTree"
+               point="org.protege.editor.core.application.ViewComponent">
+        <label value="In-memory RDF Graph"/>
+        <class value="org.protege.editor.owl.ui.view.rdf.TripleHierarchyViewComponent"/>
+        <headerColor value="@org.protege.rdfcolor"/>
+        <category value="@org.protege.rdfcategory"/>
+        <navigates value="@org.protege.rdfcategory"/>
+        <help value="https://www.w3.org/TR/rdf11-concepts/"/>
+    </extension>
+
 </plugin>

@@ -53,6 +53,10 @@ public class ProtegeProperties extends Properties {
     public static final String DIFF_VIEW_CATEGORY = PROTEGE_PREFIX + "differencecategory";
 
 
+    public static final String RDF_COLOR_KEY = PROTEGE_PREFIX + "rdfcolor";
+    public static final String RDF_VIEW_CATEGORY = PROTEGE_PREFIX + "rdfcategory";
+
+
     private static ProtegeProperties instance;
 
 	//Default Protege L&F
