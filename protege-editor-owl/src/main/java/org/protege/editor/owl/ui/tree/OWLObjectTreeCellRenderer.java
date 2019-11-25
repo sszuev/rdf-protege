@@ -18,14 +18,19 @@ import java.awt.*;
  */
 public class OWLObjectTreeCellRenderer extends OWLCellRenderer {
 
-
     public OWLObjectTreeCellRenderer(OWLEditorKit owlEditorKit) {
         super(owlEditorKit);
     }
 
-
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
-                                                  boolean leaf, int row, boolean hasFocus) {
+    @SuppressWarnings("unchecked")
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
         if (value instanceof OWLObjectTreeNode){
             OWLObjectTreeNode node = (OWLObjectTreeNode) value;
             setEquivalentObjects(node.getEquivalentObjects());

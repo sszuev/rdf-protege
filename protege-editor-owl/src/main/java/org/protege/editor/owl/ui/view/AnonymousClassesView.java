@@ -6,17 +6,14 @@ import org.protege.editor.owl.model.classexpression.anonymouscls.AnonymousDefine
 import org.protege.editor.owl.model.util.OWLEntityDeleter;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 /*
 * Copyright (C) 2007, University of Manchester
 *
@@ -31,15 +28,15 @@ import java.util.List;
  * Bio Health Informatics Group<br>
  * Date: Nov 24, 2008<br><br>
  */
-public class AnonymousClassesView extends AbstractActiveOntologyViewComponent implements Deleteable, Copyable {
-
+public class AnonymousClassesView extends AbstractActiveOntologyViewComponent
+        implements Deleteable, Copyable<OWLClass> {
 
     private MList list;
 
     private java.util.List<ChangeListener> listeners = new ArrayList<>();
 
 
-    protected void initialiseOntologyView() throws Exception {
+    protected void initialiseOntologyView() {
         setLayout(new BorderLayout());
 
         list = new MList();
@@ -103,15 +100,14 @@ public class AnonymousClassesView extends AbstractActiveOntologyViewComponent im
         return list.getSelectedIndex() >= 0;
     }
 
-
-    public java.util.List<OWLObject> getObjectsToCopy() {
-        List<OWLObject> sel = new ArrayList<>();
+    @Override
+    public List<OWLClass> getObjectsToCopy() {
+        List<OWLClass> sel = new ArrayList<>();
 for (Object clsItem : list.getSelectedValuesList()){
             sel.add(((AnonymousClassItem)clsItem).getOWLClass());
         }
         return sel;
     }
-
 
     public void addChangeListener(ChangeListener listener) {
         listeners.add(listener);

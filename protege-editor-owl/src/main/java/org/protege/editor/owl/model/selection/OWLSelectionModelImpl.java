@@ -196,7 +196,7 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
                 listener.selectionChanged();
             }
             catch (Exception e) {
-                logger.warn("A selection model listener threw an error whilst handling a selection changed event: {}", e);
+                logger.warn("A selection model listener threw an error whilst handling a selection changed event: {}", e.getMessage());
             }
         }
     }

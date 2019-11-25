@@ -1,7 +1,5 @@
 package org.protege.editor.owl.ui.view;
 
-import org.semanticweb.owlapi.model.OWLEntity;
-
 import java.util.List;
 
 
@@ -14,7 +12,7 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public interface Findable<E extends OWLEntity> {
+public interface Findable<E> {
 
     List<E> find(String match);
 

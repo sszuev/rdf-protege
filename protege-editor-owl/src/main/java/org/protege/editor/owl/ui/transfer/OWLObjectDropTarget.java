@@ -1,7 +1,6 @@
 package org.protege.editor.owl.ui.transfer;
 
 import org.protege.editor.owl.model.OWLModelManager;
-import org.semanticweb.owlapi.model.OWLObject;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,6 +8,7 @@ import java.util.List;
 
 
 /**
+ * TODO: rename
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
@@ -17,13 +17,11 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public interface OWLObjectDropTarget {
+public interface OWLObjectDropTarget<N> {
 
-    public JComponent getComponent();
+    JComponent getComponent();
 
+    boolean dropOWLObjects(List<N> owlObjects, Point pt, int type);
 
-    public boolean dropOWLObjects(List<OWLObject> owlObjects, Point pt, int type);
-
-
-    public OWLModelManager getOWLModelManager();
+    OWLModelManager getOWLModelManager();
 }

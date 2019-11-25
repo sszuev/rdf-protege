@@ -31,7 +31,7 @@ public class OWLEntityFindPanel extends JPanel {
 
     private OWLEditorKit owlEditorKit;
 
-    private Findable<?> findable;
+    private Findable<? extends OWLEntity> findable;
 
     private final JTextField textField = new AugmentedJTextField("Enter search text");
 
@@ -40,7 +40,7 @@ public class OWLEntityFindPanel extends JPanel {
     Timer findTimer;
 
 
-    public OWLEntityFindPanel(OWLEditorKit owlEditorKit, Findable<?> findable) {
+    public OWLEntityFindPanel(OWLEditorKit owlEditorKit, Findable<? extends OWLEntity> findable) {
         this.owlEditorKit = owlEditorKit;
         this.findable = findable;
         createUI();

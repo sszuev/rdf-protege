@@ -1,15 +1,15 @@
 package org.protege.editor.owl.model.hierarchy;
 
 import org.protege.editor.core.Disposable;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-
 /**
+ * TODO: rename
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
@@ -21,54 +21,39 @@ import java.util.function.Predicate;
  * An interface to an object that can provide a hierarchy of objects, for
  * example a class, property or individual hierarchy.
  */
-public interface OWLObjectHierarchyProvider<N extends OWLObject> extends Disposable, HasFilter<N> {
+public interface OWLObjectHierarchyProvider<N> extends Disposable, HasFilter<N> {
 
 
     /**
      * Sets the ontologies that this hierarchy provider should use
      * in order to determine the hierarchy.
      */
-    public void setOntologies(Set<OWLOntology> ontologies);
-
+    void setOntologies(Set<OWLOntology> ontologies);
 
     /**
      * Gets the objects that represent the roots of the hierarchy.
      */
-    public Set<N> getRoots();
+    Set<N> getRoots();
 
+    Set<N> getChildren(N object);
 
-    public Set<N> getChildren(N object);
+    Set<N> getDescendants(N object);
 
+    Set<N> getParents(N object);
 
-    public Set<N> getDescendants(N object);
+    Set<N> getAncestors(N object);
 
+    Set<N> getEquivalents(N object);
 
-    public Set<N> getParents(N object);
+    Set<List<N>> getPathsToRoot(N object);
 
+    boolean containsReference(N object);
 
-    public Set<N> getAncestors(N object);
+    void addListener(OWLObjectHierarchyProviderListener<N> listener);
 
-
-    public Set<N> getEquivalents(N object);
-
-
-    public Set<List<N>> getPathsToRoot(N object);
-
-
-    public boolean containsReference(N object);
-
-
-    public void addListener(OWLObjectHierarchyProviderListener<N> listener);
-
-
-    public void removeListener(OWLObjectHierarchyProviderListener<N> listener);
+    void removeListener(OWLObjectHierarchyProviderListener<N> listener);
 
     void dispose(); // override as previous implementations did not implement Disposable and did not throw an exception
-
-    @Override
-    default void setFilter(Predicate<N> filter) {
-        // Do nothing
-    }
 
     @Override
     default void clearFilter() {
@@ -81,4 +66,12 @@ public interface OWLObjectHierarchyProvider<N extends OWLObject> extends Disposa
         return n -> true;
     }
 
+    @Override
+    default void setFilter(Predicate<N> filter) {
+        // Do nothing
+    }
+
+    default void setOntology(OWLOntology ont) {
+        setOntologies(Collections.singleton(ont));
+    }
 }

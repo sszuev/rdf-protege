@@ -1,8 +1,8 @@
 package org.protege.editor.owl.ui.transfer;
 
 import org.protege.editor.owl.ui.table.OWLObjectDropTargetListener;
-import org.protege.editor.owl.ui.tree.OWLObjectTree;
 import org.protege.editor.owl.ui.tree.OWLTreePreferences;
+import org.protege.editor.owl.ui.tree.ObjectTree;
 
 import java.awt.*;
 import java.awt.dnd.DropTargetDragEvent;
@@ -21,16 +21,15 @@ import java.awt.dnd.DropTargetEvent;
  */
 public class OWLObjectTreeDropTargetListener extends OWLObjectDropTargetListener {
 
-    private final OWLObjectTree tree;
+    private final ObjectTree tree;
 
     private final OWLTreePreferences treePreferences;
 
-    public OWLObjectTreeDropTargetListener(OWLObjectTree component, OWLTreePreferences treePreferences) {
+    public OWLObjectTreeDropTargetListener(ObjectTree component, OWLTreePreferences treePreferences) {
         super(component);
         this.tree = component;
         this.treePreferences = treePreferences;
     }
-
 
     protected boolean isDragAcceptable(DropTargetDragEvent event) {
         int row = tree.getRowForLocation(event.getLocation().x, event.getLocation().y);
@@ -49,17 +48,14 @@ public class OWLObjectTreeDropTargetListener extends OWLObjectDropTargetListener
         return isAcceptable;
     }
 
-
     public void dragExit(DropTargetEvent dte) {
         super.dragExit(dte);
         tree.setDropRow(-1);
     }
 
-
     protected boolean isDropAcceptable(DropTargetDropEvent event) {
         return treePreferences.isTreeDragAndDropEnabled() && super.isDropAcceptable(event);
     }
-
 
     public void drop(DropTargetDropEvent dtde) {
         super.drop(dtde);

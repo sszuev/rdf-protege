@@ -14,7 +14,6 @@ import org.protege.editor.core.ui.util.VerifyingOptionPane;
 import org.protege.editor.core.ui.wizard.Wizard;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.event.EventType;
-import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.util.OWLAxiomInstance;
 import org.protege.editor.owl.ui.UIHelper;
@@ -63,7 +62,7 @@ import java.util.Set;
   An OWLFrameList is a common component that displays sections and
  * section content. Most of the standard component in protege use this.
  */
-public class OWLFrameList<R> extends MList implements LinkedObjectComponent, DropTargetListener, Copyable, Pasteable, Cuttable, Deleteable, RefreshableComponent {
+public class OWLFrameList<R> extends MList implements LinkedObjectComponent, DropTargetListener, Copyable<OWLObject>, Pasteable, Cuttable, Deleteable, RefreshableComponent {
 
     private static final int EDITOR_SCREEN_MARGIN = 100;
 
@@ -654,6 +653,7 @@ public class OWLFrameList<R> extends MList implements LinkedObjectComponent, Dro
         return getRootObject() != null && getSelectedIndex() != -1;
     }
 
+    @Override
     public List<OWLObject> getObjectsToCopy() {
         List<OWLObject> manipulatableObjects = new ArrayList<>();
         for (Object selObject : getSelectedValues()) {
@@ -815,7 +815,7 @@ public class OWLFrameList<R> extends MList implements LinkedObjectComponent, Dro
                 */
             int fixedCellHeight = list.getFixedCellHeight();
             int fixedCellWidth = list.getFixedCellWidth();
-            cellWidth = fixedCellWidth != -1 ? fixedCellWidth : -1;
+            cellWidth = fixedCellWidth;
             if (fixedCellHeight != -1) {
                 cellHeight = fixedCellHeight;
                 cellHeights = null;

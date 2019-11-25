@@ -24,7 +24,7 @@ import java.util.Iterator;
  * A renderer that renders objects using the Manchester OWL Syntax.
  * Axiom level OWLObjects are rendered in Manchester "style"
  */
-public class OWLObjectRendererImpl implements OWLObjectRenderer {
+public class OWLObjectRendererImpl implements OWLObjectRenderer<OWLObject> {
 
     private final OWLModelManager mngr;
     private WriterDelegate writerDelegate;
@@ -49,7 +49,7 @@ public class OWLObjectRendererImpl implements OWLObjectRenderer {
         ontURISFP = new OntologyIRIShortFormProvider();
     }
 
-
+    @Override
     public String render(OWLObject object) {
         if (object instanceof OWLOntology){
             return renderOntology((OWLOntology) object);
@@ -138,7 +138,7 @@ public class OWLObjectRendererImpl implements OWLObjectRenderer {
         }
 
 
-        public void write(char cbuf[], int off, int len) throws IOException {
+        public void write(char[] cbuf, int off, int len) throws IOException {
             delegate.write(cbuf, off, len);
         }
     }

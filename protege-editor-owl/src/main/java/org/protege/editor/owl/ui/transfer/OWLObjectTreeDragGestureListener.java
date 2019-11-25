@@ -1,9 +1,7 @@
 package org.protege.editor.owl.ui.transfer;
 
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.ui.tree.OWLObjectTree;
-import org.protege.editor.owl.ui.tree.OWLTreePreferences;
-import org.semanticweb.owlapi.model.OWLObject;
+import org.protege.editor.owl.ui.tree.ObjectTree;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -13,6 +11,7 @@ import java.util.List;
 
 
 /**
+ * TODO: rename
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
@@ -21,21 +20,21 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public class OWLObjectTreeDragGestureListener extends OWLObjectDragGestureListener {
+public class OWLObjectTreeDragGestureListener<N> extends OWLObjectDragGestureListener<N> {
 
-    private final OWLObjectTree<? extends OWLObject> tree;
+    private final ObjectTree<N> tree;
 
-
-    public OWLObjectTreeDragGestureListener(OWLEditorKit owlEditorKit, OWLObjectTree<? extends OWLObject> tree) {
+    public OWLObjectTreeDragGestureListener(OWLEditorKit owlEditorKit, ObjectTree<N> tree) {
         super(owlEditorKit, tree);
         this.tree = tree;
     }
 
-
-    protected List<OWLObject> getSelectedObjects() {
-        return new ArrayList<>(tree.getSelectedOWLObjects());
+    @Override
+    protected List<N> getSelectedObjects() {
+        return new ArrayList<N>(tree.getSelectedOWLObjects());
     }
 
+    @Override
     protected JComponent getRendererComponent() {
         return (JComponent) tree.getCellRenderer().getTreeCellRendererComponent(tree,
                 tree.getSelectionPath().getLastPathComponent(),
@@ -46,13 +45,13 @@ public class OWLObjectTreeDragGestureListener extends OWLObjectDragGestureListen
                 false);
     }
 
-
+    @Override
     protected Dimension getRendererComponentSize() {
         Rectangle bounds = tree.getRowBounds(tree.getRowForPath(tree.getSelectionPath()));
         return bounds.getSize();
     }
 
-
+    @Override
     protected Point getImageOffset() {
         TreePath selPath = tree.getSelectionPath();
         Rectangle rowBounds = tree.getRowBounds(tree.getRowForPath(selPath));

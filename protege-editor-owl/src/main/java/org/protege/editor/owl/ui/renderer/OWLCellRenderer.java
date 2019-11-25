@@ -16,8 +16,9 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 
 /**
@@ -29,92 +30,73 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, ListCellRenderer {
 
-    private final Logger logger = LoggerFactory.getLogger(OWLCellRenderer.class);
-    
-    private boolean forceReadOnlyRendering;
-
-    private OWLEditorKit owlEditorKit;
-
-    private boolean renderIcon;
-
-    private boolean renderExpression;
-
-    private boolean strikeThrough;
-
-    private OWLOntology ontology;
-
-    private Set<OWLObject> equivalentObjects;
-
-    private LinkedObjectComponent linkedObjectComponent;
-
-    private Font plainFont;
-
-    private Font boldFont;
-
     public static final Color SELECTION_BACKGROUND = UIManager.getDefaults().getColor("List.selectionBackground");
-
     public static final Color SELECTION_FOREGROUND = UIManager.getDefaults().getColor("List.selectionForeground");
-
     public static final Color FOREGROUND = UIManager.getDefaults().getColor("List.foreground");
-
-    private boolean gettingCellBounds;
-
-    private List<OWLEntityColorProvider> entityColorProviders;
-
-    // The object that determines which icon should be displayed.
-    private OWLObject iconObject;
-
-    private int leftMargin = 0;
-
-    private int rightMargin = 40;
-
-    private JComponent componentBeingRendered;
-
-    private JPanel renderingComponent;
+    private static final Logger LOGGER = LoggerFactory.getLogger(OWLCellRenderer.class);
 
     private final IconComponent iconComponent = new IconComponent();
-
-    private JTextPane textPane;
+    private boolean forceReadOnlyRendering;
+    private OWLEditorKit owlEditorKit;
+    private boolean renderIcon;
+    private boolean renderExpression;
+    private boolean strikeThrough;
+    private OWLOntology ontology;
+    private Set<OWLObject> equivalentObjects;
+    private LinkedObjectComponent linkedObjectComponent;
+    protected Font plainFont;
+    private Font boldFont;
+    private boolean gettingCellBounds;
+    private List<OWLEntityColorProvider> entityColorProviders;
+    // The object that determines which icon should be displayed.
+    private OWLObject iconObject;
+    private int leftMargin = 0;
+    private int rightMargin = 40;
+    private JComponent componentBeingRendered;
+    private JPanel renderingComponent;
+    protected JTextPane textPane;
     
     private int preferredWidth;
-
     private int minTextHeight;
-
     private OWLEntity focusedEntity;
-
     private boolean commentedOut;
-
     private boolean highlightKeywords;
-
     private boolean wrap = true;
-
     private boolean highlightUnsatisfiableClasses = true;
-
     private boolean highlightUnsatisfiableProperties = true;
-
     private Set<OWLEntity> crossedOutEntities;
-
     private Set<String> unsatisfiableNames;
-
     private Set<String> boxedNames;
 
 //    private int plainFontHeight;
 
     private boolean opaque = false;
-
-
-    private class OWLCellRendererPanel extends JPanel {
-        private OWLCellRendererPanel(LayoutManager layout) {
-            super(layout);
-        }
-    }
+    private boolean renderLinks;
+    private ActiveEntityVisitor activeEntityVisitor = new ActiveEntityVisitor();
+    private Composite disabledComposite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
+    private Style plainStyle;
+    private Style boldStyle;
+    private Style nonBoldStyle;
+    protected Style selectionForeground;
+    protected Style foreground;
+    private Style linkStyle;
+    private Style inconsistentClassStyle;
+    private Style focusedEntityStyle;
+    private Style ontologyURIStyle;
+    private Style commentedOutStyle;
+    private Style strikeOutStyle;
+    private Style fontSizeStyle;
+    @SuppressWarnings("FieldCanBeLocal")
+    private boolean annotURIRendered = false;
+    private boolean linkRendered = false;
+    private boolean parenthesisRendered = false;
 
     public OWLCellRenderer(OWLEditorKit owlEditorKit) {
         this(owlEditorKit, true, true);
     }
-
 
     public OWLCellRenderer(OWLEditorKit owlEditorKit, boolean renderExpression, boolean renderIcon) {
         this.owlEditorKit = owlEditorKit;
@@ -126,7 +108,7 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
 
         textPane = new JTextPane();
         textPane.setOpaque(false);
-        
+
         renderingComponent = new OWLCellRendererPanel(new OWLCellRendererLayoutManager());
         renderingComponent.add(iconComponent);
         renderingComponent.add(textPane);
@@ -138,9 +120,8 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
                 OWLEntityColorProvider prov = plugin.newInstance();
                 prov.initialise();
                 entityColorProviders.add(prov);
-            }
-            catch (Exception e) {
-                logger.error("An error occurred whilst trying to load an OWLEntityColorProviderPlugin", e);
+            } catch (Exception e) {
+                LOGGER.error("An error occurred whilst trying to load an OWLEntityColorProviderPlugin", e);
             }
         }
         crossedOutEntities = new HashSet<>();
@@ -150,43 +131,39 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         setupFont();
     }
 
+    private static boolean hasSome(Stream<?> stream) {
+        return stream.findFirst().isPresent();
+    }
 
     public void setForceReadOnlyRendering(boolean forceReadOnlyRendering) {
         this.forceReadOnlyRendering = forceReadOnlyRendering;
     }
 
-
     public void setOpaque(boolean opaque){
         this.opaque = opaque;
     }
-
 
     public void setUnsatisfiableNames(Set<String> unsatisfiableNames) {
         this.unsatisfiableNames.clear();
         this.unsatisfiableNames.addAll(unsatisfiableNames);
     }
 
-
     public void setHighlightKeywords(boolean hightlighKeywords) {
         this.highlightKeywords = hightlighKeywords;
     }
-
 
     public void setHighlightUnsatisfiableClasses(boolean highlightUnsatisfiableClasses) {
         this.highlightUnsatisfiableClasses = highlightUnsatisfiableClasses;
     }
 
-
     public void setHighlightUnsatisfiableProperties(boolean highlightUnsatisfiableProperties) {
         this.highlightUnsatisfiableProperties = highlightUnsatisfiableProperties;
     }
-
 
     public void setOntology(OWLOntology ont) {
         forceReadOnlyRendering = false;
         this.ontology = ont;
     }
-
 
     public void setIconObject(OWLObject object) {
         iconObject = object;
@@ -195,6 +172,12 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
     public void setCrossedOutEntities(Set<OWLEntity> entities) {
         crossedOutEntities.addAll(entities);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Implementation of renderer interfaces
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////
 
     public void addBoxedName(String name) {
         boxedNames.add(name);
@@ -218,25 +201,22 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         boxedNames.clear();
     }
 
-
     public void setFocusedEntity(OWLEntity entity) {
         focusedEntity = entity;
     }
-
 
     /**
      * Sets equivalent objects for the object being rendered.  For example,
      * if the object being rendered is A, and B and C are equivalent to A, then
      * setting the equivalent objects to {B, C} will cause the rendering to
      * have (= B = C) appended to it
-     * @param objects The objects that are equivalent to the object
-     *                being rendered
+     * TODO: parameterize?
+     * @param objects The objects that are equivalent to the object being rendered
      */
     public void setEquivalentObjects(Set<OWLObject> objects) {
         equivalentObjects.clear();
         equivalentObjects.addAll(objects);
     }
-
 
     /**
      * Specifies whether or not this row displays inferred information (the
@@ -248,31 +228,25 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
     	 */
     }
 
-
     public void setStrikeThrough(boolean strikeThrough) {
         this.strikeThrough = strikeThrough;
     }
-
 
     public int getPreferredWidth() {
         return preferredWidth;
     }
 
-
     public void setPreferredWidth(int preferredWidth) {
         this.preferredWidth = preferredWidth;
     }
-
 
     public int getRightMargin() {
         return rightMargin;
     }
 
-
     public void setRightMargin(int rightMargin) {
         this.rightMargin = rightMargin;
     }
-
 
     private void setupFont() {
         plainFont = OWLRendererPreferences.getInstance().getFont();
@@ -284,40 +258,27 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         return OWLRendererPreferences.getInstance().getFontSize();
     }
 
-
     public boolean isRenderExpression() {
         return renderExpression;
     }
-
 
     public boolean isRenderIcon() {
         return renderIcon;
     }
 
-
     public void setCommentedOut(boolean commentedOut) {
         this.commentedOut = commentedOut;
     }
-
 
     public boolean isWrap() {
         return wrap;
     }
 
-
     public void setWrap(boolean wrap) {
         this.wrap = wrap;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Implementation of renderer interfaces
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-    private boolean renderLinks;
-
-
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
         setupLinkedObjectComponent(table, table.getCellRect(row, column, true));
@@ -328,7 +289,7 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         return prepareRenderer(value, isSelected, hasFocus);
     }
 
-
+    @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
         componentBeingRendered = tree;
@@ -348,7 +309,7 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         return c;
     }
 
-
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                   boolean cellHasFocus) {
         componentBeingRendered = list;
@@ -371,7 +332,6 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         return c;
     }
 
-
     private void setupLinkedObjectComponent(JComponent component, Rectangle cellRect) {
         renderLinks = false;
         linkedObjectComponent = null;
@@ -389,55 +349,6 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         }
     }
 
-
-    private class ActiveEntityVisitor implements OWLEntityVisitor {
-
-        public void visit(OWLClass cls) {
-            if (!getOWLModelManager().getActiveOntology().getAxioms(cls).isEmpty()) {
-                ontology = getOWLModelManager().getActiveOntology();
-            }
-        }
-
-
-        public void visit(OWLDatatype dataType) {
-            if (!getOWLModelManager().getActiveOntology().getAxioms(dataType).isEmpty()) {
-                ontology = getOWLModelManager().getActiveOntology();
-            }
-        }
-
-
-        public void visit(OWLNamedIndividual individual) {
-            if (!getOWLModelManager().getActiveOntology().getAxioms(individual).isEmpty()) {
-                ontology = getOWLModelManager().getActiveOntology();
-            }
-        }
-
-
-        public void visit(OWLDataProperty property) {
-            if (!getOWLModelManager().getActiveOntology().getAxioms(property).isEmpty()) {
-                ontology = getOWLModelManager().getActiveOntology();
-            }
-        }
-
-
-        public void visit(OWLObjectProperty property) {
-            if (!getOWLModelManager().getActiveOntology().getAxioms(property).isEmpty()) {
-                ontology = getOWLModelManager().getActiveOntology();
-            }
-        }
-
-
-        public void visit(OWLAnnotationProperty property) {
-            if (!getOWLModelManager().getActiveOntology().getAxioms(property).isEmpty()) {
-                ontology = getOWLModelManager().getActiveOntology();
-            }
-        }
-    }
-
-
-    private ActiveEntityVisitor activeEntityVisitor = new ActiveEntityVisitor();
-
-
     private Component prepareRenderer(Object value, boolean isSelected, boolean hasFocus) {
         renderingComponent.setOpaque(isSelected || opaque);
 
@@ -450,20 +361,17 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
             entity.accept(activeEntityVisitor);
             if (OWLUtilities.isDeprecated(getOWLModelManager(), entity)) {
                 setStrikeThrough(true);
-            }
-            else {
+            } else {
                 setStrikeThrough(false);
             }
         }
 
-
-        prepareTextPane(getRendering(value), isSelected);
+        prepareTextPane(value, isSelected);
 
         if (isSelected) {
             renderingComponent.setBackground(SELECTION_BACKGROUND);
             textPane.setForeground(SELECTION_FOREGROUND);
-        }
-        else {
+        } else {
             renderingComponent.setBackground(componentBeingRendered.getBackground());
             textPane.setForeground(componentBeingRendered.getForeground());
         }
@@ -474,26 +382,20 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         return renderingComponent;
     }
 
-
     protected String getRendering(Object object) {
         if (object instanceof OWLObject) {
-            String rendering = getOWLModelManager().getRendering(((OWLObject) object));
+            StringBuilder rendering = new StringBuilder(getOWLModelManager().getRendering((OWLObject) object));
             for (OWLObject eqObj : equivalentObjects) {
                 // Add in the equivalent class symbol
-                rendering += " \u2261 " + getOWLModelManager().getRendering(eqObj);
+                rendering.append(" \u2261 ").append(getOWLModelManager().getRendering(eqObj));
             }
-            return rendering;
+            return rendering.toString();
         }
-        else {
-            if (object != null) {
-                return object.toString();
-            }
-            else {
-                return "";
-            }
+        if (object != null) {
+            return object.toString();
         }
+        return "";
     }
-
 
     protected Icon getIcon(Object object) {
         if(!renderIcon) {
@@ -505,19 +407,12 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         if (object instanceof OWLObject) {
             return owlEditorKit.getWorkspace().getOWLIconProvider().getIcon((OWLObject) object);
         }
-        else {
-            return null;
-        }
+        return null;
     }
-
-
-    private Composite disabledComposite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
-
 
     private OWLModelManager getOWLModelManager() {
         return owlEditorKit.getModelManager();
     }
-
 
     protected Color getColor(OWLEntity entity, Color defaultColor) {
         for (OWLEntityColorProvider prov : entityColorProviders) {
@@ -529,42 +424,17 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         return defaultColor;
     }
 
-
     protected boolean activeOntologyContainsAxioms(OWLEntity owlEntity) {
-        return !getOWLModelManager().getActiveOntology().getReferencingAxioms(owlEntity).isEmpty();
+        // TODO: containsEntityInSignature ?
+        return hasSome(getOWLModelManager().getActiveOntology().referencingAxioms(owlEntity));
     }
 
-
-    private Style plainStyle;
-
-    private Style boldStyle;
-
-    private Style nonBoldStyle;
-
-    private Style selectionForeground;
-
-    private Style foreground;
-
-    private Style linkStyle;
-
-    private Style inconsistentClassStyle;
-
-    private Style focusedEntityStyle;
-
-    private Style ontologyURIStyle;
-
-    private Style commentedOutStyle;
-
-    private Style strikeOutStyle;
-
-    private Style fontSizeStyle;
-
-    private void prepareStyles() {
+    protected void prepareStyles() {
         StyledDocument doc = textPane.getStyledDocument();
-        Map<String, Color> keyWordColorMap = owlEditorKit.getWorkspace().getKeyWordColorMap();
+        Map<String, Color> keyWordColorMap = getColorMap();
         for (String keyWord : keyWordColorMap.keySet()) {
-            Style s = doc.addStyle(keyWord, null);
             Color color = keyWordColorMap.get(keyWord);
+            Style s = doc.addStyle(keyWord, null);
             StyleConstants.setForeground(s, color);
             StyleConstants.setBold(s, true);
         }
@@ -577,12 +447,11 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         boldStyle = doc.addStyle("BOLD_STYLE", null);
         StyleConstants.setBold(boldStyle, true);
 
-
         nonBoldStyle = doc.addStyle("NON_BOLD_STYLE", null);
         StyleConstants.setBold(nonBoldStyle, false);
 
         selectionForeground = doc.addStyle("SEL_FG_STYPE", null);
-        // we know that it is possible for SELECTION_FOREGROUND to be null 
+        // we know that it is possible for SELECTION_FOREGROUND to be null
         // and an exception here means that Protege doesn't start
         if (selectionForeground != null && SELECTION_FOREGROUND != null) {
         	StyleConstants.setForeground(selectionForeground, SELECTION_FOREGROUND);
@@ -619,11 +488,13 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         StyleConstants.setFontSize(fontSizeStyle, 40);
     }
 
+    protected Map<String, Color> getColorMap() {
+        return owlEditorKit.getWorkspace().getKeyWordColorMap();
+    }
 
-    private void prepareTextPane(Object value, boolean selected) {
-
+    protected void prepareTextPane(Object value, boolean selected) {
         textPane.setBorder(null);
-        String theVal = value.toString();
+        String theVal = getRendering(value);
         if (!wrap) {
             theVal = theVal.replace('\n', ' ');
             theVal = theVal.replaceAll(" [ ]+", " ");
@@ -639,8 +510,7 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
 
         if (selected) {
             doc.setParagraphAttributes(0, doc.getLength(), selectionForeground, false);
-        }
-        else {
+        } else {
             doc.setParagraphAttributes(0, doc.getLength(), foreground, false);
         }
 
@@ -657,12 +527,10 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
             if (OWLRendererPreferences.getInstance().isHighlightActiveOntologyStatements() &&
                 getOWLModelManager().getActiveOntology().equals(ontology)) {
                 doc.setParagraphAttributes(0, doc.getLength(), boldStyle, false);
-            }
-            else {
+            } else {
                 doc.setParagraphAttributes(0, doc.getLength(), nonBoldStyle, false);
             }
-        }
-        else {
+        } else {
             textPane.setFont(plainFont);
         }
 
@@ -670,13 +538,11 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         if (ontology != null) {
             if (getOWLModelManager().isMutable(ontology)) {
                 textPane.setEnabled(!forceReadOnlyRendering);
-            }
-            else {
+            } else {
                 // Not editable - set readonly
                 textPane.setEnabled(false);
             }
-        }
-        else {
+        } else {
             // Ontology is null.  If the object is an entity then the font
             // should be bold if there are statements about it
             if (value instanceof OWLEntity) {
@@ -687,13 +553,12 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         }
 
         highlightText(doc, selected);
-        if(selected) {
+        if (selected) {
             if (selectionForeground != null) {
                 doc.setCharacterAttributes(0, doc.getLength(), selectionForeground, false);
             }
         }
     }
-
 
     protected void highlightText(StyledDocument doc, boolean selected) {
         // Highlight text
@@ -704,17 +569,17 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         while (tokenizer.hasMoreTokens()) {
             // Get the token and determine if it is a keyword or
             // entity (or delimeter)
-            String curToken = tokenizer.nextToken();
-            if (curToken.equals("'")) {
+            StringBuilder curToken = new StringBuilder(tokenizer.nextToken());
+            if (curToken.toString().equals("'")) {
                 while (tokenizer.hasMoreTokens()) {
                     String s = tokenizer.nextToken();
-                    curToken += s;
+                    curToken.append(s);
                     if (s.equals("'")) {
                         break;
                     }
                 }
             }
-            renderToken(curToken, tokenStartIndex, doc, selected);
+            renderToken(curToken.toString(), tokenStartIndex, doc, selected);
 
             tokenStartIndex += curToken.length();
         }
@@ -723,13 +588,10 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         }
     }
 
-
-    private boolean annotURIRendered = false;
-    private boolean linkRendered = false;
-    private boolean parenthesisRendered = false;
-
-    protected void renderToken(final String curToken, final int tokenStartIndex, final StyledDocument doc, boolean selected) {
-
+    protected void renderToken(final String curToken,
+                               final int tokenStartIndex,
+                               final StyledDocument doc,
+                               boolean selected) {
         boolean enclosedByBracket = false;
         if (parenthesisRendered){
             parenthesisRendered = false;
@@ -739,105 +601,92 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         OWLRendererPreferences prefs = OWLRendererPreferences.getInstance();
 
         final int tokenLength = curToken.length();
-        Color c = owlEditorKit.getWorkspace().getKeyWordColorMap().get(curToken);
+        Color c = getColorMap().get(curToken);
         if (c != null && prefs.isHighlightKeyWords() && highlightKeywords) {
             Style s = doc.getStyle(curToken);
             doc.setCharacterAttributes(tokenStartIndex, tokenLength, s, true);
+            return;
         }
-        else {
-            // Not a keyword, so might be an entity (or delim)
-            final OWLEntity curEntity = getOWLModelManager().getOWLEntityFinder().getOWLEntity(curToken);
-            if (curEntity != null) {
-                if (focusedEntity != null && !selected) {
-                    if (curEntity.equals(focusedEntity)) {
-                        doc.setCharacterAttributes(tokenStartIndex, tokenLength, focusedEntityStyle, true);
-                    }
+        OWLModelManager m = getOWLModelManager();
+        // Not a keyword, so might be an entity (or delim)
+        final OWLEntity curEntity = m.getOWLEntityFinder().getOWLEntity(curToken);
+        if (curEntity != null) {
+            if (focusedEntity != null && !selected) {
+                if (curEntity.equals(focusedEntity)) {
+                    doc.setCharacterAttributes(tokenStartIndex, tokenLength, focusedEntityStyle, true);
                 }
-                else if (highlightUnsatisfiableClasses && curEntity instanceof OWLClass) {
-                    // If it is a class then paint the word red if the class
-                    // is inconsistent
-                	try {
-                		getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_CLASS_UNSATISFIABILITY,
-                                () -> {
-                                    OWLReasoner reasoner = getOWLModelManager().getReasoner();
-                                    boolean consistent = reasoner.isConsistent();
-                                    if (!consistent || !getOWLModelManager().getReasoner().isSatisfiable((OWLClass) curEntity)) {
-                                        // Paint red because of inconsistency
-                                        doc.setCharacterAttributes(tokenStartIndex, tokenLength, inconsistentClassStyle, true);
-                                    }
-                                });
-                	}
-                	catch (Exception e) {
-                		logger.error("An error occurred whilst rendering a token. " +
-                                "Token: {}; " +
-                                "Token start index: {}",
-                                curToken,
-                                tokenStartIndex,
-                                e);
-                	}
-
+            } else if (highlightUnsatisfiableClasses && curEntity instanceof OWLClass) {
+                // If it is a class then paint the word red if the class
+                // is inconsistent
+                try {
+                    m.getReasonerPreferences()
+                            .executeTask(OptionalInferenceTask.SHOW_CLASS_UNSATISFIABILITY,
+                                    () -> {
+                                        OWLReasoner reasoner = m.getReasoner();
+                                        if (!reasoner.isConsistent() || !reasoner.isSatisfiable((OWLClass) curEntity)) {
+                                            // Paint red because of inconsistency
+                                            doc.setCharacterAttributes(tokenStartIndex, tokenLength, inconsistentClassStyle, true);
+                                        }
+                                    });
+                } catch (Exception e) {
+                    LOGGER.error("An error occurred whilst rendering a token. Token: {}; Token start index: {}",
+                            curToken, tokenStartIndex, e);
                 }
-                else if (highlightUnsatisfiableProperties && curEntity instanceof OWLObjectProperty) {
-                    highlightPropertyIfUnsatisfiable(curEntity, doc, tokenStartIndex, tokenLength);
-                }
-                if(OWLUtilities.isDeprecated(owlEditorKit.getOWLModelManager(), curEntity)) {
-                    setStrikeThrough(true);
-                }
-                else {
-                    setStrikeThrough(false);
-                }
-                strikeoutEntityIfCrossedOut(curEntity, doc, tokenStartIndex, tokenLength);
-
-                if (renderLinks) {
-                    renderHyperlink(curEntity, tokenStartIndex, tokenLength, doc);
-                }
+            } else if (highlightUnsatisfiableProperties && curEntity instanceof OWLObjectProperty) {
+                highlightPropertyIfUnsatisfiable(curEntity, doc, tokenStartIndex, tokenLength);
             }
-            else {
-                if (highlightUnsatisfiableClasses && unsatisfiableNames.contains(curToken)) {
-                    // Paint red because of inconsistency
-                    doc.setCharacterAttributes(tokenStartIndex, tokenLength, inconsistentClassStyle, true);
-                }
-                else if (isOntologyURI(curToken)){
-                    fadeOntologyURI(doc, tokenStartIndex, tokenLength, enclosedByBracket);
-                }
-                else if (curToken.equals("(")){
-                    parenthesisRendered = true;
-                }
+            if (OWLUtilities.isDeprecated(owlEditorKit.getOWLModelManager(), curEntity)) {
+                setStrikeThrough(true);
+            } else {
+                setStrikeThrough(false);
             }
+            strikeoutEntityIfCrossedOut(curEntity, doc, tokenStartIndex, tokenLength);
+
+            if (renderLinks) {
+                renderHyperlink(curEntity, tokenStartIndex, tokenLength, doc);
+            }
+            return;
+        }
+        if (highlightUnsatisfiableClasses && unsatisfiableNames.contains(curToken)) {
+            // Paint red because of inconsistency
+            doc.setCharacterAttributes(tokenStartIndex, tokenLength, inconsistentClassStyle, true);
+        } else if (isOntologyURI(curToken)) {
+            fadeOntologyURI(doc, tokenStartIndex, tokenLength, enclosedByBracket);
+        } else if (curToken.equals("(")) {
+            parenthesisRendered = true;
         }
     }
-
 
     private void renderHyperlink(OWLEntity curEntity, int tokenStartIndex, int tokenLength, StyledDocument doc) {
         try {
             Rectangle startRect = textPane.modelToView(tokenStartIndex);
             Rectangle endRect = textPane.modelToView(tokenStartIndex + tokenLength);
-            if (startRect != null && endRect != null) {
-                int width = endRect.x - startRect.x;
-                int heght = startRect.height;
+            if (startRect == null || endRect == null) {
+                return;
+            }
+            int width = endRect.x - startRect.x;
+            int heght = startRect.height;
 
-                Rectangle tokenRect = new Rectangle(startRect.x, startRect.y, width, heght);
-                tokenRect.grow(0, -2);
-                if (linkedObjectComponent.getMouseCellLocation() != null) {
-                    Point mouseCellLocation = linkedObjectComponent.getMouseCellLocation();
-                    if (mouseCellLocation != null) {
-                        mouseCellLocation = SwingUtilities.convertPoint(renderingComponent,
-                                                                        mouseCellLocation,
-                                                                        textPane);
-                        if (tokenRect.contains(mouseCellLocation)) {
-                            doc.setCharacterAttributes(tokenStartIndex, tokenLength, linkStyle, false);
-                            linkedObjectComponent.setLinkedObject(curEntity);
-                            linkRendered = true;
-                        }
-                    }
+            Rectangle tokenRect = new Rectangle(startRect.x, startRect.y, width, heght);
+            tokenRect.grow(0, -2);
+            if (linkedObjectComponent.getMouseCellLocation() == null) {
+                return;
+            }
+            Point mouseCellLocation = linkedObjectComponent.getMouseCellLocation();
+            if (mouseCellLocation != null) {
+                mouseCellLocation = SwingUtilities.convertPoint(renderingComponent,
+                        mouseCellLocation,
+                        textPane);
+                if (tokenRect.contains(mouseCellLocation)) {
+                    doc.setCharacterAttributes(tokenStartIndex, tokenLength, linkStyle, false);
+                    linkedObjectComponent.setLinkedObject(curEntity);
+                    linkRendered = true;
                 }
             }
-        }
-        catch (BadLocationException e) {
+        } catch (BadLocationException e) {
             e.printStackTrace();
         }
     }
-
 
     private boolean isOntologyURI(String token) {
         try {
@@ -849,13 +698,11 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
                     return true;
                 }
             }
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             // just dropthough
         }
         return false;
     }
-
 
     private void fadeOntologyURI(StyledDocument doc, int tokenStartIndex, int tokenLength, boolean enclosedByBracket) {
         // if surrounded by brackets, also render them in grey
@@ -868,7 +715,6 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         doc.setCharacterAttributes(start, length, ontologyURIStyle, true);
     }
 
-
     private void strikeoutEntityIfCrossedOut(OWLEntity entity, StyledDocument doc, int tokenStartIndex,
                                              int tokenLength) {
         if(crossedOutEntities.contains(entity) || strikeThrough) {
@@ -876,10 +722,12 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         }
     }
 
-
-    private void highlightPropertyIfUnsatisfiable(final OWLEntity entity, final StyledDocument doc, final int tokenStartIndex, final int tokenLength) {
-    	try {
-    		getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_OBJECT_PROPERTY_UNSATISFIABILITY,
+    private void highlightPropertyIfUnsatisfiable(final OWLEntity entity,
+                                                  final StyledDocument doc,
+                                                  final int tokenStartIndex,
+                                                  final int tokenLength) {
+        try {
+            getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_OBJECT_PROPERTY_UNSATISFIABILITY,
                     () -> {
                         OWLObjectProperty prop = (OWLObjectProperty) entity;
                         OWLReasoner reasoner = getOWLModelManager().getReasoner();
@@ -888,14 +736,12 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
                             doc.setCharacterAttributes(tokenStartIndex, tokenLength, inconsistentClassStyle, true);
                         }
                     });
-    	}
-    	catch (Exception e) {
-    		logger.warn("An error occurred whilst highlighting an unsatisfiable property: {}", e);
-    	}
+        } catch (Exception e) {
+            LOGGER.warn("An error occurred whilst highlighting an unsatisfiable property: {}", e.getMessage());
+        }
     }
 
-
-    private void resetStyles(StyledDocument doc) {
+    protected void resetStyles(StyledDocument doc) {
         doc.setParagraphAttributes(0, doc.getLength(), plainStyle, true);
         StyleConstants.setFontSize(fontSizeStyle, getFontSize());
         Font f = OWLRendererPreferences.getInstance().getFont();
@@ -904,9 +750,96 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
         setupFont();
     }
 
+    private static final class IconComponent extends JPanel {
+
+        private Icon icon;
+
+        private Dimension preferredSize = new Dimension();
+
+        public void setIcon(Icon icon) {
+            this.icon = icon;
+            if (icon != null) {
+                preferredSize.width = icon.getIconWidth();
+                preferredSize.height = icon.getIconHeight();
+            } else {
+                preferredSize.width = 0;
+                preferredSize.height = 0;
+            }
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return preferredSize;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (icon != null) {
+                icon.paintIcon(this, g, 0, 0);
+            }
+        }
+    }
+
+    private static class OWLCellRendererPanel extends JPanel {
+        private OWLCellRendererPanel(LayoutManager layout) {
+            super(layout);
+        }
+    }
+
+    @SuppressWarnings("NullableProblems")
+    private class ActiveEntityVisitor implements OWLEntityVisitor {
+
+        @Override
+        public void visit(OWLClass cls) {
+            OWLOntology o = getOWLModelManager().getActiveOntology();
+            if (hasSome(o.axioms(cls))) {
+                ontology = o;
+            }
+        }
+
+        @Override
+        public void visit(OWLDatatype dataType) {
+            OWLOntology o = getOWLModelManager().getActiveOntology();
+            if (hasSome(o.axioms(dataType))) {
+                ontology = o;
+            }
+        }
+
+        @Override
+        public void visit(OWLNamedIndividual individual) {
+            OWLOntology o = getOWLModelManager().getActiveOntology();
+            if (hasSome(o.axioms(individual))) {
+                ontology = o;
+            }
+        }
+
+        @Override
+        public void visit(OWLDataProperty property) {
+            OWLOntology o = getOWLModelManager().getActiveOntology();
+            if (hasSome(o.axioms(property))) {
+                ontology = o;
+            }
+        }
+
+        @Override
+        public void visit(OWLObjectProperty property) {
+            OWLOntology o = getOWLModelManager().getActiveOntology();
+            if (hasSome(o.axioms(property))) {
+                ontology = o;
+            }
+        }
+
+        @Override
+        public void visit(OWLAnnotationProperty property) {
+            OWLOntology o = getOWLModelManager().getActiveOntology();
+            if (hasSome(o.axioms(property))) {
+                ontology = o;
+            }
+        }
+    }
 
     private class OWLCellRendererLayoutManager implements LayoutManager2 {
-
 
         /**
          * Adds the specified component to the layout, using the specified
@@ -914,11 +847,11 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * @param comp        the component to be added
          * @param constraints where/how the component is added to the layout.
          */
+        @Override
         public void addLayoutComponent(Component comp, Object constraints) {
             // We only have three components the label that holds the icon
             // the text area
         }
-
 
         /**
          * Calculates the maximum size dimensions for the specified container,
@@ -926,10 +859,10 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * @see java.awt.Component#getMaximumSize
          * @see java.awt.LayoutManager
          */
+        @Override
         public Dimension maximumLayoutSize(Container target) {
             return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
         }
-
 
         /**
          * Returns the alignment along the x axis.  This specifies how
@@ -938,10 +871,10 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * where 0 represents alignment along the origin, 1 is aligned
          * the furthest away from the origin, 0.5 is centered, etc.
          */
+        @Override
         public float getLayoutAlignmentX(Container target) {
             return 0;
         }
-
 
         /**
          * Returns the alignment along the y axis.  This specifies how
@@ -950,18 +883,18 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * where 0 represents alignment along the origin, 1 is aligned
          * the furthest away from the origin, 0.5 is centered, etc.
          */
+        @Override
         public float getLayoutAlignmentY(Container target) {
             return 0;
         }
-
 
         /**
          * Invalidates the layout, indicating that if the layout manager
          * has cached information it should be discarded.
          */
+        @Override
         public void invalidateLayout(Container target) {
         }
-
 
         /**
          * If the layout manager uses a per-component string,
@@ -971,17 +904,17 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * @param name the string to be associated with the component
          * @param comp the component to be added
          */
+        @Override
         public void addLayoutComponent(String name, Component comp) {
         }
-
 
         /**
          * Removes the specified component from the layout.
          * @param comp the component to be removed
          */
+        @Override
         public void removeLayoutComponent(Component comp) {
         }
-
 
         /**
          * Calculates the preferred size dimensions for the specified
@@ -989,6 +922,7 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * @param parent the container to be laid out
          * @see #minimumLayoutSize
          */
+        @Override
         public Dimension preferredLayoutSize(Container parent) {
             if (componentBeingRendered instanceof JList) {
                 JList list = (JList) componentBeingRendered;
@@ -1013,18 +947,12 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
                 v.setSize(textWidth, Integer.MAX_VALUE);
                 textHeight = (int) v.getMinimumSpan(View.Y_AXIS);
                 width = preferredWidth;
-            }
-            else {
+            } else {
                 textWidth = textPane.getPreferredSize().width;
                 textHeight = textPane.getPreferredSize().height;
                 width = textWidth + iconWidth;
             }
-            if (textHeight < iconHeight) {
-                height = iconHeight;
-            }
-            else {
-                height = textHeight;
-            }
+            height = Math.max(textHeight, iconHeight);
             int minHeight = minTextHeight;
             if (height < minHeight) {
                 height = minHeight;
@@ -1038,6 +966,8 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * Lays out the specified container.
          * @param parent the container to be laid out
          */
+        @SuppressWarnings({"unused", "UnnecessaryLocalVariable"})
+        @Override
         public void layoutContainer(Container parent) {
             int iconWidth;
             int iconHeight;
@@ -1053,8 +983,7 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
                 View v = textPane.getUI().getRootView(textPane);
                 v.setSize(textWidth, Integer.MAX_VALUE);
                 textHeight = (int) v.getMinimumSpan(View.Y_AXIS);
-            }
-            else {
+            } else {
                 textWidth = textPane.getPreferredSize().width;
                 textHeight = textPane.getPreferredSize().height;
                 if (textHeight < minTextHeight) {
@@ -1074,41 +1003,9 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
          * @param parent the component to be laid out
          * @see #preferredLayoutSize
          */
+        @Override
         public Dimension minimumLayoutSize(Container parent) {
             return new Dimension(0, 0);
-        }
-    }
-
-
-    private static final class IconComponent extends JPanel {
-
-        private Icon icon;
-
-        private Dimension preferredSize = new Dimension();
-
-        public void setIcon(Icon icon) {
-            this.icon = icon;
-            if (icon != null) {
-                preferredSize.width = icon.getIconWidth();
-                preferredSize.height = icon.getIconHeight();
-            }
-            else {
-                preferredSize.width = 0;
-                preferredSize.height = 0;
-            }
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            return preferredSize;
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (icon != null) {
-                icon.paintIcon(this, g, 0, 0);
-            }
         }
     }
 }

@@ -3,7 +3,6 @@ package org.protege.editor.owl.ui.tree;
 import org.protege.editor.core.ui.RefreshableComponent;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.event.EventType;
-import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
 import org.protege.editor.owl.ui.renderer.OWLEntityRendererListener;
@@ -42,12 +41,10 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         initialise(owlEditorKit);
     }
 
-
     public OWLModelManagerTree(OWLEditorKit owlEditorKit, OWLObjectHierarchyProvider<N> provider, Set<N> rootObjects) {
         super(owlEditorKit, provider, rootObjects, owlEditorKit.getModelManager().getOWLObjectComparator());
         initialise(owlEditorKit);
     }
-
 
     private void initialise(OWLEditorKit owlEditorKit) {
         final OWLObjectTreeCellRenderer renderer = new OWLObjectTreeCellRenderer(owlEditorKit);
@@ -86,7 +83,6 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         }
     }
 
-
     private void autoExpand(N node, int currentDepth) {
         OWLTreePreferences prefs = OWLTreePreferences.getInstance();
         int maxDepth = prefs.getAutoExpansionDepthLimit();
@@ -105,9 +101,7 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
                 autoExpand(child, currentDepth + 1);
             }
         }
-
     }
-
 
     private void setupListener() {
         listener = event -> {
@@ -123,7 +117,7 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
 
     private void handleRenderingChanged(OWLEntity entity) {
         try {
-            for (OWLObjectTreeNode<N> node : getNodes(entity)) {
+            for (OWLObjectTreeNode<N> node : getNodes((N) entity)) {
                 DefaultTreeModel model = (DefaultTreeModel) getModel();
                 model.nodeStructureChanged(node);
             }
@@ -143,8 +137,6 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         currentRenderer.addListener(rendererListener);
     }
 
-
-
     private void installPopupMenu() {
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -158,7 +150,6 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         });
     }
 
-
     protected void handleMouseEvent(MouseEvent e) {
         if (e.isPopupTrigger()) {
             TreePath treePath = getPathForLocation(e.getX(), e.getY());
@@ -168,11 +159,8 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         }
     }
 
-
     protected void handlePopupMenuInvoked(TreePath path, Point pt) {
-
     }
-
 
     public void dispose() {
         super.dispose();

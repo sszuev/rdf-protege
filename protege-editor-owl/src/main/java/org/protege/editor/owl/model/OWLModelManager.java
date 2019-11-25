@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public interface OWLModelManager extends ModelManager, HasActiveOntology {
 
-    public static final String OWL_OBJECT_COMPARATOR_KEY = "OWL_OBJECT_COMPARATOR_KEY";
+    String OWL_OBJECT_COMPARATOR_KEY = "OWL_OBJECT_COMPARATOR_KEY";
 
 
     void addListener(OWLModelManagerListener listener);
@@ -142,6 +142,7 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
      */
     OWLOntology getActiveOntology();
 
+    void setActiveOntology(OWLOntology activeOntology);
 
     /**
      * Gets the ontologies that are in the imports
@@ -149,7 +150,6 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
      * @return A <code>Set</code> of <code>OWLOntologies</code>
      */
     Set<OWLOntology> getActiveOntologies();
-
 
     /**
      * A convenience method that determines if the active
@@ -159,7 +159,6 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
      */
     boolean isActiveOntologyMutable();
 
-
     /**
      * Determines if the specified ontology is mutable.
      * @param ontology The ontology to be tested/
@@ -168,7 +167,6 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
      *         is not mutable i.e. can't be edited.
      */
     boolean isMutable(OWLOntology ontology);
-
 
     /**
      * Gets the ontology library manager which is an interface
@@ -183,18 +181,11 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
 
     OWLHierarchyManager getOWLHierarchyManager();
 
-
-    void setActiveOntology(OWLOntology activeOntology);
-
-
-    void setActiveOntologiesStrategy(OntologySelectionStrategy strategy);
-
-
     void registerOntologySelectionStrategy(OntologySelectionStrategy strategy);
-
 
     OntologySelectionStrategy getActiveOntologiesStrategy();
 
+    void setActiveOntologiesStrategy(OntologySelectionStrategy strategy);
 
     Set<OntologySelectionStrategy> getActiveOntologiesStrategies();
 
@@ -219,7 +210,7 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
      * Gets the change history manager.  This tracks the changes that have
      * been made to various ontologies and has support for undo and redo.
      */
-    public HistoryManager getHistoryManager();
+    HistoryManager getHistoryManager();
 
 
     /**
@@ -238,14 +229,13 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
 
     OWLModelManagerEntityRenderer getOWLEntityRenderer();
 
-    void refreshRenderer();
-
     /**
      * @deprecated Use refreshRenderer instead.
      */
     @Deprecated
     void setOWLEntityRenderer(OWLModelManagerEntityRenderer renderer);
 
+    void refreshRenderer();
 
     OWLObjectRenderer getOWLObjectRenderer();
 

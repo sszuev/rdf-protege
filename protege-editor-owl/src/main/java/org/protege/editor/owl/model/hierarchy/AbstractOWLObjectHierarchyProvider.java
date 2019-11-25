@@ -1,6 +1,5 @@
 package org.protege.editor.owl.model.hierarchy;
 
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,7 @@ import static java.util.stream.Collectors.toSet;
  * implementations of method such as getAncestors, getDescendants etc.
  * which use other core methods.
  */
-public abstract class AbstractOWLObjectHierarchyProvider<N extends OWLObject> implements OWLObjectHierarchyProvider<N> {
+public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObjectHierarchyProvider<N> {
 
     private final Logger logger = LoggerFactory.getLogger(AbstractOWLObjectHierarchyProvider.class);
 

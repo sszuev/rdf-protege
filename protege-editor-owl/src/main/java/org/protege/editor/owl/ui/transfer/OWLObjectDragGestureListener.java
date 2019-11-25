@@ -1,7 +1,6 @@
 package org.protege.editor.owl.ui.transfer;
 
 import org.protege.editor.owl.OWLEditorKit;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,7 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public abstract class OWLObjectDragGestureListener implements DragGestureListener {
+public abstract class OWLObjectDragGestureListener<X> implements DragGestureListener {
 
     private final Cursor dragCursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
 
@@ -36,7 +35,6 @@ public abstract class OWLObjectDragGestureListener implements DragGestureListene
         this.component = component;
         this.owlEditorKit = owlEditorKit;
     }
-
 
     public void dragGestureRecognized(DragGestureEvent dge) {
         if (!canPerformDrag()) {
@@ -55,23 +53,17 @@ public abstract class OWLObjectDragGestureListener implements DragGestureListene
         }
     }
 
-
     protected boolean canPerformDrag() {
         return true;
     }
 
-
-    protected abstract List<OWLObject> getSelectedObjects();
-
+    protected abstract List<X> getSelectedObjects();
 
     protected abstract JComponent getRendererComponent();
 
-
     protected abstract Dimension getRendererComponentSize();
 
-
     protected abstract Point getImageOffset();
-
 
     protected Image createImage() {
         JComponent component = getRendererComponent();
@@ -84,13 +76,11 @@ public abstract class OWLObjectDragGestureListener implements DragGestureListene
         return img;
     }
 
-
     private void setupDragOriginator() {
         if (component instanceof OWLObjectDragSource) {
             ((OWLObjectDragSource) component).setDragOriginater(true);
         }
     }
-
 
     private static class OWLDragSourceAdapter extends DragSourceAdapter {
 
@@ -100,6 +90,7 @@ public abstract class OWLObjectDragGestureListener implements DragGestureListene
             this.component = component;
         }
 
+        @Override
         public void dragDropEnd(DragSourceDropEvent dsde) {
             if (component instanceof OWLObjectDragSource) {
                 ((OWLObjectDragSource) component).setDragOriginater(false);

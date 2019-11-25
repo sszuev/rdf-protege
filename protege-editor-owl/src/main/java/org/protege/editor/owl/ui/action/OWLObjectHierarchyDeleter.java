@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -46,20 +45,18 @@ public class OWLObjectHierarchyDeleter<E extends OWLEntity> {
 
     private static final String DELETE_DESCENDANTS = "delete.descendants";
 
-
-
-    public OWLObjectHierarchyDeleter(OWLEditorKit owlEditorKit, OWLObjectHierarchyProvider<E> hierarchyProvider,
-                                     OWLEntitySetProvider<E> entitySetProvider, String pluralName) {
+    public OWLObjectHierarchyDeleter(OWLEditorKit owlEditorKit,
+                                     OWLObjectHierarchyProvider<E> hierarchyProvider,
+                                     OWLEntitySetProvider<E> entitySetProvider,
+                                     String pluralName) {
         this.owlEditorKit = owlEditorKit;
         this.hierarchyProvider = hierarchyProvider;
         this.entitySetProvider = entitySetProvider;
         this.pluralName = pluralName;
     }
 
-
     public void dispose() {
     }
-
 
     public OWLEditorKit getOWLEditorKit() {
         return owlEditorKit;

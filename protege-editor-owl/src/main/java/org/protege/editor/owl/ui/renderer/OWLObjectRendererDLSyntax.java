@@ -12,16 +12,13 @@ import java.util.*;
  * Bio-Health Informatics Group<br>
  * Date: 24-Jan-2007<br><br>
  */
-public class OWLObjectRendererDLSyntax implements OWLObjectVisitor, OWLObjectRenderer {
+public class OWLObjectRendererDLSyntax implements OWLObjectVisitor, OWLObjectRenderer<OWLObject> {
 
 //    private static final Logger logger = LoggerFactory.getLogger(OWLObjectRendererImpl.class);
 
     private StringBuffer buffer;
-
     private BracketWriter bracketWriter;
-
     private OWLModelManager mngr;
-
 
     public OWLObjectRendererDLSyntax(OWLModelManager mngr) {
         this.mngr = mngr;
@@ -29,7 +26,7 @@ public class OWLObjectRendererDLSyntax implements OWLObjectVisitor, OWLObjectRen
         bracketWriter = new BracketWriter();
     }
 
-
+    @Override
     public String render(OWLObject object) {
         reset();
         try {

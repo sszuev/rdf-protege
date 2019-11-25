@@ -3,7 +3,6 @@ package org.protege.editor.owl.ui.action;
 import org.protege.editor.core.HasUpdateState;
 import org.protege.editor.core.ui.view.DisposableAction;
 import org.protege.editor.owl.ui.tree.OWLObjectTreeNode;
-import org.semanticweb.owlapi.model.OWLEntity;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
@@ -23,7 +22,7 @@ import javax.swing.tree.TreeSelectionModel;
  * Bio Health Informatics Group<br>
  * Date: May 27, 2009<br><br>
  */
-public abstract class AbstractOWLTreeAction<E extends OWLEntity> extends DisposableAction implements HasUpdateState {
+public abstract class AbstractOWLTreeAction<E> extends DisposableAction implements HasUpdateState {
 
     private TreeSelectionModel selectionModel;
 

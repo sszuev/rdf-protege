@@ -19,7 +19,7 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public class OWLObjectListDragGestureListener extends OWLObjectDragGestureListener {
+public class OWLObjectListDragGestureListener extends OWLObjectDragGestureListener<OWLObject> {
 
     private OWLObjectList owlObjectList;
 
@@ -29,11 +29,9 @@ public class OWLObjectListDragGestureListener extends OWLObjectDragGestureListen
         this.owlObjectList = owlObjectList;
     }
 
-
     protected Point getImageOffset() {
         return new Point(0, 0);
     }
-
 
     protected JComponent getRendererComponent() {
         return (JComponent) owlObjectList.getCellRenderer().getListCellRendererComponent(owlObjectList,
@@ -43,12 +41,11 @@ public class OWLObjectListDragGestureListener extends OWLObjectDragGestureListen
                                                                                          true);
     }
 
-
     protected Dimension getRendererComponentSize() {
         return getRendererComponent().getPreferredSize();
     }
 
-
+    @Override
     protected List<OWLObject> getSelectedObjects() {
         List<OWLObject> selObjects = new ArrayList<>();
         for (Object o : owlObjectList.getSelectedValuesList()) {

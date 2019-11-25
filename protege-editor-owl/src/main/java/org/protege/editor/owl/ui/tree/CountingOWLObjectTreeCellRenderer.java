@@ -18,14 +18,15 @@ import org.semanticweb.owlapi.model.OWLObject;
  */
 public class CountingOWLObjectTreeCellRenderer<N extends OWLObject> extends OWLObjectTreeCellRenderer {
 
-    private OWLObjectTree<N> tree;
+    private final ObjectTree<N> tree;
 
-
-    public CountingOWLObjectTreeCellRenderer(OWLEditorKit owlEditorKit, OWLObjectTree<N> tree) {
+    public CountingOWLObjectTreeCellRenderer(OWLEditorKit owlEditorKit, ObjectTree<N> tree) {
         super(owlEditorKit);
         this.tree = tree;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
     protected String getRendering(Object object) {
         StringBuilder label = new StringBuilder(super.getRendering(object));
         int size = tree.getProvider().getChildren((N)object).size();

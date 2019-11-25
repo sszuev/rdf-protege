@@ -8,8 +8,6 @@ import org.protege.editor.owl.model.hierarchy.IndividualsByTypeHierarchyProvider
 import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProviderListener;
 import org.protege.editor.owl.model.selection.SelectionDriver;
-import org.protege.editor.owl.model.util.OWLUtilities;
-import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.UIHelper;
 import org.protege.editor.owl.ui.action.DeleteIndividualAction;
 import org.protege.editor.owl.ui.renderer.AddEntityIcon;
@@ -21,19 +19,15 @@ import org.protege.editor.owl.ui.view.ChangeListenerMediator;
 import org.protege.editor.owl.ui.view.CreateNewTarget;
 import org.protege.editor.owl.ui.view.Findable;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.util.OWLEntitySetProvider;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 
 /**
@@ -46,7 +40,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         implements Findable<OWLNamedIndividual>, CreateNewTarget, RefreshableComponent, SelectionDriver {
 
 
-    private OWLObjectTree<OWLObject> tree;
+    private ObjectTree<OWLObject> tree;
 
     private ChangeListenerMediator changeListenerMediator;
 

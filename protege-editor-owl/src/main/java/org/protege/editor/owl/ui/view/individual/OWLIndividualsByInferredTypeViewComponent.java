@@ -6,13 +6,12 @@ import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.hierarchy.IndividualsByInferredTypeHierarchyProvider;
 import org.protege.editor.owl.ui.tree.CountingOWLObjectTreeCellRenderer;
 import org.protege.editor.owl.ui.tree.OWLModelManagerTree;
-import org.protege.editor.owl.ui.tree.OWLObjectTree;
+import org.protege.editor.owl.ui.tree.ObjectTree;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObject;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.util.HashSet;
@@ -29,7 +28,7 @@ public class OWLIndividualsByInferredTypeViewComponent extends AbstractOWLIndivi
 
     private IndividualsByInferredTypeHierarchyProvider provider;
 
-    private OWLObjectTree<OWLObject> tree;
+    private ObjectTree<OWLObject> tree;
 
     private TreeSelectionListener listener;
 

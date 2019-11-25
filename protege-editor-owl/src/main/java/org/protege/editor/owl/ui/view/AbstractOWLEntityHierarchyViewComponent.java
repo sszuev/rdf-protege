@@ -12,7 +12,7 @@ import org.protege.editor.owl.ui.action.OWLObjectHierarchyDeleter;
 import org.protege.editor.owl.ui.framelist.OWLFrameList;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
 import org.protege.editor.owl.ui.tree.OWLModelManagerTree;
-import org.protege.editor.owl.ui.tree.OWLObjectTree;
+import org.protege.editor.owl.ui.tree.ObjectTree;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.slf4j.Logger;
@@ -43,9 +43,10 @@ import java.util.Set;
 public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntity> extends AbstractOWLSelectionViewComponent
  implements Findable<E>, Deleteable, HasDisplayDeprecatedEntities {
 
-    private OWLObjectTree<E> assertedTree;
+    private ObjectTree<E> assertedTree;
 
-    private Optional<OWLObjectTree<E>> inferredTree;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private Optional<ObjectTree<E>> inferredTree;
 
     private TreeSelectionListener listener;
 
@@ -53,9 +54,9 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     private final Logger logger = LoggerFactory.getLogger(AbstractOWLEntityHierarchyViewComponent.class);
 
-    private final ViewModeComponent<OWLObjectTree<E>> viewModeComponent = new ViewModeComponent<>();
+    private final ViewModeComponent<ObjectTree<E>> viewModeComponent = new ViewModeComponent<>();
 
-
+    @Override
     final public void initialiseView() throws Exception {
         setLayout(new BorderLayout(0, 0));
         add(viewModeComponent, BorderLayout.CENTER);
@@ -84,12 +85,18 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
             @Override
             public void treeNodesChanged(TreeModelEvent e) {
             }
+
+            @Override
             public void treeNodesInserted(TreeModelEvent e) {
                 ensureSelection();
             }
+
+            @Override
             public void treeNodesRemoved(TreeModelEvent e) {
                 ensureSelection();
             }
+
+            @Override
             public void treeStructureChanged(TreeModelEvent e) {
                 ensureSelection();
             }
@@ -134,9 +141,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
                                                                    getCollectiveTypeName());
         listener = e -> transmitSelection();
         assertedTree.addTreeSelectionListener(listener);
-        if (inferredTree.isPresent()) {
-            inferredTree.get().addTreeSelectionListener(listener);
-        }
+        inferredTree.ifPresent(eObjectTree -> eObjectTree.addTreeSelectionListener(listener));
     }
 
     protected boolean isInAssertedMode() {
@@ -165,6 +170,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         };
     }
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void switchViewMode(Optional<ViewMode> viewMode) {
         E sel = viewModeComponent.getComponentForCurrentViewMode().getSelectedOWLObject();
         viewModeComponent.setViewMode(viewMode);
@@ -195,34 +201,31 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
      * Override with the name of the entities to be used in the Edit | Delete menu - eg "classes"
      * @return String the name of the entities
      */
+    @SuppressWarnings("WeakerAccess")
     protected String getCollectiveTypeName(){
         return "entities";
     }
-
 
     public void setSelectedEntity(E entity) {
         getTree().setSelectedOWLObject(entity);
     }
 
-    public OWLObjectTree<E> getAssertedTree() {
+    @SuppressWarnings("WeakerAccess")
+    public ObjectTree<E> getAssertedTree() {
         return assertedTree;
     }
-
 
     public void setSelectedEntities(Set<E> entities) {
         getTree().setSelectedOWLObjects(entities);
     }
 
-
     public E getSelectedEntity() {
         return getTree().getSelectedOWLObject();
     }
 
-
     public Set<E> getSelectedEntities() {
         return new HashSet<>(getTree().getSelectedOWLObjects());
     }
-
 
     private void ensureSelection() {
         SwingUtilities.invokeLater(() -> {
@@ -236,17 +239,15 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         });
     }
 
-
+    @Override
     public boolean requestFocusInWindow() {
         return getTree().requestFocusInWindow();
     }
 
-
-    protected OWLObjectTree<E> getTree() {
+    protected ObjectTree<E> getTree() {
         Optional<ViewMode> viewMode= getView().getViewMode();
         return viewModeComponent.getComponentForViewMode(viewMode);
     }
-
 
     protected void transmitSelection() {
         deletableChangeListenerMediator.fireStateChanged(this);
@@ -270,7 +271,6 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         updateHeader(selEntity);
     }
 
-
     protected E updateView(E selEntity) {
         if (getTree().getSelectedOWLObject() == null) {
             if (selEntity != null) {
@@ -285,7 +285,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         return selEntity;
     }
 
-
+    @Override
     public void disposeView() {
         // Dispose of the assertedTree selection listener
         if (assertedTree != null) {
@@ -298,7 +298,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         }
     }
 
-
+    @Override
     protected OWLObject getObjectToCopy() {
         return getTree().getSelectedOWLObject();
     }
@@ -311,22 +311,22 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     private ChangeListenerMediator deletableChangeListenerMediator = new ChangeListenerMediator();
 
-
+    @Override
     public void addChangeListener(ChangeListener listener) {
         deletableChangeListenerMediator.addChangeListener(listener);
     }
 
-
+    @Override
     public void removeChangeListener(ChangeListener listener) {
         deletableChangeListenerMediator.removeChangeListener(listener);
     }
 
-
+    @Override
     public void handleDelete() {
         hierarchyDeleter.performDeletion();
     }
 
-
+    @Override
     public boolean canDelete() {
         return !getTree().getSelectedOWLObjects().isEmpty();
     }
@@ -337,8 +337,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
     //
     /////////////////////////////////////////////////////////////////////////////////////
 
-
-
+    @Override
     public void show(E owlEntity) {
         getTree().setSelectedOWLObject(owlEntity);
     }

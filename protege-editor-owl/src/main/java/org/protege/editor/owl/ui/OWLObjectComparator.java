@@ -2,7 +2,6 @@ package org.protege.editor.owl.ui;
 
 import org.protege.editor.core.Disposable;
 import org.protege.editor.owl.model.OWLModelManager;
-import org.semanticweb.owlapi.model.OWLObject;
 
 import java.util.Comparator;
 
@@ -19,7 +18,7 @@ import java.util.Comparator;
  * code made available under Mozilla Public License (http://www.mozilla.org/MPL/MPL-1.1.html)<br>
  * copyright 2006, The University of Manchester<br>
  */
-public class OWLObjectComparator<E extends OWLObject> implements Comparator<E>, Disposable {
+public class OWLObjectComparator<E extends Comparable<E>> implements Comparator<E>, Disposable {
 
     private OWLModelManager owlModelManager;
 
@@ -27,6 +26,7 @@ public class OWLObjectComparator<E extends OWLObject> implements Comparator<E>, 
         this.owlModelManager = owlModelManager;
     }
 
+    @Override
     public int compare(E o1, E o2) {
         return o1.compareTo(o2);
     }
@@ -35,6 +35,7 @@ public class OWLObjectComparator<E extends OWLObject> implements Comparator<E>, 
         return owlModelManager;
     }
 
+    @Override
     public void dispose() {
         owlModelManager = null;
     }

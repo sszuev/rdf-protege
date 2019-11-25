@@ -8,13 +8,14 @@ import org.protege.editor.owl.model.OWLModelManager;
 import org.semanticweb.owlapi.model.OWLObject;
 
 
-public class OWLObjectRenderingComparator<E extends OWLObject> extends OWLObjectComparator<E> {
+public class OWLObjectRenderingComparator extends OWLObjectComparator<OWLObject> {
 
     public OWLObjectRenderingComparator(OWLModelManager owlModelManager) {
         super(owlModelManager);
     }
 
-    public int compare(E o1, E o2) {
+    @Override
+    public int compare(OWLObject o1, OWLObject o2) {
         OWLModelManager man = getOWLModelManager();
         String r1 = man.getRendering(o1);
         if (r1.startsWith("'")){

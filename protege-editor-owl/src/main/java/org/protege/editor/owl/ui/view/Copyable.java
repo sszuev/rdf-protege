@@ -1,7 +1,6 @@
 package org.protege.editor.owl.ui.view;
 
 import org.protege.editor.owl.ui.action.ActionTarget;
-import org.semanticweb.owlapi.model.OWLObject;
 
 import javax.swing.event.ChangeListener;
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.List;
  * implement this interface, so that they will work with the copy action
  * on the edit menu.
  */
-public interface Copyable extends ActionTarget {
+public interface Copyable<X> extends ActionTarget {
 
     /**
      * Determines whether or not at least one <code>OWLObject</code>
@@ -28,16 +27,14 @@ public interface Copyable extends ActionTarget {
      * @return <code>true</code> if at least one object can be copied, or
      *         <code>false</code> if no objects can't be copied.
      */
-    public boolean canCopy();
-
+    boolean canCopy();
 
     /**
      * Gets the objects that will be copied.
      * @return A <code>List</code> of <code>OWLObjects</code> that will be
      *         copied to the clip board
      */
-    public List<OWLObject> getObjectsToCopy();
-
+    List<X> getObjectsToCopy();
 
     /**
      * Adds a change listener.  If the ability to copy OWL objects changes, the
@@ -47,7 +44,6 @@ public interface Copyable extends ActionTarget {
      *      class to manage event notifcation and addition/removal of listeners
      */
     void addChangeListener(ChangeListener changeListener);
-
 
     /**
      * Removes a previously added change listener.

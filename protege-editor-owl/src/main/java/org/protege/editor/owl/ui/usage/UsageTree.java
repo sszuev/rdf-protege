@@ -11,12 +11,11 @@ import org.semanticweb.owlapi.model.OWLObject;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -28,7 +27,7 @@ import static java.util.stream.Collectors.toList;
  * Bio-Health Informatics Group<br>
  * Date: 21-Feb-2007<br><br>
  */
-public class UsageTree extends OWLLinkedObjectTree implements Copyable {
+public class UsageTree extends OWLLinkedObjectTree implements Copyable<OWLObject> {
 
 
     private OWLEditorKit owlEditorKit;

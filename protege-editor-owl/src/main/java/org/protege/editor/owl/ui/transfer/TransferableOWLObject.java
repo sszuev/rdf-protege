@@ -6,7 +6,6 @@ import org.semanticweb.owlapi.model.OWLObject;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,22 +23,16 @@ import java.util.Map;
  */
 public class TransferableOWLObject implements Transferable {
 
-    private List<OWLObject> owlObjects;
-
     private Map<DataFlavor, TransferHandler> dataFlavorMap;
 
-    private TransferHandler stringTransferHandler;
-
-
-    public TransferableOWLObject(final OWLModelManager owlModelManager, List<? extends OWLObject> objects) {
-        owlObjects = new ArrayList<>(objects);
+    public TransferableOWLObject(final OWLModelManager owlModelManager, List<?> objects) {
         dataFlavorMap = new HashMap<>();
-        dataFlavorMap.put(OWLObjectDataFlavor.OWL_OBJECT_DATA_FLAVOR, () -> new ArrayList<>(owlObjects));
+        dataFlavorMap.put(OWLObjectDataFlavor.OWL_OBJECT_DATA_FLAVOR, () -> new ArrayList<>(objects));
 
-        stringTransferHandler = () -> {
+        TransferHandler stringTransferHandler = () -> {
             StringBuilder builder = new StringBuilder();
-            for (OWLObject obj : owlObjects) {
-                builder.append(owlModelManager.getRendering(obj));
+            for (Object obj : objects) {
+                builder.append(toString(owlModelManager, obj));
                 builder.append("\n");
             }
             return builder.toString();
@@ -47,27 +40,30 @@ public class TransferableOWLObject implements Transferable {
         dataFlavorMap.put(DataFlavor.stringFlavor, stringTransferHandler);
     }
 
+    protected String toString(OWLModelManager manager, Object obj) {
+        return obj instanceof OWLObject ? manager.getRendering((OWLObject) obj) : String.valueOf(obj);
+    }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
-        DataFlavor[] dataFlavors = new DataFlavor[dataFlavorMap.size()];
+        DataFlavor[] dataFlavors = new DataFlavor[dataFlavorMap.size()]; // todo: wtf?
         System.arraycopy(dataFlavorMap.keySet().toArray(), 0, dataFlavors, 0, dataFlavors.length);
         return dataFlavors;
     }
 
-
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-        return dataFlavorMap.keySet().contains(flavor);
+        return dataFlavorMap.containsKey(flavor);
     }
 
-
-    public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+    @Override
+    public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
         TransferHandler handler = dataFlavorMap.get(flavor);
         if (handler == null) {
             throw new UnsupportedFlavorException(flavor);
         }
         return handler.getTransferData();
     }
-
 
     private interface TransferHandler {
 

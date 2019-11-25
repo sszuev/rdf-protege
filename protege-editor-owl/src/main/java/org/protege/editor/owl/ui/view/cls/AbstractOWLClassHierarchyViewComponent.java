@@ -19,10 +19,12 @@ import java.util.List;
  */
 public abstract class AbstractOWLClassHierarchyViewComponent extends AbstractOWLEntityHierarchyViewComponent<OWLClass> {
 
+    @Override
     protected OWLObject updateView() {
         return updateView(getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass());
     }
 
+    @Override
     public List<OWLClass> find(String match) {
         return new ArrayList<>(getOWLModelManager().getOWLEntityFinder().getMatchingOWLClasses(match));
     }
