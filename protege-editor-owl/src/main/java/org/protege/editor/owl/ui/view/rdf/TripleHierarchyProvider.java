@@ -1,6 +1,6 @@
 package org.protege.editor.owl.ui.view.rdf;
 
-import com.github.owlcs.ontapi.OntologyModel;
+import com.github.owlcs.ontapi.Ontology;
 import com.github.owlcs.ontapi.jena.OntModelFactory;
 import com.github.owlcs.ontapi.jena.utils.Graphs;
 import org.apache.jena.graph.BlankNodeId;
@@ -33,7 +33,7 @@ public class TripleHierarchyProvider implements OWLObjectHierarchyProvider<Tripl
 
     @Override
     public void setOntology(OWLOntology o) {
-        this.graph = ((OntologyModel) o).asGraphModel().getGraph(); // UnionGraph with all hierarchy
+        this.graph = ((Ontology) o).asGraphModel().getGraph(); // UnionGraph with all hierarchy
         fireHierarchyChanged();
     }
 
