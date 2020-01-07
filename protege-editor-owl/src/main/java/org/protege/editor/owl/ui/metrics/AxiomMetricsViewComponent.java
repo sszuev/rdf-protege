@@ -21,17 +21,20 @@ public class AxiomMetricsViewComponent extends AbstractActiveOntologyViewCompone
 
     private MetricsPanel metricsPanel;
 
-    protected void initialiseOntologyView() throws Exception {
+    @Override
+    protected void initialiseOntologyView() {
         metricsPanel = new MetricsPanel(getOWLEditorKit());
         setLayout(new BorderLayout());
         add(metricsPanel);
     }
 
+    @Override
     protected void disposeOntologyView() {
         // do nothing
     }
 
-    protected void updateView(OWLOntology activeOntology) throws Exception {
+    @Override
+    protected void updateView(OWLOntology activeOntology) {
         metricsPanel.updateView(activeOntology);
     }
 }
