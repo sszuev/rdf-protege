@@ -14,6 +14,7 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -105,7 +106,7 @@ public class Launcher {
      *                         property must be an instance of Logger.  This method therefore makes an unchecked
      *                         call to Map.put(), which works.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static void setLogger(Map configurationMap) {
         FrameworkSlf4jLogger logger = new FrameworkSlf4jLogger();
         configurationMap.put("felix.log.logger", logger);
@@ -266,15 +267,52 @@ public class Launcher {
      * NOTE: need to build the project first (e.g. {@code mvn clean package -DskipTests}).
      */
     public static class NoArg {
+        private static final String DESKTOP_WORK_DIR_KEY = "desktop.work.dir";
 
         public static void main(String... args) throws Exception {
-            Path dir = getWorkDir();
+            Path dir = getDesktopWorkDir();
             LOGGER.debug("Desktop dir: {}", dir);
-            System.setProperty("desktop.work.dir", dir.toString());
-            Launcher.main(null);
+            createDefaultLauncher(dir).start(true);
         }
 
-        private static Path getWorkDir() throws IOException {
+        private static Launcher createDefaultLauncher(Path dir) throws IOException {
+            Map<String, String> system = new HashMap<>();
+            system.put("file.encoding", StandardCharsets.UTF_8.displayName());
+            system.put("apple.laf.useScreenMenuBar", Boolean.TRUE.toString());
+            system.put("com.apple.mrj.application.growbox.intrudes", Boolean.TRUE.toString());
+            system.put("org.protege.plugin.dir", "plugins");
+            system.put(DESKTOP_WORK_DIR_KEY, dir.toString());
+
+            Map<String, String> framework = new HashMap<>();
+            framework.put(Constants.FRAMEWORK_BOOTDELEGATION, "sun.*,com.sun.*,apple.*,com.apple.*");
+            framework.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
+                    "javax.xml.parsers,org.xml.sax,org.xml.sax.ext,org.xml.sax.helpers");
+            framework.put(Constants.FRAMEWORK_STORAGE_CLEAN, "onFirstInit");
+            framework.put("org.osgi.service.http.port", "8081");
+
+            String userHomeProtegeBundles = "${user.home}/.Protege/bundles";
+            List<String> commonSearchPaths = Arrays.asList(String.format("${%s}/bundles", DESKTOP_WORK_DIR_KEY),
+                    userHomeProtegeBundles);
+            List<BundleSearchPath> paths = new ArrayList<>();
+            // org.protege.common
+            paths.add(BundleSearchPath.create(Collections.singletonList("protege-common.jar"),
+                    commonSearchPaths, system));
+
+            // eclipse equinox framework
+            paths.add(BundleSearchPath.create(Arrays.asList("org.eclipse.equinox.common.jar",
+                    "org.eclipse.equinox.supplement.jar"), commonSearchPaths, system));
+            paths.add(BundleSearchPath.create(Arrays.asList("org.eclipse.equinox.registry.jar",
+                    "org.protege.jaxb.jar", "protege-editor-core.jar"), commonSearchPaths, system));
+
+            // everything else
+            paths.add(BundleSearchPath.create(Collections.emptyList(), commonSearchPaths, system));
+            paths.add(BundleSearchPath.create(Arrays.asList("plugins", userHomeProtegeBundles),
+                    commonSearchPaths, system));
+
+            return new Launcher(paths, system, framework);
+        }
+
+        private static Path getDesktopWorkDir() throws IOException {
             Path target = Paths.get(".")
                     .resolve("protege-desktop")
                     .resolve("target").toRealPath();

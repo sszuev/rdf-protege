@@ -1,5 +1,6 @@
 package org.protege.osgi.framework;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
@@ -15,12 +16,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class Parser {
-    public static final String PROPERTY = "property";
-    public static final String NAME = "name";
-    public static final String VALUE = "value";
-    public static final String DIRECTORY = "dir";
-
-    public static final String DEFAULT_PLUGIN_DIRECTORY = "plugins";
+    private static final Logger LOGGER = LoggerFactory.getLogger(Parser.class);
 
     private DocumentBuilderFactory factory;
 
@@ -55,71 +51,75 @@ public class Parser {
 
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(f);
-        Node topNode = null;
+        Node top = null;
         for (int j = 0; j < doc.getChildNodes().getLength(); j++) {
             Node node = doc.getChildNodes().item(j);
-            if (node.getNodeName().equals("launch")) {
-                topNode = node;
+            if ("launch".equals(node.getNodeName())) {
+                top = node;
                 break;
             }
         }
-        if (topNode == null) {
+        if (top == null) {
             throw new ParserConfigurationException("Can't find <launch>");
         }
-        NodeList nodes = topNode.getChildNodes();
-        List<Element> bundles = new ArrayList<>();
+        NodeList nodes = top.getChildNodes();
+        List<Node> bundles = new ArrayList<>();
         for (int i = 0; i < nodes.getLength(); i++) {
             Node job = nodes.item(i);
-            if (job instanceof Element && job.getNodeName().equals("systemProperties")) {
+            if (!(job instanceof Element)) continue;
+            if ("systemProperties".equals(job.getNodeName())) {
                 systemProperties = readProperties(job.getChildNodes());
-            } else if (job instanceof Element && job.getNodeName().equals("frameworkProperties")) {
+            } else if ("frameworkProperties".equals(job.getNodeName())) {
                 frameworkProperties = readProperties(job.getChildNodes());
-            } else if (job instanceof Element && job.getNodeName().equals("bundles")) {
-                bundles.add((Element) job);
+            } else if ("bundles".equals(job.getNodeName())) {
+                bundles.add(job);
             }
         }
         bundles.forEach(e -> {
             BundleSearchPath directory = readDirectories(e, systemProperties);
-            if (directory != null) {
-                searchPaths.add(directory);
-                LoggerFactory.getLogger(Parser.class).debug("Added bundle search path: {}", directory);
-            }
+            searchPaths.add(directory);
+            LOGGER.debug("Added bundle search path: {}", directory);
         });
     }
 
     protected Map<String, String> readProperties(NodeList nodes) {
-        Map<String, String> properties = new TreeMap<>();
+        Map<String, String> res = new TreeMap<>();
         for (int i = 0; i < nodes.getLength(); i++) {
             Node propertyNode = nodes.item(i);
-            if (propertyNode instanceof Element && propertyNode.getNodeName().equals(PROPERTY)) {
-                NamedNodeMap attributes = propertyNode.getAttributes();
-                Node nameNode = attributes.getNamedItem(NAME);
-                Node valueNode = attributes.getNamedItem(VALUE);
-                if (nameNode != null && valueNode != null) {
-                    properties.put(nameNode.getNodeValue(), valueNode.getNodeValue());
-                }
+            if (!(propertyNode instanceof Element) || !"property".equals(propertyNode.getNodeName())) {
+                continue;
+            }
+            NamedNodeMap attributes = propertyNode.getAttributes();
+            Node nameNode = attributes.getNamedItem("name");
+            Node valueNode = attributes.getNamedItem("value");
+            if (nameNode != null && valueNode != null) {
+                res.put(nameNode.getNodeValue(), valueNode.getNodeValue());
             }
         }
-        return properties;
+        return res;
     }
 
     protected BundleSearchPath readDirectories(Node node, Map<String, String> properties) {
-        BundleSearchPath directories = new BundleSearchPath();
+        List<String> names = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
         NodeList children = node.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node child = children.item(i);
-            if (child instanceof Element && child.getNodeName().equals("bundle")) {
-                Node bundleNameNode = child.getAttributes().getNamedItem(NAME);
+            if (!(child instanceof Element)) {
+                continue;
+            }
+            if ("bundle".equals(child.getNodeName())) {
+                Node bundleNameNode = child.getAttributes().getNamedItem("name");
                 if (bundleNameNode != null) {
-                    directories.addAllowedBundle(bundleNameNode.getNodeValue());
+                    names.add(bundleNameNode.getNodeValue());
                 }
-            } else if (child instanceof Element && child.getNodeName().equals("search")) {
+            } else if ("search".equals(child.getNodeName())) {
                 Node searchPathNode = child.getAttributes().getNamedItem("path");
                 if (searchPathNode != null) {
-                    directories.addSearchPath(searchPathNode.getNodeValue(), key -> System.getProperty(key, properties.get(key)));
+                    paths.add(searchPathNode.getNodeValue());
                 }
             }
         }
-        return directories;
+        return BundleSearchPath.create(names, paths, properties);
     }
 }
