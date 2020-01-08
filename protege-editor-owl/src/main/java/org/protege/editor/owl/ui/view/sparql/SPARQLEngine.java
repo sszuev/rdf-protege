@@ -4,6 +4,8 @@ import com.github.owlcs.ontapi.jena.OntModelFactory;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.vocabulary.RDFS;
 
 import java.util.*;
 
@@ -67,13 +69,17 @@ public interface SPARQLEngine {
      * @return String
      */
     static String getSampleQuery() {
+        PrefixMapping pm = OntModelFactory.STANDARD;
+
         StringBuilder res = new StringBuilder();
-        Map<String, String> prefixes = OntModelFactory.STANDARD.getNsPrefixMap();
+        Map<String, String> prefixes = pm.getNsPrefixMap();
         for (String prefix : prefixes.keySet()) {
             res.append("PREFIX ").append(prefix).append(": <").append(prefixes.get(prefix)).append(">\n");
         }
-        res.append("SELECT ?subject ?object\n\tWHERE { ?subject rdfs:subClassOf ?object }");
-        return res.toString();
+        return res.append("SELECT ?subject ?object\n\tWHERE { ?subject ")
+                .append(pm.shortForm(RDFS.subClassOf.getURI()))
+                .append(" ?object }")
+                .toString();
     }
 
     /**

@@ -1,6 +1,5 @@
 package org.protege.editor.owl.ui.library.plugins;
 
-import com.google.common.base.Optional;
 import org.protege.editor.core.ui.util.UIUtil;
 import org.protege.editor.owl.model.repository.MasterOntologyIDExtractor;
 import org.protege.editor.owl.ui.UIHelper;
@@ -15,11 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -64,9 +62,7 @@ public class UriEntryPanel extends NewEntryPanel {
 
         JButton generate = new JButton("Generate Import Suggestions");
         generate.setAlignmentX(CENTER_ALIGNMENT);
-        generate.addActionListener(e -> {
-            regenerateImportSuggestions();
-        });
+        generate.addActionListener(e -> regenerateImportSuggestions());
         panel.add(generate);
 
         JPanel importDeclarationPanel = new JPanel();
@@ -74,9 +70,7 @@ public class UriEntryPanel extends NewEntryPanel {
         importDeclarationPanel.add(new JLabel("Import Declaration: "));
         importDeclarationComboBox = new JComboBox<>();
         importDeclarationComboBox.setEditable(true);
-        importDeclarationComboBox.addActionListener(e -> {
-            fireListeners();
-        });
+        importDeclarationComboBox.addActionListener(e -> fireListeners());
         importDeclarationPanel.add(importDeclarationComboBox);
         panel.add(importDeclarationPanel);
 
@@ -97,7 +91,7 @@ public class UriEntryPanel extends NewEntryPanel {
             Optional<OWLOntologyID> id = extractor.getOntologyId(u);
             if (id.isPresent()) {
                 if (!id.get().isAnonymous()) {
-                    preferred = id.get().getOntologyIRI().get();
+                    preferred = id.get().getOntologyIRI().orElseThrow(IllegalStateException::new);
                     locations.add(preferred);
                     if (id.get().getVersionIRI().isPresent()) {
                         preferred = id.get().getVersionIRI().get();

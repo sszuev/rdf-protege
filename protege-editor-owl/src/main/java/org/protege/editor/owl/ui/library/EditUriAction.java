@@ -1,11 +1,11 @@
 package org.protege.editor.owl.ui.library;
 
-import com.google.common.base.Optional;
 import org.protege.editor.owl.model.repository.MasterOntologyIDExtractor;
 import org.protege.xmlcatalog.CatalogUtilities;
 import org.protege.xmlcatalog.XMLCatalog;
 import org.protege.xmlcatalog.entry.UriEntry;
 import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -13,13 +13,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
 
 public class EditUriAction extends AbstractAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EditUriAction.class);
 
     public static String UNKNOWN     = "Unknown";
     public static String CALCULATING = "Calculating...";
@@ -37,8 +37,8 @@ public class EditUriAction extends AbstractAction {
         this.catalogFile = catalogFile;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        XMLCatalog catalog = null;
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
         Object container = ((DefaultMutableTreeNode) selectionPath.getPathComponent(selectionPath.getPathCount()-2)).getUserObject();
 
@@ -51,33 +51,32 @@ public class EditUriAction extends AbstractAction {
         if (value != null && value.equals(JOptionPane.OK_OPTION)) {
             UriEntry editted = panel.getUriEntry();
             if (container instanceof XMLCatalog) {
-            	XMLCatalog lib = (XMLCatalog) container;
+                XMLCatalog lib = (XMLCatalog) container;
                 lib.replaceEntry(entry, editted);
                 node.setUserObject(editted);
                 try {
                     CatalogUtilities.save(lib, catalogFile);
-                }
-                catch (IOException ex) {
-                    LoggerFactory.getLogger(EditUriAction.class)
-                            .error("An error occurred whilst saving the XML Catalog file: {}", ex);
+                } catch (IOException ex) {
+                    LOGGER.error("An error occurred whilst saving the XML Catalog file: '{}'",
+                            ex.getMessage(), ex);
                 }
             }
         }
     }
-    
-    private class EditPanel extends JPanel {
+
+    private static class EditPanel extends JPanel {
         private UriEntry original;
         private JTextField importedUri;
         private JTextField physicalLocation;
-        
+
         public EditPanel(UriEntry entry) {
             original = entry;
-            setLayout(new GridLayout(0,2));
-            
+            setLayout(new GridLayout(0, 2));
+
             add(new JLabel("Imported Declaration: "));
             importedUri = new JTextField(entry.getName());
             add(importedUri);
-            
+
             add(new JLabel());
             JButton updateImportedDeclaration = new JButton("Update Import Declaration Using Ontology Name");
             add(updateImportedDeclaration);
@@ -96,30 +95,30 @@ public class EditUriAction extends AbstractAction {
             fileButton.addActionListener(new ChooseFileAction(EditPanel.this, original, physicalLocation));
             add(fileButton);
         }
-        
 
-        
+
         public UriEntry getUriEntry() {
             URI base = CatalogUtilities.resolveXmlBase(original);
             URI physicalUri = URI.create(physicalLocation.getText());
             physicalUri = base.relativize(physicalUri);
-            return new UriEntry(original.getId(), original.getXmlBaseContext(), 
-                                importedUri.getText(), physicalUri, 
-                                original.getXmlBase());
+            return new UriEntry(original.getId(), original.getXmlBaseContext(),
+                    importedUri.getText(), physicalUri,
+                    original.getXmlBase());
         }
     }
-    
-    private class ChooseFileAction extends AbstractAction {
+
+    private static class ChooseFileAction extends AbstractAction {
         private JComponent parent;
         private UriEntry original;
         private JTextField physicalLocation;
-        
+
         public ChooseFileAction(JComponent parent, UriEntry original, JTextField physicalLocation) {
             this.parent = parent;
             this.original = original;
             this.physicalLocation = physicalLocation;
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             JFileChooser fileChooser = new JFileChooser();
             URI base = CatalogUtilities.resolveXmlBase(original);
@@ -133,18 +132,18 @@ public class EditUriAction extends AbstractAction {
             }
         }
     }
-    
-    private class GetOntologyNamePanel extends JDialog {        
+
+    private static class GetOntologyNamePanel extends JDialog {
         private JTextField ontologyNameField;
         private JTextField ontologyVersionField;
         private JButton useOntologyName;
         private JButton useOntologyVersion;
-        
+
         public GetOntologyNamePanel(JComponent parent, final JTextField importedUri, URI physicalLocation) {
             super(JOptionPane.getFrameForComponent(parent), "Update Import Declaration Using Ontology Name");
-            
+
             getContentPane().setLayout(new BorderLayout());
-            JPanel centerPanel = new JPanel(new GridLayout(0,2));
+            JPanel centerPanel = new JPanel(new GridLayout(0, 2));
 
             centerPanel.add(new JLabel("Ontology Name:"));
             centerPanel.add(ontologyNameField = new JTextField());
@@ -168,31 +167,26 @@ public class EditUriAction extends AbstractAction {
             
             JButton cancel = new JButton("Cancel");
             southPanel.add(cancel);
-            cancel.addActionListener(e -> {
-                setVisible(false);
-            });
+            cancel.addActionListener(e -> setVisible(false));
             
             getContentPane().add(southPanel, BorderLayout.SOUTH);
 
             updateOntologyName(physicalLocation);
         }
-
         
         private void updateOntologyName(URI physicalLocation) {
             try {
                 ontologyNameField.setText(CALCULATING); // if it becomes multi-threaded
                 ontologyVersionField.setText(CALCULATING);
                 MasterOntologyIDExtractor extractor = new MasterOntologyIDExtractor();
-                Optional<OWLOntologyID> id = extractor.getOntologyId(physicalLocation);
-                ontologyNameField.setText(id.get().getOntologyIRI().get().toString());
-                if (id.get().getVersionIRI().isPresent()) {
-                    ontologyVersionField.setText(id.get().getVersionIRI().get().toQuotedString());
-                }
-                else {
+                OWLOntologyID id = extractor.getOntologyId(physicalLocation).orElseThrow(IllegalStateException::new);
+                ontologyNameField.setText(id.getOntologyIRI().orElseThrow(IllegalStateException::new).toString());
+                if (id.getVersionIRI().isPresent()) {
+                    ontologyVersionField.setText(id.getVersionIRI().get().toQuotedString());
+                } else {
                     ontologyVersionField.setText(NO_VERSION);
                 }
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                 ontologyNameField.setText(NO_PARSE);
                 ontologyVersionField.setText(NO_PARSE);
             }

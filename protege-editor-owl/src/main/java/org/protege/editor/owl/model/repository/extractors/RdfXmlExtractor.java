@@ -1,6 +1,5 @@
 package org.protege.editor.owl.model.repository.extractors;
 
-import com.google.common.base.Optional;
 import org.protege.editor.owl.model.io.IOUtils;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.rdf.rdfxml.parser.RDFParser;
@@ -10,11 +9,13 @@ import org.xml.sax.InputSource;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Optional;
 
 public class RdfXmlExtractor implements OntologyIdExtractor {
 
-    private final Logger logger = LoggerFactory.getLogger(RdfXmlExtractor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RdfXmlExtractor.class);
 
+    @Override
     public Optional<OWLOntologyID> getOntologyId(URI location) {
         RdfExtractorConsumer consumer = new RdfExtractorConsumer();
         RDFParser parser = new RDFParser();
@@ -24,8 +25,8 @@ public class RdfXmlExtractor implements OntologyIdExtractor {
             parser.parse(is, consumer);
             return consumer.getOntologyID();
         } catch (Throwable t) {
-            logger.debug("Exception caught trying to extract ontology from rdf file at  " + location, t);
-            return Optional.absent();
+            LOGGER.debug("Exception caught trying to extract ontology from rdf file at  {}", location, t);
+            return Optional.empty();
         }
     }
 }
