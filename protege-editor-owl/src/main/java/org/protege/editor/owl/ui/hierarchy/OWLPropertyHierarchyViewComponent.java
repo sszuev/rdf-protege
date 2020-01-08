@@ -1,8 +1,8 @@
 package org.protege.editor.owl.ui.hierarchy;
 
 import org.protege.editor.owl.model.OWLModelManager;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyManager;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.OWLPropertyHierarchyProvider;
 import org.protege.editor.owl.ui.view.AbstractOWLEntityHierarchyViewComponent;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -11,7 +11,6 @@ import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,8 +24,8 @@ public class OWLPropertyHierarchyViewComponent extends AbstractOWLEntityHierarch
     private OWLPropertyHierarchyProvider hierarchyProvider;
 
     @Override
-    protected OWLObjectHierarchyProvider<OWLEntity> getHierarchyProvider() {
-        if(hierarchyProvider == null) {
+    protected HierarchyProvider<OWLEntity> getHierarchyProvider() {
+        if (hierarchyProvider == null) {
             OWLModelManager modelManager = getOWLModelManager();
             OWLHierarchyManager hierarchyManager = modelManager.getOWLHierarchyManager();
             hierarchyProvider = new OWLPropertyHierarchyProvider(
@@ -86,7 +85,7 @@ public class OWLPropertyHierarchyViewComponent extends AbstractOWLEntityHierarch
     }
 
     @Override
-    protected Optional<OWLObjectHierarchyProvider<OWLEntity>> getInferredHierarchyProvider() {
+    protected Optional<HierarchyProvider<OWLEntity>> getInferredHierarchyProvider() {
         return Optional.empty();
     }
 }

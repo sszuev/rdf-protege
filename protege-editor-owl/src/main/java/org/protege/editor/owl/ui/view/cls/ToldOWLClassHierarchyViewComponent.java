@@ -3,7 +3,7 @@ package org.protege.editor.owl.ui.view.cls;
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
 import org.protege.editor.owl.ui.action.DeleteClassAction;
@@ -22,8 +22,10 @@ import org.semanticweb.owlapi.model.parameters.Imports;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 
 /**
@@ -182,12 +184,12 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
     }
 
 
-    protected OWLObjectHierarchyProvider<OWLClass> getHierarchyProvider() {
+    protected HierarchyProvider<OWLClass> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider();
     }
 
     @Override
-    protected Optional<OWLObjectHierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
+    protected Optional<HierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
         return Optional.of(getOWLModelManager().getOWLHierarchyManager().getInferredOWLClassHierarchyProvider());
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////

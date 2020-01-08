@@ -8,8 +8,8 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.shared.PrefixMapping;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProviderListener;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +19,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 /**
- * An {@link OWLObjectHierarchyProvider} for {@link Graph}.
+ * An {@link HierarchyProvider} for {@link Graph}.
  * Created by @ssz on 23.11.2019.
  */
 @SuppressWarnings("WeakerAccess")
-public class TripleHierarchyProvider implements OWLObjectHierarchyProvider<Triple> {
+public class TripleHierarchyProvider implements HierarchyProvider<Triple> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TripleHierarchyProvider.class);
 
     private Graph graph;
 
-    private final List<OWLObjectHierarchyProviderListener<Triple>> listeners = new CopyOnWriteArrayList<>();
+    private final List<HierarchyProviderListener<Triple>> listeners = new CopyOnWriteArrayList<>();
     private final Map<BlankNodeId, String> ids = new HashMap<>();
 
     @Override
@@ -123,12 +123,12 @@ public class TripleHierarchyProvider implements OWLObjectHierarchyProvider<Tripl
     }
 
     @Override
-    public void addListener(OWLObjectHierarchyProviderListener<Triple> listener) {
+    public void addListener(HierarchyProviderListener<Triple> listener) {
         listeners.add(listener);
     }
 
     @Override
-    public void removeListener(OWLObjectHierarchyProviderListener<Triple> listener) {
+    public void removeListener(HierarchyProviderListener<Triple> listener) {
         listeners.remove(listener);
     }
 
@@ -138,7 +138,7 @@ public class TripleHierarchyProvider implements OWLObjectHierarchyProvider<Tripl
         ids.clear();
     }
 
-    public Stream<OWLObjectHierarchyProviderListener<Triple>> listeners() {
+    public Stream<HierarchyProviderListener<Triple>> listeners() {
         return listeners.stream();
     }
 

@@ -1,6 +1,6 @@
 package org.protege.editor.owl.ui.metrics;
 
-import org.github.owlcs.owlapi.metrics.TripleCount;
+import org.github.owlcs.ontapi.metrics.TripleCount;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.OWLAxiomTypeFramePanel;
 import org.semanticweb.owlapi.metrics.*;

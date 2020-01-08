@@ -5,8 +5,8 @@ import org.protege.editor.core.ui.menu.MenuBuilder;
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.OWLModelManager;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProviderListener;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
 import org.protege.editor.owl.ui.transfer.OWLObjectDragSource;
 import org.protege.editor.owl.ui.transfer.OWLObjectDropTarget;
 import org.protege.editor.owl.ui.transfer.OWLObjectTreeDragGestureListener;
@@ -48,8 +48,8 @@ public abstract class ObjectTree<N> extends JTree
     private Map<N, Set<OWLObjectTreeNode<N>>> nodeMap;
 
     protected final OWLEditorKit eKit;
-    protected final OWLObjectHierarchyProvider<N> provider;
-    private OWLObjectHierarchyProviderListener<N> listener;
+    protected final HierarchyProvider<N> provider;
+    private HierarchyProviderListener<N> listener;
     protected Comparator<? super N> comparator;
     private OWLTreeDragAndDropHandler<N> dragAndDropHandler;
     @SuppressWarnings("FieldCanBeLocal")
@@ -58,12 +58,12 @@ public abstract class ObjectTree<N> extends JTree
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<PopupMenuId> popupMenuId = Optional.empty();
 
-    public ObjectTree(OWLEditorKit eKit, OWLObjectHierarchyProvider<N> provider) {
+    public ObjectTree(OWLEditorKit eKit, HierarchyProvider<N> provider) {
         this(eKit, provider, provider.getRoots(), null);
     }
 
     public ObjectTree(OWLEditorKit eKit,
-                      OWLObjectHierarchyProvider<N> provider,
+                      HierarchyProvider<N> provider,
                       Set<N> rootObjects,
                       Comparator<? super N> owlObjectComparator) {
         this.eKit = eKit;
@@ -72,7 +72,7 @@ public abstract class ObjectTree<N> extends JTree
         this.comparator = owlObjectComparator;
         this.provider = provider;
         nodeMap = new HashMap<>();
-        listener = new OWLObjectHierarchyProviderListener<N>() {
+        listener = new HierarchyProviderListener<N>() {
             @Override
             public void hierarchyChanged() {
                 reload();
@@ -336,7 +336,7 @@ public abstract class ObjectTree<N> extends JTree
     /**
      * @return the hierarchy provider that this tree uses to generate its branches
      */
-    public OWLObjectHierarchyProvider<N> getProvider() {
+    public HierarchyProvider<N> getProvider() {
         return provider;
     }
 

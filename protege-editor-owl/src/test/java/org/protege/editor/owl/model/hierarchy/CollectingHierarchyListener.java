@@ -5,12 +5,11 @@ import org.semanticweb.owlapi.model.OWLClass;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CollectingHierarchyListener implements OWLObjectHierarchyProviderListener<OWLClass> {
-    
+public class CollectingHierarchyListener implements HierarchyProviderListener<OWLClass> {
+
     private Set<OWLClass> collected = new HashSet<OWLClass>();
 
     public void hierarchyChanged() {
-        ;
     }
 
     public void nodeChanged(OWLClass node) {

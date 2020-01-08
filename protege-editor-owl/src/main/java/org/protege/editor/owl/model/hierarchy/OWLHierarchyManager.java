@@ -27,15 +27,15 @@ public interface OWLHierarchyManager extends Disposable {
      * This returns the class hierarchy provider whose hierarchy is
      * generated from told information about the active ontologies.
      */
-    OWLObjectHierarchyProvider<OWLClass> getOWLClassHierarchyProvider();
+    HierarchyProvider<OWLClass> getOWLClassHierarchyProvider();
 
-    OWLObjectHierarchyProvider<OWLClass> getInferredOWLClassHierarchyProvider();
+    HierarchyProvider<OWLClass> getInferredOWLClassHierarchyProvider();
 
-    OWLObjectHierarchyProvider<OWLObjectProperty> getOWLObjectPropertyHierarchyProvider();
+    HierarchyProvider<OWLObjectProperty> getOWLObjectPropertyHierarchyProvider();
 
-    OWLObjectHierarchyProvider<OWLObjectProperty> getInferredOWLObjectPropertyHierarchyProvider();
+    HierarchyProvider<OWLObjectProperty> getInferredOWLObjectPropertyHierarchyProvider();
 
-    OWLObjectHierarchyProvider<OWLDataProperty> getOWLDataPropertyHierarchyProvider();
+    HierarchyProvider<OWLDataProperty> getOWLDataPropertyHierarchyProvider();
 
     OWLAnnotationPropertyHierarchyProvider getOWLAnnotationPropertyHierarchyProvider();
 

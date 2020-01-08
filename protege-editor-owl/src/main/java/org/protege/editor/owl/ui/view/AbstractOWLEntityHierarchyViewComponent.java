@@ -5,7 +5,7 @@ import org.protege.editor.core.ui.view.View;
 import org.protege.editor.core.ui.view.ViewAction;
 import org.protege.editor.core.ui.view.ViewMode;
 import org.protege.editor.owl.model.OWLModelManager;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.util.OWLUtilities;
 import org.protege.editor.owl.ui.OWLObjectComparatorAdapter;
 import org.protege.editor.owl.ui.action.OWLObjectHierarchyDeleter;
@@ -111,7 +111,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
 
         try {
-            Optional<OWLObjectHierarchyProvider<E>> inferredHierarchyProvider = getInferredHierarchyProvider();
+            Optional<HierarchyProvider<E>> inferredHierarchyProvider = getInferredHierarchyProvider();
             if (inferredHierarchyProvider.isPresent()) {
                 inferredTree = Optional.of(new OWLModelManagerTree<>(getOWLEditorKit(), inferredHierarchyProvider.get()));
                 inferredTree.get().setBackground(OWLFrameList.INFERRED_BG_COLOR);
@@ -192,9 +192,9 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
     protected abstract void performExtraInitialisation() throws Exception;
 
 
-    protected abstract OWLObjectHierarchyProvider<E> getHierarchyProvider();
+    protected abstract HierarchyProvider<E> getHierarchyProvider();
 
-    protected abstract Optional<OWLObjectHierarchyProvider<E>> getInferredHierarchyProvider();
+    protected abstract Optional<HierarchyProvider<E>> getInferredHierarchyProvider();
 
 
     /**

@@ -15,25 +15,23 @@ import static java.util.stream.Collectors.toSet;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 01-Jun-2006<br><br>
-
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
-
  * A basic partial implementation of a hierarchy provider, which
  * handles listeners and event firing, and also provides basic
  * implementations of method such as getAncestors, getDescendants etc.
  * which use other core methods.
  */
-public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObjectHierarchyProvider<N> {
+public abstract class AbstractOWLObjectHierarchyProvider<N> implements HierarchyProvider<N> {
 
-    private final Logger logger = LoggerFactory.getLogger(AbstractOWLObjectHierarchyProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOWLObjectHierarchyProvider.class);
 
     private volatile boolean fireEvents;
 
     /*
      * The listeners object synchronizes the listeners data.
      */
-    private List<OWLObjectHierarchyProviderListener<N>> listeners;
+    private final List<HierarchyProviderListener<N>> listeners;
 
     private OWLOntologyManager manager;
 
@@ -97,13 +95,13 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObject
 
     public Set<N> getAncestors(N object) {
 //    	getReadLock().lock();
-        try {
+//        try {
             Set<N> results = new HashSet<>();
             getAncestors(results, object);
             return results;
-        } finally {
+//        } finally {
 //    		getReadLock().unlock();
-        }
+//        }
     }
 
 
@@ -130,13 +128,13 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObject
 
     public Set<N> getDescendants(N object) {
 //    	getReadLock().lock();
-        try {
+//        try {
             Set<N> results = new HashSet<>();
             getDescendants(results, object);
             return results;
-        } finally {
+//        } finally {
 //    		getReadLock().unlock();
-        }
+//        }
     }
 
 
@@ -163,11 +161,11 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObject
      */
     public Set<List<N>> getPathsToRoot(N obj) {
 //    	getReadLock().lock();
-        try {
+//        try {
             return setOfPaths(obj, new HashSet<>());
-        } finally {
+//        } finally {
 //    		getReadLock().unlock();
-        }
+//        }
     }
 
 
@@ -205,25 +203,26 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObject
     ////////////////////////////////////////////////////////////////////////////////////////////
 
 
+    @SuppressWarnings("unused")
     protected void setFireEvents(boolean b) {
         fireEvents = b;
     }
 
 
-    public void addListener(OWLObjectHierarchyProviderListener<N> listener) {
+    public void addListener(HierarchyProviderListener<N> listener) {
         synchronized (listeners) {
             listeners.add(listener);
         }
     }
 
 
-    public void removeListener(OWLObjectHierarchyProviderListener<N> listener) {
+    public void removeListener(HierarchyProviderListener<N> listener) {
         synchronized (listeners) {
             listeners.remove(listener);
         }
     }
 
-    private List<OWLObjectHierarchyProviderListener<N>> getListeners() {
+    private List<HierarchyProviderListener<N>> getListeners() {
         synchronized (listeners) {
             return new ArrayList<>(listeners);
         }
@@ -233,12 +232,12 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObject
         if (!fireEvents) {
             return;
         }
-        for (OWLObjectHierarchyProviderListener<N> listener : getListeners()) {
+        for (HierarchyProviderListener<N> listener : getListeners()) {
             try {
                 listener.nodeChanged(node);
             } catch (Throwable e) {
                 e.printStackTrace();
-                logger.error("{}: Listener {} has thrown an exception.  Removing bad listener.",
+                LOGGER.error("{}: Listener {} has thrown an exception.  Removing bad listener.",
                         getClass().getName(),
                         listener);
                 removeListener(listener);
@@ -252,7 +251,7 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLObject
         if (!fireEvents) {
             return;
         }
-        for (OWLObjectHierarchyProviderListener<N> listener : getListeners()) {
+        for (HierarchyProviderListener<N> listener : getListeners()) {
             try {
                 listener.hierarchyChanged();
             } catch (Throwable e) {

@@ -2,9 +2,8 @@ package org.protege.editor.owl.ui.view.objectproperty;
 
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.selection.SelectionDriver;
-import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.renderer.*;
 import org.protege.editor.owl.ui.view.AbstractOWLPropertyHierarchyViewComponent;
 import org.semanticweb.owlapi.model.OWLObject;
@@ -37,12 +36,12 @@ public class OWLObjectPropertyHierarchyViewComponent
     }
 
 
-    protected OWLObjectHierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
+    protected HierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLObjectPropertyHierarchyProvider();
     }
 
     @Override
-    protected Optional<OWLObjectHierarchyProvider<OWLObjectProperty>> getInferredHierarchyProvider() {
+    protected Optional<HierarchyProvider<OWLObjectProperty>> getInferredHierarchyProvider() {
         return Optional.of(getOWLModelManager().getOWLHierarchyManager().getInferredOWLObjectPropertyHierarchyProvider());
     }
 

@@ -4,9 +4,9 @@ import com.google.common.collect.Sets;
 import org.protege.editor.core.ui.RefreshableComponent;
 import org.protege.editor.core.ui.view.DisposableAction;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
 import org.protege.editor.owl.model.hierarchy.IndividualsByTypeHierarchyProvider;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProviderListener;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.UIHelper;
 import org.protege.editor.owl.ui.action.DeleteIndividualAction;
@@ -308,16 +308,15 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
     }
 
 
-
-    private class HierarchyProviderWrapper implements OWLObjectHierarchyProvider<OWLObject> {
+    private class HierarchyProviderWrapper implements HierarchyProvider<OWLObject> {
 
         private final Set<OWLObject> temporaryClasses = new HashSet<>();
 
-        private final List<OWLObjectHierarchyProviderListener<OWLObject>> listeners = new ArrayList<>();
+        private final List<HierarchyProviderListener<OWLObject>> listeners = new ArrayList<>();
 
         public void addTemporaryClass(OWLClass cls) {
             temporaryClasses.add(cls);
-            for(OWLObjectHierarchyProviderListener<OWLObject> listener : listeners) {
+            for (HierarchyProviderListener<OWLObject> listener : listeners) {
                 listener.nodeChanged(cls);
             }
         }
@@ -375,13 +374,13 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         }
 
         @Override
-        public void addListener(OWLObjectHierarchyProviderListener<OWLObject> listener) {
+        public void addListener(HierarchyProviderListener<OWLObject> listener) {
             listeners.add(listener);
             getProvider().addListener(listener);
         }
 
         @Override
-        public void removeListener(OWLObjectHierarchyProviderListener<OWLObject> listener) {
+        public void removeListener(HierarchyProviderListener<OWLObject> listener) {
             listeners.remove(listener);
             getProvider().removeListener(listener);
         }

@@ -12,24 +12,24 @@ import java.util.Set;
  */
 public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProvider<OWLEntity> {
 
-    private OWLObjectHierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider;
+    private HierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider;
 
-    private OWLObjectHierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider;
+    private HierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider;
 
-    private OWLObjectHierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider;
+    private HierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider;
 
     public OWLPropertyHierarchyProvider(
             OWLOntologyManager owlOntologyManager,
-            OWLObjectHierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider,
-            OWLObjectHierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider,
-            OWLObjectHierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider
-            ) {
+            HierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider,
+            HierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider,
+            HierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider
+    ) {
         super(owlOntologyManager);
         this.annotationPropertyHierarchyProvider = annotationPropertyHierarchyProvider;
         this.dataPropertyHierarchyProvider = dataPropertyHierarchyProvider;
         this.objectPropertyHierarchyProvider = objectPropertyHierarchyProvider;
 
-        annotationPropertyHierarchyProvider.addListener(new OWLObjectHierarchyProviderListener<OWLAnnotationProperty>() {
+        annotationPropertyHierarchyProvider.addListener(new HierarchyProviderListener<OWLAnnotationProperty>() {
             @Override
             public void nodeChanged(OWLAnnotationProperty node) {
                 OWLPropertyHierarchyProvider.this.fireNodeChanged(node);
@@ -40,7 +40,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
                 OWLPropertyHierarchyProvider.this.fireHierarchyChanged();
             }
         });
-        dataPropertyHierarchyProvider.addListener(new OWLObjectHierarchyProviderListener<OWLDataProperty>() {
+        dataPropertyHierarchyProvider.addListener(new HierarchyProviderListener<OWLDataProperty>() {
             @Override
             public void nodeChanged(OWLDataProperty node) {
                 OWLPropertyHierarchyProvider.this.fireNodeChanged(node);
@@ -51,7 +51,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
                 OWLPropertyHierarchyProvider.this.fireHierarchyChanged();
             }
         });
-        objectPropertyHierarchyProvider.addListener(new OWLObjectHierarchyProviderListener<OWLObjectProperty>() {
+        objectPropertyHierarchyProvider.addListener(new HierarchyProviderListener<OWLObjectProperty>() {
             @Override
             public void nodeChanged(OWLObjectProperty node) {
                 OWLPropertyHierarchyProvider.this.fireNodeChanged(node);
@@ -64,6 +64,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
         });
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public boolean containsReference(OWLEntity object) {
         return object.accept(new OWLObjectVisitorEx<Boolean>() {
@@ -88,7 +89,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
      * Sets the ontologies that this hierarchy provider should use
      * in order to determine the hierarchy.
      *
-     * @param ontologies
+     * @param ontologies a {@code Set} of {@link OWLOntology ontologies}
      */
     @Override
     public void setOntologies(Set<OWLOntology> ontologies) {
@@ -109,6 +110,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
         return roots;
     }
 
+    @SuppressWarnings({"NullableProblems", "unchecked"})
     @Override
     public Set<OWLEntity> getUnfilteredChildren(OWLEntity object) {
         Set<? extends OWLObject> result = object.accept(new OWLObjectVisitorEx<Set<? extends OWLEntity>>() {
@@ -130,6 +132,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
         return (Set<OWLEntity>)result;
     }
 
+    @SuppressWarnings({"NullableProblems", "unchecked"})
     @Override
     public Set<OWLEntity> getParents(OWLEntity object) {
         Set<? extends OWLEntity> result = object.accept(new OWLObjectVisitorEx<Set<? extends OWLEntity>>() {
@@ -151,6 +154,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
         return (Set<OWLEntity>)result;
     }
 
+    @SuppressWarnings({"NullableProblems", "unchecked"})
     @Override
     public Set<OWLEntity> getEquivalents(OWLEntity object) {
         Set<? extends OWLEntity> result = object.accept(new OWLObjectVisitorEx<Set<? extends OWLEntity>>() {

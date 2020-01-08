@@ -1,4 +1,4 @@
-package org.github.owlcs.owlapi.metrics;
+package org.github.owlcs.ontapi.metrics;
 
 import com.github.owlcs.ontapi.Ontology;
 import com.github.owlcs.ontapi.jena.model.OntModel;
@@ -42,7 +42,7 @@ public class TripleCount extends IntegerValuedMetric {
 
     @Override
     public String getName() {
-        return "Triples";
+        return "Triple";
     }
 
 }

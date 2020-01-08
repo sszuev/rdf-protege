@@ -9,7 +9,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.LiteralLabel;
 import org.apache.jena.shared.PrefixMapping;
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.ui.tree.OWLObjectTreeCellRenderer;
 import org.protege.editor.owl.ui.tree.OWLObjectTreeNode;
 import org.protege.editor.owl.ui.tree.OWLTreePreferences;
@@ -99,7 +99,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         if (!prefs.isAutoExpandEnabled()) {
             return;
         }
-        OWLObjectHierarchyProvider<Triple> prov = getProvider();
+        HierarchyProvider<Triple> prov = getProvider();
         for (Triple root : prov.getRoots()) {
             autoExpand(root, 0);
         }
@@ -111,7 +111,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         if (currentDepth >= maxDepth) {
             return;
         }
-        OWLObjectHierarchyProvider<Triple> prov = getProvider();
+        HierarchyProvider<Triple> prov = getProvider();
         int childCountLimit = prefs.getAutoExpansionChildLimit();
         Set<Triple> children = prov.getChildren(node);
         if (children.size() <= childCountLimit) {

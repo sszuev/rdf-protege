@@ -5,7 +5,7 @@ import org.protege.editor.core.log.LogBanner;
 import org.protege.editor.core.prefs.Preferences;
 import org.protege.editor.core.prefs.PreferencesManager;
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.util.OWLEntityDeleter;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.util.OWLEntitySetProvider;
@@ -33,7 +33,7 @@ public class OWLObjectHierarchyDeleter<E extends OWLEntity> {
 
     private OWLEntitySetProvider<E> entitySetProvider;
 
-    private OWLObjectHierarchyProvider<E> hierarchyProvider;
+    private HierarchyProvider<E> hierarchyProvider;
 
     private String pluralName;
 
@@ -46,7 +46,7 @@ public class OWLObjectHierarchyDeleter<E extends OWLEntity> {
     private static final String DELETE_DESCENDANTS = "delete.descendants";
 
     public OWLObjectHierarchyDeleter(OWLEditorKit owlEditorKit,
-                                     OWLObjectHierarchyProvider<E> hierarchyProvider,
+                                     HierarchyProvider<E> hierarchyProvider,
                                      OWLEntitySetProvider<E> entitySetProvider,
                                      String pluralName) {
         this.owlEditorKit = owlEditorKit;

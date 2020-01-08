@@ -4,7 +4,7 @@ import org.protege.editor.core.ui.RefreshableComponent;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.ui.renderer.OWLEntityRendererListener;
 import org.protege.editor.owl.ui.renderer.OWLModelManagerEntityRenderer;
 import org.semanticweb.owlapi.model.OWLEntity;
@@ -36,12 +36,12 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
 
     public OWLModelManagerEntityRenderer currentRenderer = null; // only use to clean up old listeners
 
-    public OWLModelManagerTree(OWLEditorKit owlEditorKit, OWLObjectHierarchyProvider<N> provider) {
+    public OWLModelManagerTree(OWLEditorKit owlEditorKit, HierarchyProvider<N> provider) {
         super(owlEditorKit, provider);
         initialise(owlEditorKit);
     }
 
-    public OWLModelManagerTree(OWLEditorKit owlEditorKit, OWLObjectHierarchyProvider<N> provider, Set<N> rootObjects) {
+    public OWLModelManagerTree(OWLEditorKit owlEditorKit, HierarchyProvider<N> provider, Set<N> rootObjects) {
         super(owlEditorKit, provider, rootObjects, owlEditorKit.getModelManager().getOWLObjectComparator());
         initialise(owlEditorKit);
     }
@@ -77,7 +77,7 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         if (!prefs.isAutoExpandEnabled()) {
             return;
         }
-        OWLObjectHierarchyProvider<N> prov = getProvider();
+        HierarchyProvider<N> prov = getProvider();
         for (N root : prov.getRoots()) {
             autoExpand(root, 0);
         }
@@ -89,7 +89,7 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         if (currentDepth >= maxDepth) {
             return;
         }
-        OWLObjectHierarchyProvider<N> prov = getProvider();
+        HierarchyProvider<N> prov = getProvider();
         int childCountLimit = prefs.getAutoExpansionChildLimit();
         Set<N> children = prov.getChildren(node);
         if (children.size() <= childCountLimit) {

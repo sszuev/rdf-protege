@@ -1,7 +1,8 @@
 package org.protege.editor.owl.model.hierarchy.tabbed;
 
-import com.google.common.collect.*;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.semanticweb.owlapi.model.*;
 
 import javax.annotation.Nonnull;
@@ -19,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class MakeSiblingsDisjointChangeGenerator<E extends OWLEntity> {
 
-    private final OWLObjectHierarchyProvider<E> hierarchyProvider;
+    private final HierarchyProvider<E> hierarchyProvider;
 
     private final Function<Set<E>, Set<E>> siblingsExtractor;
 
@@ -27,7 +28,7 @@ public class MakeSiblingsDisjointChangeGenerator<E extends OWLEntity> {
 
     private final OWLOntology targetOntology;
 
-    public MakeSiblingsDisjointChangeGenerator(@Nonnull OWLObjectHierarchyProvider<E> existingHierarchyProvider,
+    public MakeSiblingsDisjointChangeGenerator(@Nonnull HierarchyProvider<E> existingHierarchyProvider,
                                                @Nonnull Function<Set<E>, Set<E>> disjointSiblingsExtractor,
                                                @Nonnull Function<Set<E>, OWLAxiom> disjointSiblingsAxiomFactory,
                                                @Nonnull OWLOntology targetOntology) {

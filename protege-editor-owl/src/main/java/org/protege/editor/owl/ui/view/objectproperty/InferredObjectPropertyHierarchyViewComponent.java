@@ -2,7 +2,7 @@ package org.protege.editor.owl.ui.view.objectproperty;
 
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.ui.framelist.OWLFrameList;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 
@@ -38,7 +38,7 @@ public class InferredObjectPropertyHierarchyViewComponent extends OWLObjectPrope
     }
 
 
-    protected OWLObjectHierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
+    protected HierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getInferredOWLObjectPropertyHierarchyProvider();
     }
 }

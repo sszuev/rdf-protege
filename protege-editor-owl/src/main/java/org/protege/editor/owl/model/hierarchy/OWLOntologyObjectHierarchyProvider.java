@@ -13,14 +13,14 @@ import java.util.Set;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 01-Jun-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public interface OWLOntologyObjectHierarchyProvider<N extends OWLObject> extends OWLObjectHierarchyProvider<N> {
+public interface OWLOntologyObjectHierarchyProvider<N extends OWLObject> extends HierarchyProvider<N> {
 
-    public void setOntologies(Set<OWLOntology> ontologies);
+    void setOntologies(Set<OWLOntology> ontologies);
 
 
-    public void handleOntologyChanges(List<? extends OWLOntologyChange> changes);
+    void handleOntologyChanges(List<? extends OWLOntologyChange> changes);
 }

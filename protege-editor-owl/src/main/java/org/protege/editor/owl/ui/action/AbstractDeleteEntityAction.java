@@ -1,7 +1,7 @@
 package org.protege.editor.owl.ui.action;
 
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.ui.view.OWLSelectionViewAction;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.util.OWLEntitySetProvider;
@@ -24,7 +24,7 @@ public abstract class AbstractDeleteEntityAction<E extends OWLEntity> extends OW
 
 
     protected AbstractDeleteEntityAction(String name, Icon icon, OWLEditorKit owlEditorKit,
-                                         OWLObjectHierarchyProvider<E> hp,
+                                         HierarchyProvider<E> hp,
                                          OWLEntitySetProvider<E> entitySetProvider) {
         super(name, icon);
         this.entitySetProvider = entitySetProvider;

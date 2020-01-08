@@ -5,7 +5,7 @@ import org.protege.editor.core.ui.view.ViewComponentPlugin;
 import org.protege.editor.core.ui.view.ViewComponentPluginAdapter;
 import org.protege.editor.core.ui.workspace.Workspace;
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.ui.renderer.OWLSystemColors;
 import org.protege.editor.owl.ui.view.AbstractOWLEntityHierarchyViewComponent;
 import org.protege.editor.owl.ui.view.cls.ToldOWLClassHierarchyViewComponent;
@@ -38,7 +38,7 @@ public class OWLClassSelectorPanel extends AbstractHierarchySelectorPanel<OWLCla
         this(editorKit, editable, editorKit.getModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider());
     }
 
-    public OWLClassSelectorPanel(OWLEditorKit editorKit, boolean editable, OWLObjectHierarchyProvider<OWLClass> hp) {
+    public OWLClassSelectorPanel(OWLEditorKit editorKit, boolean editable, HierarchyProvider<OWLClass> hp) {
         super(editorKit, editable, hp);
     }
 
@@ -65,7 +65,7 @@ public class OWLClassSelectorPanel extends AbstractHierarchySelectorPanel<OWLCla
                         }
                     }
 
-                    protected OWLObjectHierarchyProvider<OWLClass> getOWLClassHierarchyProvider() {
+                    protected HierarchyProvider<OWLClass> getOWLClassHierarchyProvider() {
                         return getHierarchyProvider();
                     }
                 };

@@ -2,9 +2,8 @@ package org.protege.editor.owl.ui.view.annotationproperty;
 
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.selection.SelectionDriver;
-import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.action.AbstractDeleteEntityAction;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
 import org.protege.editor.owl.ui.renderer.*;
@@ -16,19 +15,20 @@ import org.semanticweb.owlapi.util.OWLEntitySetProvider;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
-/*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
+import java.util.*;
 import java.util.stream.Stream;
+
+/*
+ * Copyright (C) 2007, University of Manchester
+ *
+ *
+ */
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Apr 23, 2009<br><br>
@@ -64,12 +64,12 @@ public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEnti
     }
 
 
-    protected OWLObjectHierarchyProvider<OWLAnnotationProperty> getHierarchyProvider() {
+    protected HierarchyProvider<OWLAnnotationProperty> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLAnnotationPropertyHierarchyProvider();
     }
 
     @Override
-    protected Optional<OWLObjectHierarchyProvider<OWLAnnotationProperty>> getInferredHierarchyProvider() {
+    protected Optional<HierarchyProvider<OWLAnnotationProperty>> getInferredHierarchyProvider() {
         return Optional.empty();
     }
 
