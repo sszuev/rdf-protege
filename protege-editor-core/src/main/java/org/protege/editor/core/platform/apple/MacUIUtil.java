@@ -12,47 +12,37 @@ import java.util.Set;
 public class MacUIUtil {
 
     public static File openFile(Window parent, String title, final Set<String> extensions) {
-        FileDialog fileDialog;
-        if (parent instanceof Frame) {
-            fileDialog = new FileDialog((Frame) parent, title, FileDialog.LOAD);
-        }
-        else {
-            fileDialog = new FileDialog((Dialog) parent, title, FileDialog.LOAD);
-        }
-        fileDialog.setFilenameFilter((dir, name) -> {
-            if (extensions.isEmpty()) {
-                return true;
-            }
-            else {
-                for (String ext : extensions) {
-                    if (name.toLowerCase().endsWith(ext.toLowerCase())) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
-        fileDialog.setDirectory(UIUtil.getCurrentFileDirectory());
-        fileDialog.setVisible(true);
-        String fileName = fileDialog.getFile();
-        if (fileName != null) {
-            UIUtil.setCurrentFileDirectory(fileDialog.getDirectory());
-            return new File(fileDialog.getDirectory() + fileName);
-        }
-        else {
+        FileDialog dialog = createDialog(parent, title, FileDialog.LOAD);
+        dialog.setFilenameFilter(createFilenameFilter(extensions));
+        dialog.setDirectory(UIUtil.getCurrentFileDirectory());
+        dialog.setVisible(true);
+        String fileName = dialog.getFile();
+        if (fileName == null) {
             return null;
         }
+        UIUtil.setCurrentFileDirectory(dialog.getDirectory());
+        return new File(dialog.getDirectory() + fileName);
     }
-    
-    public static File saveFile(Window parent, String title, final Set<String> extensions, String initialName) {
-        FileDialog fileDialog;
-        if (parent instanceof Frame) {
-            fileDialog = new FileDialog((Frame) parent, title, FileDialog.SAVE);
+
+    public static File saveFile(Window parent, String title, Set<String> extensions, String initialName) {
+        FileDialog dialog = createDialog(parent, title, FileDialog.SAVE);
+        dialog.setFilenameFilter(createFilenameFilter(extensions));
+        dialog.setDirectory(UIUtil.getCurrentFileDirectory());
+        if (initialName != null) {
+            dialog.setFile(initialName);
         }
-        else {
-            fileDialog = new FileDialog((Dialog) parent, title, FileDialog.SAVE);
+        dialog.setVisible(true);
+
+        String fileName = dialog.getFile();
+        if (fileName == null) {
+            return null;
         }
-        fileDialog.setFilenameFilter((dir, name) -> {
+        UIUtil.setCurrentFileDirectory(dialog.getDirectory());
+        return new File(dialog.getDirectory() + fileName);
+    }
+
+    private static FilenameFilter createFilenameFilter(Set<String> extensions) {
+        return (dir, name) -> {
             if (extensions == null || extensions.isEmpty()) {
                 return true;
             }
@@ -62,37 +52,26 @@ public class MacUIUtil {
                 }
             }
             return false;
-        });
-        fileDialog.setDirectory(UIUtil.getCurrentFileDirectory());
-        if (initialName != null) {
-            fileDialog.setFile(initialName);
-        }
-        fileDialog.setVisible(true);
-
-        String fileName = fileDialog.getFile();
-        if (fileName != null) {
-            UIUtil.setCurrentFileDirectory(fileDialog.getDirectory());
-            return new File(fileDialog.getDirectory() + fileName);
-        }
-        else {
-            return null;
-        }
+        };
     }
 
-	public static File chooseOSXFolder(Component parent, String title) {
-	    String prop = null;
-	    File file = null;
-	    try {
-	        prop = "apple.awt.fileDialogForDirectories";
-	        System.setProperty(prop, "true");
-	        file = UIUtil.openFile((Frame) SwingUtilities.getAncestorOfClass(Frame.class, parent),
-	                        title,
-	                        "Folder",
-	                        Collections.singleton(""));
-	    }
-	    finally {
-	        System.setProperty(prop, "false");
-	    }
-	    return file;
-	}
+    private static FileDialog createDialog(Window parent, String title, int constant) {
+        return parent instanceof Frame ?
+                new FileDialog((Frame) parent, title, constant) :
+                new FileDialog((Dialog) parent, title, constant);
+    }
+
+    public static File chooseOSXFolder(Component parent, String title) {
+        String prop = null;
+        File file;
+        try {
+            prop = "apple.awt.fileDialogForDirectories";
+            System.setProperty(prop, "true");
+            file = UIUtil.openFile(SwingUtilities.getAncestorOfClass(Frame.class, parent),
+                    title, "Folder", Collections.singleton(""));
+        } finally {
+            System.setProperty(prop, "false");
+        }
+        return file;
+    }
 }

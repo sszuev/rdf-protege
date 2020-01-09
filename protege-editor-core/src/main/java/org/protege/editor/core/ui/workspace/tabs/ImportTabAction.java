@@ -18,28 +18,24 @@ import java.util.Set;
 
 public class ImportTabAction extends ProtegeAction {
 
-	private static final long serialVersionUID = 7952432018266375998L;
+    private static final long serialVersionUID = 7952432018266375998L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportTabAction.class);
 
-	private final Logger logger = LoggerFactory.getLogger(ImportTabAction.class);
+    @Override
+    public void initialise() throws Exception {
+    }
 
-	public ImportTabAction() {
-	}
+    @Override
+    public void dispose() throws Exception {
+    }
 
-	public void initialise() throws Exception {
-	}
-
-
-	public void dispose() throws Exception {
-	}
-
-	public void actionPerformed(ActionEvent event) {
-		TabbedWorkspace workspace = (TabbedWorkspace) getWorkspace();
+    @Override
+    public void actionPerformed(ActionEvent event) {
+        TabbedWorkspace workspace = (TabbedWorkspace) getWorkspace();
         Set<String> extensions = new HashSet<>();
         extensions.add("xml");
-        File f = UIUtil.openFile((JFrame) SwingUtilities.getAncestorOfClass(JFrame.class, workspace),
-                "Open layout from",
-                "XML Layout File",
-                extensions);
+        File f = UIUtil.openFile(SwingUtilities.getAncestorOfClass(JFrame.class, workspace),
+                "Open layout from", "XML Layout File", extensions);
         if (f == null) {
             return;
         }
@@ -47,7 +43,7 @@ public class ImportTabAction extends ProtegeAction {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(f));
             StringBuilder sb = new StringBuilder();
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 sb.append(line);
                 sb.append("\n");
@@ -57,15 +53,12 @@ public class ImportTabAction extends ProtegeAction {
                 return;
             }
             tab.reset(sb.toString());
-        }
-        catch (IOException e) {
-            logger.error("An error occurred when attempting to import a tab configuration.  File: {}, Details: {}",
+        } catch (IOException e) {
+            LOGGER.error("An error occurred when attempting to import a tab configuration.  File: {}, Details: {}",
                     f.getAbsolutePath(), e);
-            JOptionPane.showMessageDialog(workspace,
-                    "There was a problem saving the layout",
-                    "Error",
+            JOptionPane.showMessageDialog(workspace, "There was a problem saving the layout", "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
-	}
+    }
 
 }

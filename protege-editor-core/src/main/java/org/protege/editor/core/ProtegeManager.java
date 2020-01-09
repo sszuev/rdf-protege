@@ -3,6 +3,7 @@ package org.protege.editor.core;
 import org.protege.editor.core.editorkit.*;
 import org.protege.editor.core.ui.workspace.Workspace;
 import org.protege.editor.core.ui.workspace.WorkspaceFrame;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +25,10 @@ import java.util.Map;
  * manages the creation and deletion of <code>EditorKit</code>s.  A list of the installed
  * <code>EditorKitFactoryPlugin</code>s
  */
+@SuppressWarnings({"UnusedReturnValue", "unused"})
 public class ProtegeManager {
 
-    public static final Logger logger = LoggerFactory.getLogger(ProtegeManager.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(ProtegeManager.class);
 
     private static ProtegeManager instance;
 
@@ -65,7 +67,7 @@ public class ProtegeManager {
                 repository.dispose();
             }
             catch (Exception e) {
-                logger.warn("An error occurred whilst trying dispose of the repository '{}': {}", repository.getName(), e);
+                LOGGER.warn("An error occurred whilst trying dispose of the repository '{}': {}", repository.getName(), e);
             }
         }
         instance = null;
@@ -130,7 +132,7 @@ public class ProtegeManager {
     }
 
     public synchronized EditorKit createAndSetupNewEditorKit(EditorKitFactory editorKitFactory) throws Exception {
-        logger.debug("[ProtegeManager] Creating and setting up new EditorKit.  Factory: {}", editorKitFactory);
+        LOGGER.debug("[ProtegeManager] Creating and setting up new EditorKit.  Factory: {}", editorKitFactory);
         if (editorKitFactory != null) {
             boolean success = false;
             EditorKit editorKit = editorKitFactory.createEditorKit();
@@ -157,42 +159,39 @@ public class ProtegeManager {
     /**
      * Creates and sets up a new <code>EditorKit</code> with an ontology specified by a given <code>URI</code>.
      *
-     * @param plugin The <code>EditorKitFactoryPlugin</code> that describes the <code>EditorKitFactory</code> which will
-     *               be used to create the <code>EditorKit</code>.
+     * @param ekf The <code>EditorKitFactoryPlugin</code> that describes the <code>EditorKitFactory</code> which will
+     *            be used to create the <code>EditorKit</code>.
      * @param uri The ontology <code>URI</code> with which the new <code>EditorKit</code> will be instantiated
      */
-    public synchronized EditorKit createAndSetupNewEditorKit(EditorKitFactory editorKitFactory, URI uri) throws Exception {
-        logger.debug("[ProtegeManager] Creating and setting up new EditorKit.  Factory: {}, URI: {}", editorKitFactory, uri);
-        if (editorKitFactory != null) {
-            boolean success = false;
-            EditorKit editorKit = editorKitFactory.createEditorKit();
-
-            try {
-                if (editorKit.handleLoadFrom(uri)) {
-                    getEditorKitManager().addEditorKit(editorKit);
-                    success = true;
-                    if(getEditorKitManager().getEditorKitCount() == 1) {
-                        firstEditorKit = new WeakReference<>(editorKit);
-                    }
-                    closeFirstEditorKitIfNotModified();
-                    return editorKit;
+    public synchronized EditorKit createAndSetupNewEditorKit(EditorKitFactory ekf, URI uri) throws Exception {
+        LOGGER.debug("[ProtegeManager] Creating and setting up new EditorKit.  Factory: {}, URI: {}", ekf, uri);
+        if (ekf == null) {
+            return null;
+        }
+        boolean success = false;
+        EditorKit kit = ekf.createEditorKit();
+        try {
+            if (kit.handleLoadFrom(uri)) {
+                getEditorKitManager().addEditorKit(kit);
+                success = true;
+                if (getEditorKitManager().getEditorKitCount() == 1) {
+                    firstEditorKit = new WeakReference<>(kit);
                 }
+                closeFirstEditorKitIfNotModified();
+                return kit;
             }
-            finally {
-                if (!success) {
-                    editorKit.dispose();
-                }
+        } finally {
+            if (!success) {
+                kit.dispose();
             }
         }
         return null;
     }
 
-
     public synchronized boolean createAndSetupNewEditorKit(EditorKitFactoryPlugin plugin, URI uri) throws Exception {
         EditorKitFactory editorKitFactory = getEditorKitFactory(plugin);
         return createAndSetupNewEditorKit(editorKitFactory, uri) != null;
     }
-
 
     /**
      * Opens an <code>EditorKit</code> using the <code>EditorKitFactory</code> specified by the given Id.
@@ -227,50 +226,50 @@ public class ProtegeManager {
             return;
         }
         EditorKit firstEditorKit = this.firstEditorKit.get();
-        if(firstEditorKit == null) {
+        if (firstEditorKit == null) {
             return;
         }
         EditorKitManager editorKitManager = getEditorKitManager();
-        if(!firstEditorKit.hasModifiedDocument()) {
+        if (!firstEditorKit.hasModifiedDocument()) {
             editorKitManager.getWorkspaceManager().doClose(firstEditorKit.getWorkspace());
         }
     }
 
-
-    public synchronized boolean loadAndSetupEditorKitFromURI(EditorKitFactoryPlugin plugin, URI uri) throws Exception {
-        logger.debug("[ProtegeManager] Creating and loading EditorKit.  Factory: {}, URI: {}", plugin, uri);
+    public synchronized boolean loadAndSetupEditorKitFromURI(EditorKitFactoryPlugin plugin, OWLSource src) throws Exception {
+        LOGGER.debug("[ProtegeManager] Creating and loading EditorKit.  Factory: {}, URI: {}", plugin, src.toURI());
         EditorKitFactory editorKitFactory = getEditorKitFactory(plugin);
-        if (editorKitFactory != null) {
-            boolean success = false;
-            EditorKit editorKit = editorKitFactory.createEditorKit();
-            try {
-                if (editorKit.handleLoadFrom(uri)) {
-                    getEditorKitManager().addEditorKit(editorKit);
-                    closeFirstEditorKitIfNotModified();
-                    success = true;
-                    return true;
-                }
+        if (editorKitFactory == null) {
+            return false;
+        }
+
+        EditorKit kit = editorKitFactory.createEditorKit();
+        OWLOntologyLoaderConfiguration conf = src.configure(kit.getLoadConfig());
+        boolean res = false;
+        try {
+            if (kit.handleLoadFrom(src.toURI(), conf)) {
+                getEditorKitManager().addEditorKit(kit);
+                closeFirstEditorKitIfNotModified();
+                return res = true;
             }
-            finally {
-                if (!success) {
-                    editorKit.dispose();
-                }
+        } finally {
+            if (!res) {
+                kit.dispose();
             }
         }
         return false;
     }
 
-
     public boolean openAndSetupRecentEditorKit(EditorKitDescriptor editorKitDescriptor) throws Exception {
         for (EditorKitFactoryPlugin plugin : getEditorKitFactoryPlugins()) {
-            if (plugin.getId().equals(editorKitDescriptor.getEditorKitFactoryID())) {
-                EditorKitFactory editorKitFactory = getEditorKitFactory(plugin);
-                EditorKit editorKit = editorKitFactory.createEditorKit();
-                if (editorKit.handleLoadRecentRequest(editorKitDescriptor)) {
-                    getEditorKitManager().addEditorKit(editorKit);
-                    closeFirstEditorKitIfNotModified();
-                    return true;
-                }
+            if (!plugin.getId().equals(editorKitDescriptor.getEditorKitFactoryID())) {
+                continue;
+            }
+            EditorKitFactory editorKitFactory = getEditorKitFactory(plugin);
+            EditorKit editorKit = editorKitFactory.createEditorKit();
+            if (editorKit.handleLoadRecentRequest(editorKitDescriptor)) {
+                getEditorKitManager().addEditorKit(editorKit);
+                closeFirstEditorKitIfNotModified();
+                return true;
             }
         }
         return false;
@@ -289,28 +288,29 @@ public class ProtegeManager {
                                                        OntologyRepositoryEntry entry) throws Exception {
         for (EditorKitFactoryPlugin plugin : getEditorKitFactoryPlugins()) {
             String id = plugin.getId();
-            if (id.equals(entry.getEditorKitId())) {
-                boolean success = false;
-                EditorKitFactory editorKitFactory = getEditorKitFactory(plugin);
-                if (editorKitFactory != null) {
-                    EditorKit editorKit = editorKitFactory.createEditorKit();
-                    try {
-                        entry.configureEditorKit(editorKit);
-                        if (editorKit.handleLoadFrom(entry.getPhysicalURI())) {
-                            getEditorKitManager().addEditorKit(editorKit);
-                            closeFirstEditorKitIfNotModified();
-                            success = true;
-                        }
-                    }
-                    finally {
-                        entry.restoreEditorKit(editorKit);
-                        if (!success) {
-                            editorKit.dispose();
-                        }
-                    }
-                }
+            if (!id.equals(entry.getEditorKitId())) {
+                continue;
+            }
+            boolean success = false;
+            EditorKitFactory editorKitFactory = getEditorKitFactory(plugin);
+            if (editorKitFactory == null) {
                 return success;
             }
+            EditorKit editorKit = editorKitFactory.createEditorKit();
+            try {
+                entry.configureEditorKit(editorKit);
+                if (editorKit.handleLoadFrom(entry.getPhysicalURI())) {
+                    getEditorKitManager().addEditorKit(editorKit);
+                    closeFirstEditorKitIfNotModified();
+                    success = true;
+                }
+            } finally {
+                entry.restoreEditorKit(editorKit);
+                if (!success) {
+                    editorKit.dispose();
+                }
+            }
+            return success;
         }
         return false;
     }
@@ -319,12 +319,10 @@ public class ProtegeManager {
         editorKit.handleSave();
     }
 
-
     public void saveEditorKitAs(EditorKit editorKit) throws Exception {
         editorKit.handleSaveAs();
         getFrame(editorKit.getWorkspace()).updateTitle();
     }
-
 
     /**
      * Closes an <code>EditorKit</code>.  This disposes of the editor kit's <code>Workspace</code>, and
@@ -336,12 +334,11 @@ public class ProtegeManager {
             editorKit.dispose();
         }
         catch (Exception e) {
-            logger.warn("An error occurred whilst trying to dispose of the editor kit '{}': {}", editorKit.getId(), e);
+            LOGGER.warn("An error occurred whilst trying to dispose of the editor kit '{}': {}", editorKit.getId(), e);
         }
         System.gc();
         application.handleClose();
     }
-
 
     /**
      * Gets an <code>EditorKitFactory</code> by its corresponding plugin.
@@ -362,18 +359,16 @@ public class ProtegeManager {
     }
 
     private void setupRepositories() {
-            OntologyRepositoryFactoryPluginLoader loader = new OntologyRepositoryFactoryPluginLoader();
-            for(OntologyRepositoryFactoryPlugin plugin : loader.getPlugins()) {
-                try {
-                    OntologyRepositoryFactory factory = plugin.newInstance();
-                    factory.initialise();
-                    OntologyRepositoryManager.getManager().addRepository(factory.createRepository());
-                }
-                // CATCH EVERYTHING!  We don't want to bring down P4 even before it has appeared to start!
-                catch (Throwable e) {
-                    logger.warn("An error occurred whilst attempting to load an ontology repository.  " +
-                            "Ontology Repository Plugin: ", plugin.getId(), e);
-                }
+        OntologyRepositoryFactoryPluginLoader loader = new OntologyRepositoryFactoryPluginLoader();
+        for (OntologyRepositoryFactoryPlugin plugin : loader.getPlugins()) {
+            try {
+                OntologyRepositoryFactory factory = plugin.newInstance();
+                factory.initialise();
+                OntologyRepositoryManager.getManager().addRepository(factory.createRepository());
+            } catch (Throwable e) { // CATCH EVERYTHING!  We don't want to bring down P4 even before it has appeared to start!
+                LOGGER.warn("An error occurred whilst attempting to load an ontology repository.  " +
+                        "Ontology Repository Plugin: {}", plugin.getId(), e);
             }
+        }
     }
 }

@@ -3,6 +3,7 @@ package org.protege.editor.core.editorkit;
 import org.protege.editor.core.Disposable;
 import org.protege.editor.core.ModelManager;
 import org.protege.editor.core.ui.workspace.Workspace;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -51,14 +52,12 @@ public interface EditorKit extends Disposable {
 
     @Nullable
     Disposable get(Object key);
-    
 
     /**
      * Gets the factory that created the editor kit.
      */
     @Nonnull
     EditorKitFactory getEditorKitFactory();
-
 
     /**
      * Gets the <code>Workspace</code> that is used in the UI to
@@ -67,7 +66,6 @@ public interface EditorKit extends Disposable {
     @Nonnull
     Workspace getWorkspace();
 
-
     /**
      * Gets the "model" that the editor kit edits.  This will
      * probably contain one or more ontologies.
@@ -75,31 +73,28 @@ public interface EditorKit extends Disposable {
     @Nonnull
     ModelManager getModelManager();
 
-
     /**
      * Called by the system to initialise the editorkit to an
      * "new" or "empty" state.  This is typically called in response
      * to a File->New request for example.
-     * @return <code>true</code> in an new/empty editorkit and
-     *         model was successfully created. <code>false</code> if the
-     *         intialisation sequence was cancelled or didn't complete.
-     * @throws Exception This exception is thrown if there were
-     *                   errors.
+     *
+     * @return <code>true</code> in an new/empty editorkit and model was successfully created.
+     * <code>false</code> if the initialization sequence was cancelled or didn't complete.
+     * @throws Exception This exception is thrown if there were errors.
      */
     boolean handleNewRequest() throws Exception;
 
-
     boolean handleLoadRequest() throws Exception;
-
 
     boolean handleLoadFrom(@Nonnull URI uri) throws Exception;
 
+    boolean handleLoadFrom(URI uri, OWLOntologyLoaderConfiguration conf);
+
+    OWLOntologyLoaderConfiguration getLoadConfig();
 
     boolean handleLoadRecentRequest(@Nonnull EditorKitDescriptor descriptor) throws Exception;
 
-
     void handleSave() throws Exception;
-
 
     void handleSaveAs() throws Exception;
 

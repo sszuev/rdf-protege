@@ -237,7 +237,7 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
 
     void refreshRenderer();
 
-    OWLObjectRenderer getOWLObjectRenderer();
+    OWLObjectRenderer<?> getOWLObjectRenderer();
 
 
     OWLExpressionCheckerFactory getOWLExpressionCheckerFactory();

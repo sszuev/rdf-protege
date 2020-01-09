@@ -67,59 +67,50 @@ public class FilePathPanel extends JPanel {
             }
         });
         add(new JButton(browseAction = new AbstractAction("Browse...") {
-            /**
-             * 
-             */
             private static final long serialVersionUID = -392303565634614444L;
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (selectFolders) {
                     browseForFolder();
-                }
-                else {
+                } else {
                     browseForFile();
                 }
             }
         }), BorderLayout.EAST);
     }
 
-
     public int getDialogMode() {
         return dialogMode;
     }
-
 
     public void setDialogMode(int dialogMode) {
         this.dialogMode = dialogMode;
     }
 
-
+    @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         textField.setEnabled(enabled);
         browseAction.setEnabled(enabled);
     }
 
-
     public void setPath(String path) {
         textField.setText(path);
     }
-
 
     public void setSelectsFolders(boolean selectFolders) {
         this.selectFolders = selectFolders;
     }
 
-
     public void browseForFile() {
         Window f = (Window) SwingUtilities.getAncestorOfClass(Window.class, this);
-        File file = dialogMode == OPEN_DIALOG_MODE ? UIUtil.openFile(f, fileChooserText, "OWL File", extensions) : 
-                                                     UIUtil.saveFile(new JFrame(),fileChooserText, "OWL File", extensions);
+        File file = dialogMode == OPEN_DIALOG_MODE ? UIUtil.openFile(f, fileChooserText, "OWL File", extensions) :
+                UIUtil.saveFile(new JFrame(), fileChooserText, "OWL File", extensions);
         if (file != null) {
             textField.setText(file.toString());
         }
     }
-
 
     public void browseForFolder() {
         File f = UIUtil.chooseFolder(this, "Select a folder");
@@ -128,16 +119,13 @@ public class FilePathPanel extends JPanel {
         }
     }
 
-
     public void addChangeListener(ChangeListener changeListener) {
         listeners.add(changeListener);
     }
 
-
     public void removeChangeListener(ChangeListener changeListener) {
         listeners.remove(changeListener);
     }
-
 
     protected void fireChange() {
         for (ChangeListener listener : new ArrayList<>(listeners)) {
@@ -145,12 +133,11 @@ public class FilePathPanel extends JPanel {
         }
     }
 
-
     public File getFile() {
         return new File(textField.getText());
     }
 
-
+    @Override
     public void requestFocus() {
         // Pass on
         textField.requestFocus();

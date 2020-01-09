@@ -1,5 +1,6 @@
 package org.github.owlcs.ontapi;
 
+import com.github.owlcs.ontapi.DataFactory;
 import com.github.owlcs.ontapi.OntApiException;
 import com.github.owlcs.ontapi.OntManagers;
 import com.github.owlcs.ontapi.OntologyManager;
@@ -40,13 +41,13 @@ public class OWLManager {
     public static OntologyManager createConcurrentOWLOntologyManager() {
         OntologyManager res = OntManagers.createConcurrentONT();
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("OWLOntologyManager: {}", res);
+            LOGGER.debug("ConcurrentOWLOntologyManager: {}", res);
         }
         return res;
     }
 
-    public static OWLDataFactory getOWLDataFactory() {
-        OWLDataFactory res = OntManagers.getDataFactory();
+    public static DataFactory getOWLDataFactory() {
+        DataFactory res = OntManagers.getDataFactory();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("OWLDataFactory: {}", res);
         }

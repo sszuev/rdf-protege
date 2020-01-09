@@ -1,6 +1,8 @@
 package org.protege.editor.owl.ui;
 
+import org.protege.editor.core.OWLSource;
 import org.protege.editor.core.ui.util.JOptionPaneEx;
+import org.protege.editor.core.ui.util.LoadSettingsPanel;
 import org.protege.editor.core.ui.util.UIUtil;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.OWLModelManager;
@@ -15,8 +17,8 @@ import java.awt.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 
 /**
@@ -28,11 +30,11 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
+@SuppressWarnings("unused")
 public class UIHelper {
 
-    private OWLEditorKit owlEditorKit;
+    public static final Set<String> OWL_EXTENSIONS;
 
-    public final static Set<String> OWL_EXTENSIONS;
     static {
     	Set<String> extensions = new HashSet<>();
         extensions.add("owl");
@@ -49,21 +51,19 @@ public class UIHelper {
         OWL_EXTENSIONS = Collections.unmodifiableSet(extensions);
     }
 
+    private OWLEditorKit owlEditorKit;
 
     public UIHelper(OWLEditorKit owlEditorKit) {
         this.owlEditorKit = owlEditorKit;
     }
 
-
     private JComponent getParent() {
         return owlEditorKit.getWorkspace();
     }
 
-
     private OWLModelManager getOWLModelManager() {
         return owlEditorKit.getModelManager();
     }
-
 
     public URI getURI(String title, String message) throws URISyntaxException {
         String uriString = JOptionPane.showInputDialog(getParent(), message, title, JOptionPane.INFORMATION_MESSAGE);
@@ -73,56 +73,39 @@ public class UIHelper {
         return new URI(uriString);
     }
 
-
     public OWLClass pickOWLClass() {
         OWLClassSelectorPanel clsPanel = new OWLClassSelectorPanel(owlEditorKit);
         int ret = showDialog("Select a class", clsPanel);
         clsPanel.dispose();
-        if (ret == JOptionPane.OK_OPTION) {
-            return clsPanel.getSelectedObject();
-        }
-        else {
+        if (ret != JOptionPane.OK_OPTION) {
             return null;
         }
+        return clsPanel.getSelectedObject();
     }
-
 
     public OWLIndividual pickOWLIndividual() {
         OWLIndividualSelectorPanel indPanel = owlEditorKit.getOWLWorkspace().getOWLComponentFactory().getOWLIndividualSelectorPanel();
         int ret = showDialog("Select an individual", indPanel);
-        if (ret == JOptionPane.OK_OPTION) {
-            OWLIndividual ind = indPanel.getSelectedObject();
-            indPanel.dispose();
-            return ind;
-        }
-        else {
+        if (ret != JOptionPane.OK_OPTION) {
             return null;
         }
+        OWLIndividual ind = indPanel.getSelectedObject();
+        indPanel.dispose();
+        return ind;
     }
-
 
     public OWLOntology pickOWLOntology() {
         OWLOntologySelectorPanel ontPanel = new OWLOntologySelectorPanel(owlEditorKit);
         ontPanel.setMultipleSelectionEnabled(false);
         int ret = showDialog("Select an ontology", ontPanel);
-        if (ret == JOptionPane.OK_OPTION){
-            return ontPanel.getSelectedOntology();
-        }
-        else{
-            return null;
-        }
+        return ret == JOptionPane.OK_OPTION ? ontPanel.getSelectedOntology() : null;
     }
 
 
     public Set<OWLOntology> pickOWLOntologies() {
         OWLOntologySelectorPanel ontPanel = new OWLOntologySelectorPanel(owlEditorKit);
         int ret = showDialog("Select ontologies", ontPanel);
-        if (ret == JOptionPane.OK_OPTION) {
-            return ontPanel.getSelectedOntologies();
-        }
-        else {
-            return Collections.emptySet();
-        }
+        return ret == JOptionPane.OK_OPTION ? ontPanel.getSelectedOntologies() : Collections.emptySet();
     }
 
 
@@ -165,78 +148,46 @@ public class UIHelper {
                                                          focusedComponent);
     }
 
-
     public OWLObjectProperty pickOWLObjectProperty() {
-        OWLObjectPropertySelectorPanel objPropPanel = owlEditorKit.getOWLWorkspace().getOWLComponentFactory().getOWLObjectPropertySelectorPanel();
-        if (showDialog("Select an object property", objPropPanel) == JOptionPane.OK_OPTION) {
-            return objPropPanel.getSelectedObject();
-        }
-        else {
-            return null;
-        }
+        OWLObjectPropertySelectorPanel p = owlEditorKit.getOWLWorkspace().getOWLComponentFactory().getOWLObjectPropertySelectorPanel();
+        return showDialog("Select an object property", p) == JOptionPane.OK_OPTION ? p.getSelectedObject() : null;
     }
-
 
     public OWLDataProperty pickOWLDataProperty() {
-        OWLDataPropertySelectorPanel panel = owlEditorKit.getOWLWorkspace().getOWLComponentFactory().getOWLDataPropertySelectorPanel();
-        if (showDialog("Select an object property", panel) == JOptionPane.OK_OPTION) {
-            return panel.getSelectedObject();
-        }
-        else {
-            return null;
-        }
+        OWLDataPropertySelectorPanel p = owlEditorKit.getOWLWorkspace().getOWLComponentFactory().getOWLDataPropertySelectorPanel();
+        return showDialog("Select an object property", p) == JOptionPane.OK_OPTION ? p.getSelectedObject() : null;
     }
-
 
     public OWLDatatype pickOWLDatatype() {
         OWLDataTypeSelectorPanel panel = new OWLDataTypeSelectorPanel(owlEditorKit);
-        if (showDialog("Select a datatype", panel) == JOptionPane.OK_OPTION) {
-            return panel.getSelectedObject();
-        }
-        else{
-            return null;
-        }
+        return showDialog("Select a datatype", panel) == JOptionPane.OK_OPTION ? panel.getSelectedObject() : null;
     }
-
 
     public <E extends OWLEntity> E pickOWLEntity(String message, Set<E> entities, OWLModelManager owlModelManager) {
         OWLEntityListPanel<E> panel = new OWLEntityListPanel<>(message, entities, owlEditorKit);
-        if (showDialog("Select an entity", panel) == JOptionPane.OK_OPTION) {
-            return panel.getSelectedObject();
-        }
-        else {
-            return null;
-        }
+        return showDialog("Select an entity", panel) == JOptionPane.OK_OPTION ? panel.getSelectedObject() : null;
     }
-
 
     public OWLAnnotationProperty pickAnnotationProperty() {
-    	OWLAnnotationPropertySelectorPanel panel = new OWLAnnotationPropertySelectorPanel(owlEditorKit);
-    	try {
-    		if (showDialog("Select an annotation property", panel) == JOptionPane.OK_OPTION) {
-    			return panel.getSelectedObject();
-    		}
-    		else{
-    			return null;
-    		}
-    	}
-    	finally {
-    		panel.dispose();
-    	}
+        OWLAnnotationPropertySelectorPanel panel = new OWLAnnotationPropertySelectorPanel(owlEditorKit);
+        try {
+            return showDialog("Select an annotation property", panel) == JOptionPane.OK_OPTION ?
+                    panel.getSelectedObject() : null;
+        } finally {
+            panel.dispose();
+        }
     }
-
 
     public String getHTMLOntologyList(Collection<OWLOntology> ontologies) {
         StringBuilder result = new StringBuilder();
         for (OWLOntology ont : ontologies) {
-            java.util.Optional<IRI> defaultDocumentIRI = ont.getOntologyID().getDefaultDocumentIRI();
+            Optional<IRI> defaultDocumentIRI = ont.getOntologyID().getDefaultDocumentIRI();
             if (defaultDocumentIRI.isPresent()) {
                 if (getOWLModelManager().getActiveOntology().equals(ont)) {
                     result.append("<font color=\"0000ff\"><b>");
                     result.append(defaultDocumentIRI.get());
                     result.append("</font></b>");
-                }
-                else {
+                } else {
                     result.append(defaultDocumentIRI);
                 }
             }
@@ -254,28 +205,25 @@ public class UIHelper {
         return JOptionPane.showConfirmDialog(getParent(), message, title, optionType, messageType);
     }
 
-
-    public File chooseOWLFile(String title) {
-        JFrame f = (JFrame) SwingUtilities.getAncestorOfClass(JFrame.class, getParent());
-        if (f == null) {
-            f = new JFrame();
+    public OWLSource chooseOWLFile(String title) {
+        JFrame frame = (JFrame) SwingUtilities.getAncestorOfClass(JFrame.class, getParent());
+        if (frame == null) {
+            frame = new JFrame();
         }
-        return UIUtil.openFile(f, title, "OWL File", OWL_EXTENSIONS);
+        LoadSettingsPanel panel = new LoadSettingsPanel(true);
+        File file = UIUtil.openFile(frame, title, "OWL File", OWL_EXTENSIONS, panel);
+        Map<String, Object> props = panel.getProperties();
+        return OWLSource.create(file, props);
     }
-
 
     public File saveOWLFile(String title) {
         return UIUtil.saveFile((JFrame) SwingUtilities.getAncestorOfClass(JFrame.class, getParent()),
-                               title,
-                               "OWL File", 
-                               OWL_EXTENSIONS);
+                title, "OWL File", OWL_EXTENSIONS);
     }
-
 
     public OWLLiteral createConstant() {
         return null;
     }
-
 
     public JComboBox<String> getLanguageSelector() {
         JComboBox<String> c = new JComboBox<>();
@@ -285,17 +233,20 @@ public class UIHelper {
         return c;
     }
 
-
+    @SuppressWarnings("unchecked")
     public JComboBox<OWLDatatype> getDatatypeSelector() {
         final OWLModelManager mngr = getOWLModelManager();
-        List<OWLDatatype> datatypeList = new ArrayList<>(new OWLDataTypeUtils(mngr.getOWLOntologyManager()).getKnownDatatypes(mngr.getActiveOntologies()));
+        List<OWLDatatype> datatypeList =
+                new ArrayList<>(new OWLDataTypeUtils(mngr.getOWLOntologyManager())
+                        .getKnownDatatypes(mngr.getActiveOntologies()));
 
-        Collections.sort(datatypeList, mngr.getOWLObjectComparator());
+        datatypeList.sort(mngr.getOWLObjectComparator());
         datatypeList.add(0, null);
 
-        JComboBox<OWLDatatype> c = new JComboBox<>(new DefaultComboBoxModel<>(datatypeList.toArray(new OWLDatatype [datatypeList.size()])));
+        JComboBox<OWLDatatype> c = new JComboBox<>(new DefaultComboBoxModel<>(datatypeList.toArray(new OWLDatatype[0])));
         c.setPreferredSize(new Dimension(120, c.getPreferredSize().height));
         c.setRenderer(new OWLCellRendererSimple(owlEditorKit));
         return c;
     }
+
 }

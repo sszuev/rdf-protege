@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
+import java.net.URI;
 
 
 /**
@@ -20,38 +20,37 @@ import java.io.File;
  */
 public class LoadIntoCurrentModelAction extends ProtegeOWLAction {
 
-    private Logger logger = LoggerFactory.getLogger(LoadIntoCurrentModelAction.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadIntoCurrentModelAction.class);
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         UIHelper helper = new UIHelper(getOWLEditorKit());
         if (helper.showOptionPane("Load ontology?",
-                                  "This will open an ontology into the current set of ontologies.\n" + "Do you want to continue?",
-                                  JOptionPane.YES_NO_OPTION,
-                                  JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+                "This will open an ontology into the current set of ontologies.\n" + "Do you want to continue?",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             loadOntology();
         }
     }
 
-
     private void loadOntology() {
         UIHelper helper = new UIHelper(getOWLEditorKit());
-        File file = helper.chooseOWLFile("Select an OWL ontology file");
+        URI file = helper.chooseOWLFile("Select an OWL ontology file").toURI();
         if (file == null) {
             return;
         }
         try {
-            getOWLEditorKit().handleLoadFrom(file.toURI());
-        }
-        catch (Exception e) {
-            logger.error("An error occurred when loading an ontology from {}", file.getAbsolutePath(), e);
+            getOWLEditorKit().handleLoadFrom(file);
+        } catch (Exception e) {
+            LOGGER.error("An error occurred when loading an ontology from {}", file, e);
         }
     }
 
-
+    @Override
     public void dispose() {
     }
 
-
+    @Override
     public void initialise() throws Exception {
     }
 }

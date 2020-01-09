@@ -39,6 +39,9 @@ import org.protege.editor.owl.ui.renderer.*;
 import org.protege.editor.owl.ui.renderer.plugin.RendererPlugin;
 import org.protege.xmlcatalog.XMLCatalog;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import org.semanticweb.owlapi.io.FileDocumentSource;
+import org.semanticweb.owlapi.io.IRIDocumentSource;
+import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.PriorityCollection;
@@ -49,12 +52,17 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
 /**
+ * The <code>OWLModelManager</code> acts as a controller over a collection of ontologies
+ * (ontologies that are related to each other via owl:imports) and
+ * the various UI components that are used to access the ontology.
+ * <p>
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
@@ -63,15 +71,12 @@ import java.util.stream.Collectors;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  * <p/>
- * The <code>OWLModelManager</code> acts as a controller
- * over a collection of ontologies (ontologies that are
- * related to each other via owl:imports) and the various
- * UI components that are used to access the ontology.
  */
 public class OWLModelManagerImpl extends AbstractModelManager
-        implements OWLModelManager, OWLEntityRendererListener, OWLOntologyChangeListener, OWLOntologyLoaderListener, IOListenerManager {
+        implements OWLModelManager, OWLEntityRendererListener,
+        OWLOntologyChangeListener, OWLOntologyLoaderListener, IOListenerManager {
 
-    private final Logger logger = LoggerFactory.getLogger(OWLModelManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OWLModelManagerImpl.class);
 
     private final HistoryManager historyManager;
     private final OWLReasonerManager owlReasonerManager;
@@ -99,7 +104,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
     private final ListenerManager<OWLOntologyChangeListener> changeListenerManager = new ListenerManager<>();
     private final List<IOListener> ioListeners = new ArrayList<>();
     private OWLModelManagerEntityRenderer entityRenderer;
-    private OWLObjectRenderer objectRenderer;
+    private OWLObjectRenderer<?> objectRenderer;
     private OWLOntology activeOntology;
     private OWLEntityRenderingCache owlEntityRenderingCache;
     /**
@@ -125,9 +130,9 @@ public class OWLModelManagerImpl extends AbstractModelManager
 
 
     public OWLModelManagerImpl() {
-        super();
-
+        // todo: is a concurrent manager instance justified in a single-session desktop application ?
         manager = OWLManager.createConcurrentOWLOntologyManager();
+
         manager.addOntologyChangeListener(this);
         manager.addOntologyLoaderListener(this);
 
@@ -155,14 +160,11 @@ public class OWLModelManagerImpl extends AbstractModelManager
         owlReasonerManager = new OWLReasonerManagerImpl(this);
         owlReasonerManager.getReasonerPreferences().addListener(() -> fireEvent(EventType.ONTOLOGY_CLASSIFIED));
 
-
         // force the renderer to be created
         // to prevent double cache rebuild once ontologies loaded
         getOWLEntityRenderer();
 
         put(OntologySourcesManager.ID, new OntologySourcesManager(this));
-
-
     }
 
     @Override
@@ -180,14 +182,14 @@ public class OWLModelManagerImpl extends AbstractModelManager
             }
             owlReasonerManager.dispose();
         } catch (Exception e) {
-            logger.error("An error occurred whilst disposing of the model manager: {}", e.getMessage(), e);
+            LOGGER.error("An error occurred whilst disposing of the model manager: {}", e.getMessage(), e);
         }
 
         // Name and shame plugins that do not (or can't be bothered to) clean up
         // their listeners!
-        modelManagerListenerManager.dumpWarningForAllListeners(logger, "(Listeners should be removed in the plugin dispose method!)");
+        modelManagerListenerManager.dumpWarningForAllListeners(LOGGER, "(Listeners should be removed in the plugin dispose method!)");
 
-        changeListenerManager.dumpWarningForAllListeners(logger, "(Listeners should be removed in the plugin dispose method!)");
+        changeListenerManager.dumpWarningForAllListeners(LOGGER, "(Listeners should be removed in the plugin dispose method!)");
     }
 
     @Override
@@ -255,29 +257,42 @@ public class OWLModelManagerImpl extends AbstractModelManager
     /**
      * A convenience method that loads an ontology from a file
      * The location of the file is specified by the URI argument.
+     *
+     * @param uri  - {@link URI}, not {@code null}
+     * @param conf - {@link OWLOntologyLoaderConfiguration} or {@code null} to use default
+     * @return {@code true} in case of success
      */
-    public boolean loadOntologyFromPhysicalURI(URI uri) {
+    public boolean loadOntologyFromPhysicalURI(URI uri, OWLOntologyLoaderConfiguration conf) {
         Stopwatch stopwatch = Stopwatch.createUnstarted();
         try {
-            logger.info(LogBanner.start("Loading Ontology"));
-            logger.info("Loading ontology from {}", uri);
+            LOGGER.info(LogBanner.start("Loading Ontology"));
+            LOGGER.info("Loading ontology from {}", uri);
             stopwatch.start();
+            OWLOntologyDocumentSource src;
+            if (conf == null) {
+                conf = getOWLOntologyManager().getOntologyLoaderConfiguration();
+            }
+            conf = conf.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+
             if (UIUtil.isLocalFile(uri)) {
                 // Load the URIs of other ontologies that are contained in the same folder.
                 File parentFile = new File(uri).getParentFile();
                 addRootFolder(parentFile);
+                src = new FileDocumentSource(Paths.get(uri).toFile());
+            } else {
+                src = new IRIDocumentSource(IRI.create(uri));
             }
-            OntologyLoader loader = new OntologyLoader(this, userResolvedIRIMapper);
-            Optional<OWLOntology> loadedOntology = loader.loadOntology(uri);
-            logger.info("Loading for ontology and imports closure successfully completed in {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            loadedOntology.ifPresent(ontology -> {
+            Optional<OWLOntology> loadedOntology = new OntologyLoader(this, userResolvedIRIMapper).loadOntology(src, conf);
+            LOGGER.info("Loading for ontology and imports closure successfully completed in {} ms",
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            loadedOntology.ifPresent(o -> {
                 DocumentFormatUpdater formatUpdater = new DocumentFormatUpdater(new DocumentFormatMapper());
-                formatUpdater.updateFormat(ontology);
+                formatUpdater.updateFormat(o);
             });
-            logger.info(LogBanner.end());
+            LOGGER.info(LogBanner.end());
             return loadedOntology.isPresent();
         } catch (OWLOntologyCreationException e) {
-            OWLOntologyID id = new OWLOntologyID(java.util.Optional.of(IRI.create(uri)), java.util.Optional.empty());
+            OWLOntologyID id = new OWLOntologyID(Optional.of(IRI.create(uri)), Optional.empty());
             handleLoadError(id, uri, e);
             return false;
         }
@@ -285,7 +300,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
 
     @Override
     public void startedLoadingOntology(LoadingStartedEvent event) {
-        logger.info("Loading {} from {}", event.getOntologyID(), event.getDocumentIRI());
+        LOGGER.info("Loading {} from {}", event.getOntologyID(), event.getDocumentIRI());
         fireBeforeLoadEvent(event.getOntologyID(), event.getDocumentIRI().toURI());
     }
 
@@ -298,13 +313,14 @@ public class OWLModelManagerImpl extends AbstractModelManager
     }
 
     private void handleLoadError(OWLOntologyID owlOntologyID, URI documentURI, Exception e) {
-        if (loadErrorHandler != null) {
-            try {
-                loadErrorHandler.handleErrorLoadingOntology(owlOntologyID, documentURI, e);
-            } catch (Throwable e1) {
-                // if, for any reason, the loadErrorHandler cannot report the error
-                ErrorLogPanel.showErrorDialog(e1);
-            }
+        if (loadErrorHandler == null) {
+            return;
+        }
+        try {
+            loadErrorHandler.handleErrorLoadingOntology(owlOntologyID, documentURI, e);
+        } catch (Throwable e1) {
+            // if, for any reason, the loadErrorHandler cannot report the error
+            ErrorLogPanel.showErrorDialog(e1);
         }
     }
 
@@ -319,7 +335,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
             try {
                 listener.beforeLoad(new IOListenerEvent(ontologyID, physicalURI));
             } catch (Throwable e) {
-                logger.warn("An IOListener threw an exception during event dispatch: {}", e.getMessage());
+                LOGGER.warn("An IOListener threw an exception during event dispatch: {}", e.getMessage());
             }
         }
     }
@@ -337,7 +353,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
             try {
                 listener.afterLoad(new IOListenerEvent(ontologyID, physicalURI));
             } catch (Throwable e) {
-                logger.warn("An IOListener threw an exception during event dispatch: {}", e.getMessage());
+                LOGGER.warn("An IOListener threw an exception during event dispatch: {}", e.getMessage());
             }
         }
     }
@@ -347,8 +363,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
         IRI ontologyDocumentIRI = manager.getOntologyDocumentIRI(ontology);
         if (isDefaultOWLAPIDocumentIRI(ontologyDocumentIRI)) {
             return URI.create("");
-        }
-        else {
+        } else {
             return ontologyDocumentIRI.toURI();
         }
     }
@@ -378,7 +393,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
                     getOntologyCatalogManager().addFolder(containingDirectory);
                 }
             } catch (IllegalArgumentException iae) {
-                logger.warn("Cannot generate ontology catalog for ontology at " + physicalURI);
+                LOGGER.warn("Cannot generate ontology catalog for ontology at " + physicalURI);
             }
         }
         fireEvent(EventType.ONTOLOGY_CREATED);
@@ -409,11 +424,13 @@ public class OWLModelManagerImpl extends AbstractModelManager
     @Override
     public boolean removeOntology(OWLOntology ont) {
         if (ont.equals(activeOntology)) {
-            logger.debug("Request received to remove an ontology that is the active ontology.  Cannot remove the active ontology.  Ignoring request.");
+            LOGGER.debug("Request received to remove an ontology that is the active ontology.  " +
+                    "Cannot remove the active ontology.  Ignoring request.");
             return false;
         }
         if (manager.contains(ont.getOntologyID()) && manager.ontologies().count() == 1) {
-            logger.debug("Request received to remove the one and only ontology that is open.  This is not allowed.  Ignoring request.");
+            LOGGER.debug("Request received to remove the one and only ontology that is open.  " +
+                    "This is not allowed.  Ignoring request.");
             return false;
         }
         activeOntologies.remove(ont);
@@ -458,11 +475,9 @@ public class OWLModelManagerImpl extends AbstractModelManager
         final OWLDocumentFormat previousFormat = manager.getOntologyFormat(ont);
         if (previousFormat == null) {
             format = new RDFXMLDocumentFormat();
-            logger.info("No document format for {} has been found.  " +
-                            "Using the {} format.",
+            LOGGER.info("No document format for {} has been found.  Using the {} format.",
                     ont.getOntologyID(), format);
-        }
-        else {
+        } else {
             format = previousFormat;
         }
                 /*
@@ -478,7 +493,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
         saver.saveOntologies();
         ensureCatalogFileExists();
         manager.setOntologyDocumentIRI(ont, documentIRI);
-        logger.info("Saved ontology {} to {} in {} format", ont.getOntologyID(), documentIRI, format);
+        LOGGER.info("Saved ontology {} to {} in {} format", ont.getOntologyID(), documentIRI, format);
 
         dirtyOntologies.remove(ont.getOntologyID());
 
@@ -496,7 +511,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
                 getOntologyCatalogManager().ensureCatalogExists(parentDirectory);
             }
         } catch (IllegalArgumentException e) {
-            logger.error("A problem occurred when trying to save the catalog file: {}", e.getMessage());
+            LOGGER.error("A problem occurred when trying to save the catalog file: {}", e.getMessage());
         }
     }
 
@@ -506,7 +521,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
             try {
                 listener.beforeSave(new IOListenerEvent(ontologyID, physicalURI));
             } catch (Throwable e) {
-                logger.warn("An IOListener threw an error during event dispatch: {}", e.getMessage());
+                LOGGER.warn("An IOListener threw an error during event dispatch: {}", e.getMessage());
             }
         }
     }
@@ -523,7 +538,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
             try {
                 listener.afterSave(new IOListenerEvent(ontologyID, physicalURI));
             } catch (Throwable e) {
-                logger.warn("An IOListener threw an error during event dispatch: {}", e.getMessage());
+                LOGGER.warn("An IOListener threw an error during event dispatch: {}", e.getMessage());
             }
         }
     }
@@ -539,8 +554,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
         for (OWLOntologyID ontId : new ArrayList<>(dirtyOntologies)) {
             if (manager.contains(ontId)) {
                 ontologies.add(manager.getOntology(ontId));
-            }
-            else {
+            } else {
                 dirtyOntologies.remove(ontId);
             }
         }
@@ -610,15 +624,11 @@ public class OWLModelManagerImpl extends AbstractModelManager
      *                       of a change in the state of the active ontology.
      */
     private void setActiveOntology(OWLOntology activeOntology, boolean force) {
-        if (!force) {
-            if (this.activeOntology != null) {
-                if (this.activeOntology.equals(activeOntology)) {
-                    return;
-                }
-            }
+        if (!force && this.activeOntology != null && this.activeOntology.equals(activeOntology)) {
+            return;
         }
         this.activeOntology = activeOntology;
-        logger.debug("Setting active ontology to " + activeOntology.getOntologyID());
+        LOGGER.debug("Setting active ontology to {}", activeOntology.getOntologyID());
         rebuildActiveOntologiesCache();
         // Rebuild entity indices
         entityRenderer.ontologiesChanged();
@@ -663,11 +673,11 @@ public class OWLModelManagerImpl extends AbstractModelManager
             if (adcManager != null) {
                 changes = adcManager.getChangeRewriter().rewriteChanges(changes);
             }
-            logger.debug(LogBanner.start("Applying changes"));
-            logger.debug("Number of requested changes: {}", changes.size());
+            LOGGER.debug(LogBanner.start("Applying changes"));
+            LOGGER.debug("Number of requested changes: {}", changes.size());
             List<OWLOntologyChange> minimizedChanges = new ChangeListMinimizer().getMinimisedChanges(changes);
-            logger.debug("Number of minimized changes: {}", minimizedChanges.size());
-            logger.debug(LogBanner.end());
+            LOGGER.debug("Number of minimized changes: {}", minimizedChanges.size());
+            LOGGER.debug(LogBanner.end());
             if (minimizedChanges.isEmpty()) {
                 return;
             }
@@ -737,23 +747,22 @@ public class OWLModelManagerImpl extends AbstractModelManager
 
     @Override
     public void fireEvent(EventType type) {
-        logger.debug("Firing event {}", type);
+        LOGGER.debug("Firing event {}", type);
         Runnable r = () -> {
             OWLModelManagerChangeEvent event = new OWLModelManagerChangeEvent(this, type);
-            logger.debug("Firing model manager event: {}", event);
+            LOGGER.debug("Firing model manager event: {}", event);
             for (OWLModelManagerListener listener : new ArrayList<>(modelManagerChangeListeners)) {
                 try {
                     listener.handleChange(event);
                 } catch (Throwable e) {
-                    logger.warn("Exception thrown by listener: {}.  Detatching bad listener.", listener.getClass().getName());
+                    LOGGER.warn("Exception thrown by listener: {}.  Detatching bad listener.", listener.getClass().getName());
                     modelManagerChangeListeners.remove(listener);
                 }
             }
         };
         if (SwingUtilities.isEventDispatchThread()) {
             r.run();
-        }
-        else {
+        } else {
             SwingUtilities.invokeLater(r);
         }
     }
@@ -777,19 +786,20 @@ public class OWLModelManagerImpl extends AbstractModelManager
 
     @Override
     public OWLModelManagerEntityRenderer getOWLEntityRenderer() {
+        if (entityRenderer != null) {
+            return entityRenderer;
+        }
+        try {
+            OWLRendererPreferences preferences = OWLRendererPreferences.getInstance();
+            RendererPlugin plugin = preferences.getRendererPlugin();
+            entityRenderer = plugin.newInstance();
+            loadRenderer();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            LOGGER.error(e.getMessage());
+        }
         if (entityRenderer == null) {
-            try {
-                OWLRendererPreferences preferences = OWLRendererPreferences.getInstance();
-                RendererPlugin plugin = preferences.getRendererPlugin();
-                entityRenderer = plugin.newInstance();
-                loadRenderer();
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                logger.error(e.getMessage());
-            }
-            if (entityRenderer == null) {
-                entityRenderer = new OWLEntityRendererImpl();
-                loadRenderer();
-            }
+            entityRenderer = new OWLEntityRendererImpl();
+            loadRenderer();
         }
         return entityRenderer;
     }
@@ -802,23 +812,20 @@ public class OWLModelManagerImpl extends AbstractModelManager
     @Override
     public String getRendering(OWLObject object) {
         // Look for a cached version of the rendering first!
-        if (object instanceof OWLEntity) {
-            AnonymousDefinedClassManager adcManager = get(AnonymousDefinedClassManager.ID);
-            if (adcManager != null &&
-                    object instanceof OWLClass &&
-                    adcManager.isAnonymous((OWLClass) object)) {
-                return owlObjectRenderingCache.getRendering(adcManager.getExpression((OWLClass) object), getOWLObjectRenderer());
-            } else {
-                getOWLEntityRenderer();
-                String rendering = owlEntityRenderingCache.getRendering((OWLEntity) object);
-                if (rendering != null) {
-                    return rendering;
-                } else {
-                    return getOWLEntityRenderer().render((OWLEntity) object);
-                }
-            }
+        if (!(object instanceof OWLEntity)) {
+            return owlObjectRenderingCache.getRendering(object, getOWLObjectRenderer());
         }
-        return owlObjectRenderingCache.getRendering(object, getOWLObjectRenderer());
+        AnonymousDefinedClassManager adcManager = get(AnonymousDefinedClassManager.ID);
+        if (adcManager != null && object instanceof OWLClass && adcManager.isAnonymous((OWLClass) object)) {
+            return owlObjectRenderingCache.getRendering(adcManager.getExpression((OWLClass) object), getOWLObjectRenderer());
+        }
+        getOWLEntityRenderer();
+        String rendering = owlEntityRenderingCache.getRendering((OWLEntity) object);
+        if (rendering != null) {
+            return rendering;
+        } else {
+            return getOWLEntityRenderer().render((OWLEntity) object);
+        }
     }
 
     @Override
@@ -838,7 +845,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
             try {
                 entityRenderer.dispose();
             } catch (Exception e) {
-                logger.warn("An error occurred whilst disposing of the entity renderer: {}", e.getMessage());
+                LOGGER.warn("An error occurred whilst disposing of the entity renderer: {}", e.getMessage());
             }
         }
         entityRenderer = null;
@@ -855,7 +862,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
     }
 
     @Override
-    public OWLObjectRenderer getOWLObjectRenderer() {
+    public OWLObjectRenderer<?> getOWLObjectRenderer() {
         return objectRenderer;
     }
 
@@ -895,13 +902,12 @@ public class OWLModelManagerImpl extends AbstractModelManager
         return comparator;
     }
 
-
     private void rebuildEntityIndices() {
         Stopwatch stopwatch = Stopwatch.createStarted();
         owlEntityRenderingCache.rebuild();
         owlObjectRenderingCache.clear();
         stopwatch.stop();
-        logger.debug("Rebuilt entity indices in {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        LOGGER.debug("Rebuilt entity indices in {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -924,7 +930,6 @@ public class OWLModelManagerImpl extends AbstractModelManager
     public ReasonerPreferences getReasonerPreferences() {
         return getOWLReasonerManager().getReasonerPreferences();
     }
-
 
     //////////////////////////////////////////////////////////////////////////////////////
     //
