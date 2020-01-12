@@ -18,9 +18,9 @@ import java.util.Objects;
  *
  * @see <a href='https://github.com/protegeproject/sparql-query-plugin/blob/master/src/main/java/org/protege/editor/owl/rdf/SparqlQueryView.java'>org.protege.editor.owl.rdf.SparqlQueryView</a>
  */
-public class SparqlQueryView extends AbstractOWLViewComponent {
+public class SPARQLViewComponent extends AbstractOWLViewComponent {
 
-    private final SPARQLEngine.Factory factory = new SPARQLEngine.Factory();
+    private final SPARQLFactory factory = new SPARQLFactory();
     private final JTextPane queryPane = new JTextPane();
     private final ResultModel resultModel = new ResultModel();
 
@@ -78,7 +78,7 @@ public class SparqlQueryView extends AbstractOWLViewComponent {
             try {
                 Ontology o = (Ontology) getOWLModelManager().getActiveOntology();
                 String query = queryPane.getText();
-                SPARQLEngine.Res result = factory.create(type).executeQuery(o.asGraphModel(), query);
+                SPARQLEngine.Res result = factory.create(type).execute(o.asGraphModel(), query);
                 resultModel.setResults(result);
             } catch (SPARQLEngine.Error ex) {
                 ErrorLogPanel.showErrorDialog(ex);
@@ -99,7 +99,7 @@ public class SparqlQueryView extends AbstractOWLViewComponent {
      */
     public static class ResultModel extends AbstractTableModel {
         private static final long serialVersionUID = -1094080880127911408L;
-        private SPARQLEngine.Res results = SPARQLEngine.Factory.EMPTY;
+        private SPARQLEngine.Res results = SPARQLFactory.EMPTY;
 
         @Override
         public int getRowCount() {

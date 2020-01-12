@@ -1675,18 +1675,18 @@
         <help value="https://www.w3.org/TR/rdf11-concepts/"/>
     </extension>
 
-    <extension id="SparqlTab"
+    <extension id="SPARQLTab"
                point="org.protege.editor.core.application.WorkspaceTab">
-        <label value="SPARQL Query"/>
+        <label value="SPARQL"/>
         <class value="org.protege.editor.owl.ui.OWLWorkspaceViewsTab"/>
         <editorKitId value="OWLEditorKit"/>
         <index value="Z"/>
         <defaultViewConfigFileName value="viewconfig-sparqltab.xml"/>
     </extension>
-    <extension id="SparqlQueryView"
+    <extension id="SPARQLView"
                point="org.protege.editor.core.application.ViewComponent">
-        <label value="SPARQL query"/>
-        <class value="org.protege.editor.owl.ui.view.sparql.SparqlQueryView"/>
+        <label value="SPARQL"/>
+        <class value="org.protege.editor.owl.ui.view.sparql.SPARQLViewComponent"/>
         <headerColor value="@org.protege.ontologycolor"/>
         <category value="@org.protege.rdfcategory"/>
     </extension>
