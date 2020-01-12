@@ -2,6 +2,7 @@ package org.protege.editor.owl.ui.view.sparql;
 
 import com.github.owlcs.ontapi.Ontology;
 import org.protege.editor.core.ui.error.ErrorLogPanel;
+import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
 import org.protege.editor.owl.ui.table.BasicOWLTable;
 import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
@@ -13,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 
 /**
- * A {@code ViewComponent} for executing SPARQL.
+ * A {@code ViewComponent} for executing SPARQL (both Query and Update).
  * Created by @ssz on 07.01.2020.
  *
  * @see <a href='https://github.com/protegeproject/sparql-query-plugin/blob/master/src/main/java/org/protege/editor/owl/rdf/SparqlQueryView.java'>org.protege.editor.owl.rdf.SparqlQueryView</a>
@@ -78,8 +79,11 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
             try {
                 Ontology o = (Ontology) getOWLModelManager().getActiveOntology();
                 String query = queryPane.getText();
-                SPARQLEngine.Res result = factory.create(type).execute(o.asGraphModel(), query);
-                resultModel.setResults(result);
+                SPARQLEngine.Res res = factory.create(type).execute(o.asGraphModel(), query);
+                resultModel.setResults(res);
+                if (type.canUpdate() && !res.isEmpty()) {
+                    getOWLModelManager().fireEvent(EventType.ENTITY_RENDERER_CHANGED);
+                }
             } catch (SPARQLEngine.Error ex) {
                 ErrorLogPanel.showErrorDialog(ex);
                 JOptionPane.showMessageDialog(getOWLWorkspace(),

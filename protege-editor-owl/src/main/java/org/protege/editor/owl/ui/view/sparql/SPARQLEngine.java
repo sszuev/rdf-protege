@@ -54,7 +54,13 @@ public interface SPARQLEngine {
                         .append(" ?object .\n}")
                         .toString();
             }
-        }, UPDATE {
+        },
+        UPDATE {
+            @Override
+            public boolean canUpdate() {
+                return true;
+            }
+
             @Override
             boolean test(Prologue q) {
                 return q instanceof UpdateRequest;
@@ -73,7 +79,8 @@ public interface SPARQLEngine {
                         .append(" 'This is an anonymous individual' .\n}\nWHERE\n{\n  BIND( BNODE() AS ?b ) .\n}")
                         .toString();
             }
-        }, ASK {
+        },
+        ASK {
             @Override
             boolean test(Prologue q) {
                 return q instanceof Query && ((Query) q).isAskType();
@@ -89,7 +96,8 @@ public interface SPARQLEngine {
                         .append(pm.shortForm(RDF.type.getURI())).append(" ")
                         .append(pm.shortForm(OWL.Ontology.getURI())).append(" .\n}").toString();
             }
-        }, JSON {
+        },
+        JSON {
             @Override
             boolean test(Prologue q) {
                 return q instanceof Query && ((Query) q).isJsonType();
@@ -105,7 +113,8 @@ public interface SPARQLEngine {
             Syntax getSyntax() {
                 return Syntax.syntaxARQ;
             }
-        }, DESCRIBE {
+        },
+        DESCRIBE {
             @Override
             boolean test(Prologue q) {
                 return q instanceof Query && ((Query) q).isDescribeType();
@@ -121,7 +130,13 @@ public interface SPARQLEngine {
                         .append(pm.shortForm(RDF.type.getURI())).append(" ")
                         .append(pm.shortForm(OWL.Ontology.getURI())).append(" .\n}").toString();
             }
-        }, CONSTRUCT {
+        },
+        CONSTRUCT {
+            @Override
+            public boolean canUpdate() {
+                return true;
+            }
+
             @Override
             boolean test(Prologue q) {
                 return q instanceof Query && ((Query) q).isConstructType();
@@ -145,6 +160,12 @@ public interface SPARQLEngine {
             return Syntax.defaultSyntax;
         }
 
+        /**
+         * Tests that query is correct (corresponds to this query-type)
+         *
+         * @param q {@link Prologue}
+         * @return boolean
+         */
         abstract boolean test(Prologue q);
 
         /**
@@ -153,6 +174,15 @@ public interface SPARQLEngine {
          * @return String
          */
         public abstract String getSampleQuery();
+
+        /**
+         * Answers {@code true} if a query of this type can update a graph.
+         *
+         * @return boolean
+         */
+        public boolean canUpdate() {
+            return false;
+        }
     }
 
     /**
@@ -166,6 +196,10 @@ public interface SPARQLEngine {
         String getColumnName(int col);
 
         Object getResult(int row, int col);
+
+        default boolean isEmpty() {
+            return getRowCount() == 0;
+        }
     }
 
     /**
