@@ -12,7 +12,7 @@ The approximate roadmap is as follows:
 
     * RDF view (a read-only triples-tree is added)
     * RDF editor (not yet implemented)
-    * SPARQL tab (minimalistic ui with `select` is supported)
+    * SPARQL tab (SELECT, ASK, DESCRIBE, CONSTRUCT, JSON)
     * Jena TDB support (not yet implemented)
     * RDB through [ONT-D2RQ](https://github.com/owlcs/ont-d2rq) (discussable) 
     * SPIN mapping through [ONT-MAP](https://github.com/owlcs/ont-map) (discussable)
