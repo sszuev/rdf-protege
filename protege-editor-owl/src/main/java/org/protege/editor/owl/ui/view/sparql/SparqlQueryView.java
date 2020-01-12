@@ -9,6 +9,8 @@ import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Objects;
 
 /**
  * A {@code ViewComponent} for executing SPARQL.
@@ -18,27 +20,40 @@ import java.awt.*;
  */
 public class SparqlQueryView extends AbstractOWLViewComponent {
 
-    private SPARQLEngine engine;
+    private final SPARQLEngine.Factory factory = new SPARQLEngine.Factory();
     private final JTextPane queryPane = new JTextPane();
-
     private final ResultModel resultModel = new ResultModel();
+
+    private SPARQLEngine.Type type = SPARQLEngine.Type.SELECT;
 
     @Override
     protected void initialiseOWLView() {
-        initializeReasoner();
         setLayout(new BorderLayout());
+        add(createNorthComponent(), BorderLayout.NORTH);
         add(createCenterComponent(), BorderLayout.CENTER);
         add(createBottomComponent(), BorderLayout.SOUTH);
     }
 
-    private void initializeReasoner() {
-        engine = SPARQLEngine.create();
+    private JComponent createNorthComponent() {
+        JComboBox<SPARQLEngine.Type> s = new JComboBox<>(SPARQLEngine.Type.values());
+        s.setSelectedIndex(0);
+        s.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                type = (SPARQLEngine.Type) Objects.requireNonNull(s.getSelectedItem());
+                queryPane.setText(type.getSampleQuery());
+            }
+        });
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.add(s, BorderLayout.WEST);
+        return panel;
     }
 
     private JComponent createCenterComponent() {
         JPanel panel = new JPanel();
         panel.setLayout(new GridLayout(0, 1));
-        queryPane.setText(SPARQLEngine.getSampleQuery());
+        queryPane.setText(type.getSampleQuery());
         panel.add(new JScrollPane(queryPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
         BasicOWLTable results = new BasicOWLTable(resultModel) {
@@ -63,7 +78,7 @@ public class SparqlQueryView extends AbstractOWLViewComponent {
             try {
                 Ontology o = (Ontology) getOWLModelManager().getActiveOntology();
                 String query = queryPane.getText();
-                SPARQLEngine.Res result = engine.executeQuery(o.asGraphModel(), query);
+                SPARQLEngine.Res result = factory.create(type).executeQuery(o.asGraphModel(), query);
                 resultModel.setResults(result);
             } catch (SPARQLEngine.Error ex) {
                 ErrorLogPanel.showErrorDialog(ex);
@@ -84,7 +99,7 @@ public class SparqlQueryView extends AbstractOWLViewComponent {
      */
     public static class ResultModel extends AbstractTableModel {
         private static final long serialVersionUID = -1094080880127911408L;
-        private SPARQLEngine.Res results = SPARQLEngine.EMPTY;
+        private SPARQLEngine.Res results = SPARQLEngine.Factory.EMPTY;
 
         @Override
         public int getRowCount() {
