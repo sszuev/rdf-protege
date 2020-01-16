@@ -118,7 +118,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
                 TreePath path = new TreePath(treeNode.getPath());
                 expandPath(path);
             }
-            for (Triple child : prov.getChildren(node)) {
+            for (Triple child : children) {
                 autoExpand(child, currentDepth + 1);
             }
         }

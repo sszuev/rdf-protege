@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -61,15 +62,19 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
 
     @Override
     public Set<OWLObject> getUnfilteredChildren(OWLObject object) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<OWLObject> unfilteredChildren(OWLObject object) {
         if (!(object instanceof OWLClass) || !classes.contains(object)) {
-            return Collections.emptySet();
+            return Stream.empty();
         }
         OWLClass cls = (OWLClass) object;
         return ontologies.stream()
                 .flatMap(ont -> ont.classAssertionAxioms(cls))
-                .map(OWLClassAssertionAxiom::getIndividual)
-                .filter(x -> !x.isAnonymous())
-                .collect(Collectors.toSet());
+                .filter(x -> !x.getIndividual().isAnonymous())
+                .map(x -> x);
     }
 
     @Override
@@ -191,7 +196,7 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
             if (!classes.contains(type)) {
                 return;
             }
-            if (getChildren(type).isEmpty()) {
+            if (!hasChildren(type)) {
                 classes.remove(type);
             }
             changedNodes.add(type);

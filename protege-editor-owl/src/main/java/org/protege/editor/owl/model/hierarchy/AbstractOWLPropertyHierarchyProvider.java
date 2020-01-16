@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -52,11 +54,11 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
     }
 
     /*
-     * This call holds the write lock so no other thread can hold the either the OWL ontology 
-     * manager read or write locks or the ontologies 
+     * This call holds the write lock so no other thread can hold the either the OWL ontology
+     * manager read or write locks or the ontologies
      */
     private void handleChanges(List<? extends OWLOntologyChange> changes) {
-        Set<P> properties = new HashSet<>(getPropertiesReferencedInChange(changes));
+        Set<P> properties = propertiesReferencedInChange(changes).collect(Collectors.toSet());
         for (P prop : properties) {
             if (isSubPropertyOfRoot(prop)) {
                 subPropertiesOfRoot.add(prop);
@@ -79,7 +81,7 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
         fireNodeChanged(getRoot());
     }
 
-    protected abstract Set<P> getPropertiesReferencedInChange(List<? extends OWLOntologyChange> changes);
+    protected abstract Stream<P> propertiesReferencedInChange(List<? extends OWLOntologyChange> changes);
 
     private boolean isSubPropertyOfRoot(P prop) {
         if (prop.equals(getRoot())) {
@@ -105,26 +107,23 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
 
     private void rebuildRoots() {
         subPropertiesOfRoot.clear();
-        for (OWLOntology ontology : ontologies) {
-            for (P prop : getReferencedProperties(ontology)) {
-                if (isSubPropertyOfRoot(prop)) {
-                    subPropertiesOfRoot.add(prop);
-                }
-            }
-        }
+        ontologies.stream()
+                .flatMap(this::referencedProperties)
+                .filter(this::isSubPropertyOfRoot)
+                .forEach(subPropertiesOfRoot::add);
     }
 
     protected abstract boolean containsReference(OWLOntology ont, P prop);
 
     /**
-     * Gets the relevant properties in the specified ontology that are contained
-     * within the property hierarchy.  For example, for an object property hierarchy
-     * this would constitute the set of referenced object properties in the specified
-     * ontology.
+     * Gets the relevant properties in the specified ontology that are contained within the property hierarchy.
+     * For example, for an object property hierarchy
+     * this would constitute the set of referenced object properties in the specified ontology.
      *
      * @param ont The ontology
+     * @return {@code Stream}
      */
-    protected abstract Set<? extends P> getReferencedProperties(OWLOntology ont);
+    protected abstract Stream<? extends P> referencedProperties(OWLOntology ont);
 
     protected abstract P getRoot();
 
@@ -159,7 +158,7 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
         ontologySetReadLock.lock();
         try {
             for (OWLOntology ont : ontologies) {
-                if (getReferencedProperties(ont).contains(object)) {
+                if (containsReference(ont, object)) {
                     return true;
                 }
             }
@@ -169,7 +168,6 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Set<P> getUnfilteredChildren(P object) {
         ontologySetReadLock.lock();
@@ -177,21 +175,18 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
             if (object.equals(getRoot())) {
                 return Collections.unmodifiableSet(subPropertiesOfRoot);
             }
-            Set<P> result = new HashSet<>();
-            for (E p : getSubProperties(object, ontologies)) {
-                // Don't add the sub property if it is a parent of itself - i.e. prevent cycles
-                P x = (P) p;
-                if (!x.isAnonymous() && !getAncestors(x).contains(x)) {
-                    result.add(x);
-                }
-            }
-            return result;
+            return subProperties(object, ontologies)
+                    // Don't add the sub property if it is a parent of itself - i.e. prevent cycles
+                    .filter(p -> !p.isAnonymous() && !getAncestors(p).contains(p))
+                    .collect(Collectors.toSet());
         } finally {
             ontologySetReadLock.unlock();
         }
     }
 
-    protected abstract Collection<P> getSubProperties(P object, Set<OWLOntology> ontologies);
+    protected abstract Stream<P> superProperties(P subProperty, Set<OWLOntology> ontologies);
+
+    protected abstract Stream<P> subProperties(P superProperty, Set<OWLOntology> ontologies);
 
     @SuppressWarnings("unchecked")
     @Override
@@ -225,20 +220,15 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Set<P> getParents(P object) {
         ontologySetReadLock.lock();
         try {
             if (object.equals(getRoot())) {
                 return Collections.emptySet();
             }
-
-            Set<P> res = new HashSet<>();
-            for (E prop : getSuperProperties(object, ontologies)) {
-                if (!prop.isAnonymous()) {
-                    res.add((P) prop);
-                }
-            }
+            Set<P> res = superProperties(object, ontologies)
+                    .filter(p -> !p.isAnonymous())
+                    .collect(Collectors.toSet());
             if (res.isEmpty() && isReferenced(object)) {
                 res.add(getRoot());
             }
@@ -247,8 +237,6 @@ public abstract class AbstractOWLPropertyHierarchyProvider<E extends OWLProperty
             ontologySetReadLock.unlock();
         }
     }
-
-    protected abstract Collection<P> getSuperProperties(P subProperty, Set<OWLOntology> ontologies);
 
     private boolean isReferenced(P e) {
         return e.accept(new IsReferencePropertyExpressionVisitor());

@@ -40,7 +40,7 @@ import java.util.*;
  *
  * @param <N> - anything
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess"})
 public abstract class ObjectTree<N> extends JTree
         implements OWLObjectDropTarget<N>, Copyable<N>,
         OWLObjectDragSource, HasExpandAll, HasCopySubHierarchyToClipboard, RefreshableComponent {
@@ -136,10 +136,11 @@ public abstract class ObjectTree<N> extends JTree
         // Want to detect if the node handle is clicked (or anywhere in the white space of a row).
         for (int i = 0; i < getRowCount(); i++) {
             Rectangle rowBounds = getRowBounds(i);
-            if (rowBounds != null && rowBounds.y <= y && y <= rowBounds.y + rowBounds.height) {
-                expandDescendantsOfRow(i);
-                break;
+            if (rowBounds == null || rowBounds.y > y || y > rowBounds.y + rowBounds.height) {
+                continue;
             }
+            expandDescendantsOfRow(i);
+            break;
         }
     }
 
@@ -203,81 +204,81 @@ public abstract class ObjectTree<N> extends JTree
         final Set<OWLObjectTreeNode<N>> treeNodes = nodeMap.get(node);
 
         // The parents/children might have changed
-        if (treeNodes != null && !treeNodes.isEmpty()) {
-            // Remove children that aren't there any more
-            Set<N> children = provider.getChildren(node);
-
-
-            Set<OWLObjectTreeNode<N>> nodesToRemove = new HashSet<>();
-            for (OWLObjectTreeNode<N> treeNode : treeNodes) {
-                for (int i = 0; i < treeNode.getChildCount(); i++) {
-                    OWLObjectTreeNode<N> childTreeNode = treeNode.getChildAt(i);
-                    if (!children.contains(childTreeNode.getOWLObject())) {
-                        nodesToRemove.add(childTreeNode);
-                    }
-                }
-            }
-
-            for (OWLObjectTreeNode<N> nodeToRemove : nodesToRemove) {
-                // update the nodeMap to remove this parent from the child
-                final Set<OWLObjectTreeNode<N>> childNodes = getNodes(nodeToRemove.getOWLObject());
-                final Set<OWLObjectTreeNode<N>> updatedChildNodes = new HashSet<>();
-                for (OWLObjectTreeNode<N> childNode : childNodes) {
-                    @SuppressWarnings("unchecked") OWLObjectTreeNode<N> p = (OWLObjectTreeNode<N>) childNode.getParent();
-                    if (!treeNodes.contains(p)) {
-                        updatedChildNodes.add(childNode);
-                    }
-                }
-                nodeMap.put(nodeToRemove.getOWLObject(), updatedChildNodes);
-                ((DefaultTreeModel) getModel()).removeNodeFromParent(nodeToRemove);
-            }
-
-            // Add new children
-            Set<N> existingChildren = new HashSet<>();
-            for (OWLObjectTreeNode<N> treeNode : treeNodes) {
-                for (int i = 0; i < treeNode.getChildCount(); i++) {
-                    existingChildren.add(treeNode.getChildAt(i).getOWLObject());
-                }
-            }
-
-
-            for (OWLObjectTreeNode<N> treeNode : treeNodes) {
-                for (N child : children) {
-                    if (!existingChildren.contains(child)) {
-                        OWLObjectTreeNode<N> childTreeNode = createTreeNode(child);
-                        ((DefaultTreeModel) getModel()).insertNodeInto(childTreeNode, treeNode, 0);
-                    }
-                }
-            }
-
-            if (provider.hasRoot(node)) {
-                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) getModel().getRoot();
-                for (int i = 0; i < treeNode.getChildCount(); i++) {
-                    @SuppressWarnings("unchecked")
-                    OWLObjectTreeNode<N> n = (OWLObjectTreeNode<N>) treeNode.getChildAt(i);
-                    if (n.getOWLObject().equals(node)) {
-                        return;
-                    }
-                }
-                ((DefaultTreeModel) getModel()).insertNodeInto(createTreeNode(node), treeNode, 0);
-            } else {
-                DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getModel().getRoot();
-                for (int i = 0; i < rootNode.getChildCount(); i++) {
-                    @SuppressWarnings("unchecked")
-                    OWLObjectTreeNode<N> n = (OWLObjectTreeNode<N>) rootNode.getChildAt(i);
-                    if (n.getOWLObject().equals(node)) {
-                        ((DefaultTreeModel) getModel()).removeNodeFromParent(n);
-                        return;
-                    }
-                }
-            }
-        } else {
+        if (treeNodes == null || treeNodes.isEmpty()) {
             // Might be a new root!
             if (provider.hasRoot(node)) {
                 DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getModel().getRoot();
                 DefaultMutableTreeNode nn = createTreeNode(node);
                 ((DefaultTreeModel) getModel()).insertNodeInto(nn, rootNode, 0);
                 expandPath(new TreePath(rootNode.getPath()));
+            }
+            return;
+        }
+        // Remove children that aren't there any more
+        Set<N> children = provider.getChildren(node);
+
+        Set<OWLObjectTreeNode<N>> nodesToRemove = new HashSet<>();
+        for (OWLObjectTreeNode<N> treeNode : treeNodes) {
+            for (int i = 0; i < treeNode.getChildCount(); i++) {
+                OWLObjectTreeNode<N> childTreeNode = treeNode.getChildAt(i);
+                if (children.contains(childTreeNode.getOWLObject())) {
+                    continue;
+                }
+                nodesToRemove.add(childTreeNode);
+            }
+        }
+
+        for (OWLObjectTreeNode<N> nodeToRemove : nodesToRemove) {
+            // update the nodeMap to remove this parent from the child
+            final Set<OWLObjectTreeNode<N>> childNodes = getNodes(nodeToRemove.getOWLObject());
+            final Set<OWLObjectTreeNode<N>> updatedChildNodes = new HashSet<>();
+            for (OWLObjectTreeNode<N> childNode : childNodes) {
+                @SuppressWarnings("unchecked") OWLObjectTreeNode<N> p = (OWLObjectTreeNode<N>) childNode.getParent();
+                if (!treeNodes.contains(p)) {
+                    updatedChildNodes.add(childNode);
+                }
+            }
+            nodeMap.put(nodeToRemove.getOWLObject(), updatedChildNodes);
+            ((DefaultTreeModel) getModel()).removeNodeFromParent(nodeToRemove);
+        }
+
+        // Add new children
+        Set<N> existingChildren = new HashSet<>();
+        for (OWLObjectTreeNode<N> treeNode : treeNodes) {
+            for (int i = 0; i < treeNode.getChildCount(); i++) {
+                existingChildren.add(treeNode.getChildAt(i).getOWLObject());
+            }
+        }
+
+        for (OWLObjectTreeNode<N> treeNode : treeNodes) {
+            for (N child : children) {
+                if (existingChildren.contains(child)) {
+                    continue;
+                }
+                OWLObjectTreeNode<N> childTreeNode = createTreeNode(child);
+                ((DefaultTreeModel) getModel()).insertNodeInto(childTreeNode, treeNode, 0);
+            }
+        }
+
+        if (provider.hasRoot(node)) {
+            DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) getModel().getRoot();
+            for (int i = 0; i < treeNode.getChildCount(); i++) {
+                @SuppressWarnings("unchecked")
+                OWLObjectTreeNode<N> n = (OWLObjectTreeNode<N>) treeNode.getChildAt(i);
+                if (n.getOWLObject().equals(node)) {
+                    return;
+                }
+            }
+            ((DefaultTreeModel) getModel()).insertNodeInto(createTreeNode(node), treeNode, 0);
+            return;
+        }
+        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getModel().getRoot();
+        for (int i = 0; i < rootNode.getChildCount(); i++) {
+            @SuppressWarnings("unchecked")
+            OWLObjectTreeNode<N> n = (OWLObjectTreeNode<N>) rootNode.getChildAt(i);
+            if (n.getOWLObject().equals(node)) {
+                ((DefaultTreeModel) getModel()).removeNodeFromParent(n);
+                return;
             }
         }
     }
@@ -395,12 +396,6 @@ public abstract class ObjectTree<N> extends JTree
             }
         }
         return parents;
-    }
-
-    protected int getChildCount(N owlObject) {
-        return owlObject == null ?
-                (int) provider.getRootsCount() :
-                provider.getChildren(owlObject).size();
     }
 
     /**

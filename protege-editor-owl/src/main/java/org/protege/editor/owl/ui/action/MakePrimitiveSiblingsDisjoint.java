@@ -1,5 +1,6 @@
 package org.protege.editor.owl.ui.action;
 
+import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.AddAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
@@ -18,51 +19,50 @@ import java.util.Set;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 30-Jun-2006<br><br>
-
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class MakePrimitiveSiblingsDisjoint extends SelectedOWLClassAction {
 
-    protected void initialiseAction() throws Exception {
-
+    @Override
+    protected void initialiseAction() {
     }
 
-
+    @Override
     public void actionPerformed(ActionEvent e) {
         OWLClass selCls = getOWLClass();
         if (selCls == null) {
             return;
         }
+        OWLModelManager m = getOWLModelManager();
         // TODO: Extract this and make less dependent on hierarchy provider
-        OWLHierarchyProvider<OWLClass> provider = getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider();
+        OWLHierarchyProvider<OWLClass> provider = m.getOWLHierarchyManager().getOWLClassHierarchyProvider();
         Set<OWLClass> clses = new HashSet<>();
         for (OWLClass par : provider.getParents(selCls)) {
-            clses.addAll(provider.getChildren(par));
+            provider.children(par).forEach(clses::add);
         }
-        for(Iterator<OWLClass> it = clses.iterator(); it.hasNext(); ) {
+        for (Iterator<OWLClass> it = clses.iterator(); it.hasNext(); ) {
             OWLClass cls = it.next();
-            for(OWLOntology ont : getOWLModelManager().getActiveOntologies()) {
-                if(EntitySearcher.isDefined(cls, ont)) {
+            for (OWLOntology ont : m.getActiveOntologies()) {
+                if (EntitySearcher.isDefined(cls, ont)) {
                     it.remove();
                     break;
                 }
             }
         }
 
-        if (clses.size() > 1){
+        if (clses.size() > 1) {
             OWLAxiom ax = getOWLDataFactory().getOWLDisjointClassesAxiom(clses);
-            getOWLModelManager().applyChange(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
+            m.applyChange(new AddAxiom(m.getActiveOntology(), ax));
         }
         // 2) Get the named subs
 
 //        try {
-//            OWLOntology owlOntology = getOWLModelManager().getActiveOntology();
-//            DisjointAxiomCreator creator = new DisjointAxiomCreator(getOWLModelManager().getOWLClassHierarchyProvider(),
+//            OWLOntology owlOntology = m.getActiveOntology();
+//            DisjointAxiomCreator creator = new DisjointAxiomCreator(m.getOWLClassHierarchyProvider(),
 //                                                                    owlOntology,
-//                                                                    getOWLModelManager().getActiveOntologies());
-//
-//            getOWLModelManager().applyChanges(creator.getChanges());
+//                                                                    m.getActiveOntologies());
+//            m.applyChanges(creator.getChanges());
 //        } catch (OWLException ex) {
 //            logger.error(ex);
 //        }

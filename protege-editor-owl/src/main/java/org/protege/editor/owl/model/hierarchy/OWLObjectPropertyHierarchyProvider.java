@@ -3,12 +3,9 @@ package org.protege.editor.owl.model.hierarchy;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
+import java.util.stream.Stream;
 
 
 /**
@@ -25,25 +22,17 @@ public class OWLObjectPropertyHierarchyProvider
     }
 
     @Override
-    protected Set<OWLObjectProperty> getPropertiesReferencedInChange(List<? extends OWLOntologyChange> changes) {
-        return changes.stream().filter(OWLOntologyChange::isAxiomChange)
+    protected Stream<OWLObjectProperty> propertiesReferencedInChange(List<? extends OWLOntologyChange> changes) {
+        return changes.stream()
+                .filter(OWLOntologyChange::isAxiomChange)
                 .flatMap(HasSignature::signature)
                 .filter(AsOWLObjectProperty::isOWLObjectProperty)
-                .map(AsOWLObjectProperty::asOWLObjectProperty)
-                .collect(Collectors.toSet());
+                .map(AsOWLObjectProperty::asOWLObjectProperty);
     }
 
-    /**
-     * Gets the relevant properties in the specified ontology that are contained
-     * within the property hierarchy.  For example, for an object property hierarchy
-     * this would constitute the set of referenced object properties in the specified
-     * ontology.
-     *
-     * @param ont The ontology
-     */
     @Override
-    protected Set<? extends OWLObjectProperty> getReferencedProperties(OWLOntology ont) {
-        return ont.objectPropertiesInSignature().collect(Collectors.toSet());
+    protected Stream<? extends OWLObjectProperty> referencedProperties(OWLOntology ont) {
+        return ont.objectPropertiesInSignature();
     }
 
     @Override
@@ -57,19 +46,17 @@ public class OWLObjectPropertyHierarchyProvider
     }
 
     @Override
-    protected Collection<OWLObjectProperty> getSuperProperties(OWLObjectProperty subProperty, Set<OWLOntology> ontologies) {
+    protected Stream<OWLObjectProperty> superProperties(OWLObjectProperty subProperty, Set<OWLOntology> ontologies) {
         return EntitySearcher.getSuperProperties(subProperty, ontologies.stream())
-                .filter(p -> !p.isAnonymous())
-                .collect(toList());
+                .filter(p -> !p.isAnonymous());
     }
 
     @Override
-    protected Collection<OWLObjectProperty> getSubProperties(OWLObjectProperty superProp, Set<OWLOntology> ontologies) {
+    protected Stream<OWLObjectProperty> subProperties(OWLObjectProperty superProp, Set<OWLOntology> ontologies) {
         return ontologies.stream()
                 .flatMap(x -> x.objectSubPropertyAxiomsForSuperProperty(superProp))
                 .map(OWLSubPropertyAxiom::getSubProperty)
                 .filter(p -> !p.isAnonymous())
-                .map(AsOWLObjectProperty::asOWLObjectProperty)
-                .collect(Collectors.toList());
+                .map(AsOWLObjectProperty::asOWLObjectProperty);
     }
 }

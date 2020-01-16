@@ -45,14 +45,6 @@ public interface HierarchyProvider<N> {
     }
 
     /**
-     * @return long
-     * @see #getRoots()
-     */
-    default long getRootsCount() {
-        return getRoots().size();
-    }
-
-    /**
      * @return <b>distinct</b> {@code Stream} of root {@link N node}s
      * @see #getRoots()
      */
@@ -60,4 +52,20 @@ public interface HierarchyProvider<N> {
         return getRoots().stream();
     }
 
+    /**
+     * @param parent {@link N} - parent
+     * @return <b>distinct</b> {@code Stream} of root {@link N node}s
+     * @see #getChildren(Object)
+     */
+    default Stream<N> children(N parent) {
+        return getChildren(parent).stream();
+    }
+
+    /**
+     * @param parent {@link N}
+     * @return {@code true} if the specified {@link N node} is parent for some children
+     */
+    default boolean hasChildren(N parent) {
+        return !getChildren(parent).isEmpty();
+    }
 }

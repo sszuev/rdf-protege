@@ -29,8 +29,8 @@ public class CountingOWLObjectTreeCellRenderer<N extends OWLObject> extends OWLO
     @Override
     protected String getRendering(Object object) {
         StringBuilder label = new StringBuilder(super.getRendering(object));
-        int size = tree.getProvider().getChildren((N)object).size();
-        if (size > 0){
+        long size = tree.getProvider().children((N) object).count();
+        if (size > 0) {
             label.append(" (");
             label.append(size);
             label.append(")");

@@ -87,7 +87,7 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
             TreePath path = new TreePath(treeNode.getPath());
             expandPath(path);
         }
-        for (N child : prov.getChildren(node)) {
+        for (N child : children) {
             autoExpand(child, currentDepth + 1);
         }
     }

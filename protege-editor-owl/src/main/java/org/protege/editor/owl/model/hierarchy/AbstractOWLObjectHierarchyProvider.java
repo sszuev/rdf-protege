@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
@@ -94,10 +95,17 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLHierar
     }
 
     @Override
-    public Set<N> getChildren(N object) {
-        return getUnfilteredChildren(object).stream()
-                .filter(filter)
-                .collect(toSet());
+    public final Set<N> getChildren(N object) {
+        return children(object).collect(toSet());
+    }
+
+    @Override
+    public final Stream<N> children(N object) {
+        return unfilteredChildren(object).filter(filter);
+    }
+
+    protected Stream<N> unfilteredChildren(N object) {
+        return getUnfilteredChildren(object).stream();
     }
 
     protected Set<N> getUnfilteredChildren(N object) {
@@ -112,7 +120,7 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLHierar
     }
 
     private void getDescendants(Set<N> results, N object) {
-        getChildren(object).stream()
+        children(object)
                 .filter(child -> !results.contains(child))
                 .forEach(child -> {
                     results.add(child);
