@@ -5,8 +5,8 @@ import org.protege.editor.core.ui.menu.MenuBuilder;
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.OWLModelManager;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.transfer.OWLObjectDragSource;
 import org.protege.editor.owl.ui.transfer.OWLObjectDropTarget;
 import org.protege.editor.owl.ui.transfer.OWLObjectTreeDragGestureListener;
@@ -48,7 +48,7 @@ public abstract class ObjectTree<N> extends JTree
     private Map<N, Set<OWLObjectTreeNode<N>>> nodeMap;
 
     protected final OWLEditorKit eKit;
-    protected final HierarchyProvider<N> provider;
+    protected final OWLHierarchyProvider<N> provider;
     private HierarchyProviderListener<N> listener;
     protected Comparator<? super N> comparator;
     private OWLTreeDragAndDropHandler<N> dragAndDropHandler;
@@ -58,12 +58,12 @@ public abstract class ObjectTree<N> extends JTree
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<PopupMenuId> popupMenuId = Optional.empty();
 
-    public ObjectTree(OWLEditorKit eKit, HierarchyProvider<N> provider) {
+    public ObjectTree(OWLEditorKit eKit, OWLHierarchyProvider<N> provider) {
         this(eKit, provider, provider.getRoots(), null);
     }
 
     public ObjectTree(OWLEditorKit eKit,
-                      HierarchyProvider<N> provider,
+                      OWLHierarchyProvider<N> provider,
                       Set<N> rootObjects,
                       Comparator<? super N> owlObjectComparator) {
         this.eKit = eKit;
@@ -250,7 +250,7 @@ public abstract class ObjectTree<N> extends JTree
                 }
             }
 
-            if (provider.getRoots().contains(node)) {
+            if (provider.hasRoot(node)) {
                 DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) getModel().getRoot();
                 for (int i = 0; i < treeNode.getChildCount(); i++) {
                     @SuppressWarnings("unchecked")
@@ -273,7 +273,7 @@ public abstract class ObjectTree<N> extends JTree
             }
         } else {
             // Might be a new root!
-            if (provider.getRoots().contains(node)) {
+            if (provider.hasRoot(node)) {
                 DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getModel().getRoot();
                 DefaultMutableTreeNode nn = createTreeNode(node);
                 ((DefaultTreeModel) getModel()).insertNodeInto(nn, rootNode, 0);
@@ -336,7 +336,7 @@ public abstract class ObjectTree<N> extends JTree
     /**
      * @return the hierarchy provider that this tree uses to generate its branches
      */
-    public HierarchyProvider<N> getProvider() {
+    public OWLHierarchyProvider<N> getProvider() {
         return provider;
     }
 
@@ -398,11 +398,9 @@ public abstract class ObjectTree<N> extends JTree
     }
 
     protected int getChildCount(N owlObject) {
-        if (owlObject == null) {
-            return provider.getRoots().size();
-        } else {
-            return provider.getChildren(owlObject).size();
-        }
+        return owlObject == null ?
+                (int) provider.getRootsCount() :
+                provider.getChildren(owlObject).size();
     }
 
     /**

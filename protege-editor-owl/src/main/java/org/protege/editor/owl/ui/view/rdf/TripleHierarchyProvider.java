@@ -8,8 +8,8 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.shared.PrefixMapping;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +19,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 /**
- * An {@link HierarchyProvider} for {@link Graph}.
+ * An {@link OWLHierarchyProvider} for {@link Graph}.
  * Created by @ssz on 23.11.2019.
  */
 @SuppressWarnings("WeakerAccess")
-public class TripleHierarchyProvider implements HierarchyProvider<Triple> {
+public class TripleHierarchyProvider implements OWLHierarchyProvider<Triple> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TripleHierarchyProvider.class);
 
     private Graph graph;

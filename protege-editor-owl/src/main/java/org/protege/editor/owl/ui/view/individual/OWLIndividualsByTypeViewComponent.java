@@ -4,9 +4,9 @@ import com.google.common.collect.Sets;
 import org.protege.editor.core.ui.RefreshableComponent;
 import org.protege.editor.core.ui.view.DisposableAction;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
 import org.protege.editor.owl.model.hierarchy.IndividualsByTypeHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.UIHelper;
 import org.protege.editor.owl.ui.action.DeleteIndividualAction;
@@ -39,17 +39,12 @@ import java.util.*;
 public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewComponent
         implements Findable<OWLNamedIndividual>, CreateNewTarget, RefreshableComponent, SelectionDriver {
 
-
     private ObjectTree<OWLObject> tree;
-
     private ChangeListenerMediator changeListenerMediator;
-
-
-    private TreeSelectionListener listener = e -> transmitSelection();
-
+    private final TreeSelectionListener listener = e -> transmitSelection();
     private HierarchyProviderWrapper hierarchyProvider;
 
-
+    @Override
     public void initialiseView() throws Exception {
         setLayout(new BorderLayout());
         hierarchyProvider = new HierarchyProviderWrapper();
@@ -58,22 +53,20 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         tree.setCellRenderer(new CountingOWLObjectTreeCellRenderer<>(getOWLEditorKit(), tree));
         tree.expandRow(0);
         add(new JScrollPane(tree));
-
         changeListenerMediator = new ChangeListenerMediator();
-
         tree.addTreeSelectionListener(listener);
-
         tree.setDragAndDropHandler(new OWLTreeDragAndDropHandler<OWLObject>() {
-
+            @Override
             public boolean canDrop(Object child, Object parent) {
-                return child instanceof OWLNamedIndividual &&
-                       parent instanceof OWLClass;
+                return child instanceof OWLNamedIndividual && parent instanceof OWLClass;
             }
 
+            @Override
             public void move(OWLObject child, OWLObject fromParent, OWLObject toParent) {
                 handleMove(child, fromParent, toParent);
             }
 
+            @Override
             public void add(OWLObject child, OWLObject parent) {
                 handleAdd(child, parent);
             }
@@ -81,69 +74,64 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         setupActions();
     }
 
-
-    private IndividualsByTypeHierarchyProvider getProvider(){
+    private IndividualsByTypeHierarchyProvider getProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLIndividualsByTypeHierarchyProvider();
     }
 
-
     private void handleAdd(OWLObject child, OWLObject toParent) {
-        if (child instanceof OWLNamedIndividual){
-            OWLNamedIndividual ind = (OWLNamedIndividual)child;
-
-            List<OWLOntologyChange> changes = new ArrayList<>();
-
-            if (toParent != null && toParent instanceof OWLClass){
-                OWLClass to = (OWLClass)toParent;
-                OWLClassAssertionAxiom ax = getOWLModelManager().getOWLDataFactory().getOWLClassAssertionAxiom(to, ind);
-                changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
-            }
-            getOWLModelManager().applyChanges(changes);
+        if (!(child instanceof OWLNamedIndividual)) {
+            return;
         }
+        OWLNamedIndividual ind = (OWLNamedIndividual) child;
+        List<OWLOntologyChange> changes = new ArrayList<>();
+        if (toParent instanceof OWLClass) {
+            OWLClass to = (OWLClass) toParent;
+            OWLClassAssertionAxiom ax = getOWLModelManager().getOWLDataFactory().getOWLClassAssertionAxiom(to, ind);
+            changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
+        }
+        getOWLModelManager().applyChanges(changes);
     }
 
 
     private void handleMove(OWLObject child, OWLObject fromParent, OWLObject toParent) {
-        if (child instanceof OWLNamedIndividual){
-            OWLNamedIndividual ind = (OWLNamedIndividual)child;
+        if (!(child instanceof OWLNamedIndividual)) {
+            return;
+        }
+        OWLNamedIndividual ind = (OWLNamedIndividual) child;
+        List<OWLOntologyChange> changes = new ArrayList<>();
 
-            List<OWLOntologyChange> changes = new ArrayList<>();
-
-            if (toParent != null && toParent instanceof OWLClass){
-                OWLClass to = (OWLClass)toParent;
-                OWLClassAssertionAxiom ax = getOWLModelManager().getOWLDataFactory().getOWLClassAssertionAxiom(to, ind);
-                changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
-            }
-
-            if (fromParent != null && fromParent instanceof OWLClass){
-                OWLClass from = (OWLClass)fromParent;
-                OWLClassAssertionAxiom ax = getOWLModelManager().getOWLDataFactory().getOWLClassAssertionAxiom(from, ind);
-                for (OWLOntology ont : getOWLModelManager().getActiveOntologies()){
-                    if (ont.containsAxiom(ax)){
-                        changes.add(new RemoveAxiom(ont, ax));
-                    }
+        if (toParent instanceof OWLClass) {
+            OWLClass to = (OWLClass) toParent;
+            OWLClassAssertionAxiom ax = getOWLModelManager().getOWLDataFactory().getOWLClassAssertionAxiom(to, ind);
+            changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
+        }
+        if (fromParent instanceof OWLClass) {
+            OWLClass from = (OWLClass) fromParent;
+            OWLClassAssertionAxiom ax = getOWLModelManager().getOWLDataFactory().getOWLClassAssertionAxiom(from, ind);
+            for (OWLOntology ont : getOWLModelManager().getActiveOntologies()) {
+                if (ont.containsAxiom(ax)) {
+                    changes.add(new RemoveAxiom(ont, ax));
                 }
             }
-
-            getOWLModelManager().applyChanges(changes);
         }
+        getOWLModelManager().applyChanges(changes);
     }
-
 
     protected void setupActions() {
         addAction(new DisposableAction("Add individual", new AddEntityIcon(new OWLIndividualIcon())) {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 createNewObject();
             }
 
+            @Override
             public void dispose() {
             }
-        } , "A", "A");
+        }, "A", "A");
         addAction(new DeleteIndividualAction(getOWLEditorKit(), () -> getSelectedIndividuals().stream()), "B", "A");
         addAction(new DisposableAction("Add empty class to list", new AddEntityIcon(new OWLClassIcon())) {
             @Override
             public void dispose() {
-
             }
 
             @Override
@@ -156,53 +144,47 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
     private void addEmptyClassToList() {
         UIHelper helper = new UIHelper(getOWLEditorKit());
         OWLClass cls = helper.pickOWLClass();
-        if(cls != null) {
+        if (cls != null) {
             hierarchyProvider.addTemporaryClass(cls);
         }
     }
 
-
+    @Override
     public void disposeView() {
         tree.dispose();
     }
 
-
+    @Override
     protected boolean isOWLClassView() {
         return true;
     }
 
-
+    @Override
     protected boolean isOWLIndividualView() {
         return true;
     }
 
-    final protected OWLObject updateView() {
+    @Override
+    protected final OWLObject updateView() {
         OWLObject sel = null;
         OWLEntity entity = getOWLWorkspace().getOWLSelectionModel().getSelectedEntity();
-        if (entity instanceof OWLClass || entity instanceof OWLNamedIndividual){
+        if (entity instanceof OWLClass || entity instanceof OWLNamedIndividual) {
             sel = updateView(entity);
-            if (sel != null) {
-                updateRegisteredActions();
-            }
-            else {
-                disableRegisteredActions();
-            }
+            updateRegisteredActions();
         }
         return sel;
     }
 
-
-    private Set<OWLNamedIndividual> getSelectedIndividuals(){
+    private Set<OWLNamedIndividual> getSelectedIndividuals() {
         List<OWLObject> sel = tree.getSelectedOWLObjects();
         Set<OWLNamedIndividual> selIndivs = new HashSet<>();
-        for (OWLObject obj : sel){
-            if (obj instanceof OWLNamedIndividual){
-                selIndivs.add((OWLNamedIndividual)obj);
+        for (OWLObject obj : sel) {
+            if (obj instanceof OWLNamedIndividual) {
+                selIndivs.add((OWLNamedIndividual) obj);
             }
         }
         return selIndivs;
     }
-
 
     private OWLObject updateView(OWLObject selectedEntity) {
         OWLObject selObj = tree.getSelectedOWLObject();
@@ -215,69 +197,60 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         return selectedEntity;
     }
 
-
     private void transmitSelection() {
-        if (isSynchronizing()){
+        if (isSynchronizing()) {
             OWLObject obj = tree.getSelectedOWLObject();
-            if (obj instanceof OWLEntity) {
-                setGlobalSelection((OWLEntity) obj);
-            }
-            else {
-                setGlobalSelection(null);
-            }
+            setGlobalSelection(obj instanceof OWLEntity ? (OWLEntity) obj : null);
         }
         changeListenerMediator.fireStateChanged(this);
     }
 
-
-    //////// Findable
-
+    @Override
     public List<OWLNamedIndividual> find(String match) {
         return new ArrayList<>(getOWLModelManager().getOWLEntityFinder().getMatchingOWLIndividuals(match));
     }
 
+    @Override
     public void show(OWLNamedIndividual owlEntity) {
         tree.setSelectedOWLObject(owlEntity);
     }
 
-
     //////// Deleteable
-
+    @SuppressWarnings("unused")
     public boolean canDelete() {
         return !getSelectedIndividuals().isEmpty();
     }
-
 
     public void handleDelete() {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
-
+    @Override
     public boolean canCreateNew() {
         return true;
     }
 
-
+    @Override
     public void createNewObject() {
         OWLEntityCreationSet<OWLNamedIndividual> set = getOWLWorkspace().createOWLIndividual();
         if (set == null) {
             return;
         }
-        java.util.List<OWLOntologyChange> changes = new ArrayList<>();
-        changes.addAll(set.getOntologyChanges());
+        List<OWLOntologyChange> changes = new ArrayList<>(set.getOntologyChanges());
         TreePath selectionPath = tree.getSelectionPath();
         OWLClass targetType = null;
-        while(selectionPath != null) {
-            if(selectionPath.getLastPathComponent() instanceof OWLObjectTreeNode) {
-                OWLObjectTreeNode node = (OWLObjectTreeNode) selectionPath.getLastPathComponent();
-                if(node.getOWLObject() instanceof OWLClass) {
+        while (selectionPath != null) {
+            Object path = selectionPath.getLastPathComponent();
+            if (path instanceof OWLObjectTreeNode) {
+                OWLObjectTreeNode<?> node = (OWLObjectTreeNode<?>) path;
+                if (node.getOWLObject() instanceof OWLClass) {
                     targetType = (OWLClass) node.getOWLObject();
                     break;
                 }
             }
             selectionPath = selectionPath.getParentPath();
         }
-        if(targetType != null) {
+        if (targetType != null) {
             OWLOntology ont = getOWLModelManager().getActiveOntology();
             changes.add(new AddAxiom(ont, getOWLDataFactory().getOWLClassAssertionAxiom(targetType, set.getOWLEntity())));
         }
@@ -288,11 +261,12 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         }
     }
 
-
+    @Override
     public void addChangeListener(ChangeListener listener) {
         changeListenerMediator.addChangeListener(listener);
     }
 
+    @Override
     public void removeChangeListener(ChangeListener listener) {
         changeListenerMediator.removeChangeListener(listener);
     }
@@ -307,11 +281,9 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         return Optional.ofNullable(tree.getSelectedOWLObject());
     }
 
-
-    private class HierarchyProviderWrapper implements HierarchyProvider<OWLObject> {
+    private class HierarchyProviderWrapper implements OWLHierarchyProvider<OWLObject> {
 
         private final Set<OWLObject> temporaryClasses = new HashSet<>();
-
         private final List<HierarchyProviderListener<OWLObject>> listeners = new ArrayList<>();
 
         public void addTemporaryClass(OWLClass cls) {
@@ -328,8 +300,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
 
         @Override
         public Set<OWLObject> getRoots() {
-            Sets.SetView<OWLObject> roots = Sets.union(getProvider().getRoots(), temporaryClasses);
-            return roots;
+            return Sets.union(getProvider().getRoots(), temporaryClasses);
         }
 
         @Override
@@ -344,7 +315,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
 
         @Override
         public Set<OWLObject> getParents(OWLObject object) {
-            if(temporaryClasses.contains(object)) {
+            if (temporaryClasses.contains(object)) {
                 return Collections.emptySet();
             }
             return getProvider().getParents(object);
@@ -362,7 +333,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
 
         @Override
         public Set<List<OWLObject>> getPathsToRoot(OWLObject object) {
-            if(temporaryClasses.contains(object)) {
+            if (temporaryClasses.contains(object)) {
                 return Collections.singleton(Collections.singletonList(object));
             }
             return getProvider().getPathsToRoot(object);

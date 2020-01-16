@@ -17,12 +17,12 @@ import java.util.Set;
  */
 public class OWLObjectHierarchyDiffTool<N extends OWLObject> {
 
-    private HierarchyProvider<N> fromProv;
+    private OWLHierarchyProvider<N> fromProv;
 
-    private HierarchyProvider<N> toProv;
+    private OWLHierarchyProvider<N> toProv;
 
 
-    public OWLObjectHierarchyDiffTool(HierarchyProvider<N> fromProv, HierarchyProvider<N> toProv) {
+    public OWLObjectHierarchyDiffTool(OWLHierarchyProvider<N> fromProv, OWLHierarchyProvider<N> toProv) {
         this.fromProv = fromProv;
         this.toProv = toProv;
     }

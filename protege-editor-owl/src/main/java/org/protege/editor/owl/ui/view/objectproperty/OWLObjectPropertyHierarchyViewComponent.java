@@ -2,13 +2,13 @@ package org.protege.editor.owl.ui.view.objectproperty;
 
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.renderer.*;
 import org.protege.editor.owl.ui.view.AbstractOWLPropertyHierarchyViewComponent;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLSubPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,45 +31,47 @@ public class OWLObjectPropertyHierarchyViewComponent
         getAssertedTree().setPopupMenuId(new PopupMenuId("[AssertedObjectPropertyHierarchy]"));
     }
 
+    @Override
     protected boolean isOWLObjectPropertyView() {
         return true;
     }
 
-
-    protected HierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
+    @Override
+    protected OWLHierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLObjectPropertyHierarchyProvider();
     }
 
     @Override
-    protected Optional<HierarchyProvider<OWLObjectProperty>> getInferredHierarchyProvider() {
+    protected Optional<OWLHierarchyProvider<OWLObjectProperty>> getInferredHierarchyProvider() {
         return Optional.of(getOWLModelManager().getOWLHierarchyManager().getInferredOWLObjectPropertyHierarchyProvider());
     }
 
-    protected OWLSubPropertyAxiom getSubPropertyAxiom(OWLObjectProperty child, OWLObjectProperty parent) {
+    @Override
+    protected OWLSubObjectPropertyOfAxiom getSubPropertyAxiom(OWLObjectProperty child, OWLObjectProperty parent) {
         return getOWLDataFactory().getOWLSubObjectPropertyOfAxiom(child, parent);
     }
 
-
+    @Override
     protected boolean canAcceptDrop(Object child, Object parent) {
         return child instanceof OWLObjectProperty;
     }
 
-
+    @Override
     protected OWLEntityCreationSet<OWLObjectProperty> createProperty() {
         return getOWLWorkspace().createOWLObjectProperty();
     }
 
-
+    @Override
     protected Icon getSubIcon() {
         return new AddChildIcon(new OWLObjectPropertyIcon());
     }
 
-
+    @Override
     protected Icon getSibIcon() {
         return new AddSiblingIcon(new OWLObjectPropertyIcon());
     }
 
-
+    @Override
     protected Icon getDeleteIcon() {
         return new DeleteEntityIcon(new OWLObjectPropertyIcon(OWLEntityIcon.FillType.HOLLOW));
     }

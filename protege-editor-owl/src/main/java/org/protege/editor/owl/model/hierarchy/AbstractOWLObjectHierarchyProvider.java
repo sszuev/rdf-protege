@@ -11,28 +11,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
 
 /**
+ * A basic partial implementation of a hierarchy provider,
+ * which handles listeners and event firing, and also provides basic implementations
+ * of method such as {@link #getAncestors}, {@link #getDescendants}, etc, which use other core methods.
+ * <p>
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 01-Jun-2006<br><br>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
- * A basic partial implementation of a hierarchy provider, which
- * handles listeners and event firing, and also provides basic
- * implementations of method such as getAncestors, getDescendants etc.
- * which use other core methods.
  */
-public abstract class AbstractOWLObjectHierarchyProvider<N> implements HierarchyProvider<N> {
-
+public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLHierarchyProvider<N> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOWLObjectHierarchyProvider.class);
-
-    private volatile boolean fireEvents;
-
     /*
      * The listeners object synchronizes the listeners data.
      */
     private final List<HierarchyProviderListener<N>> listeners;
-
+    private volatile boolean fireEvents;
     private OWLOntologyManager manager;
 
     private Predicate<N> filter = n -> true;
@@ -40,7 +36,7 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
     /*
      * If you expect this or any of its subclasses to be thread safe it must be a WriteSafeOWLOntologyManager.
      * Ideally we would change the interface here but this might break some existing plugin code.  On the other hand,
-     * all Protege code will pass in a ProtegeOWLOntologyManager and Web-Protege will pass in another implementation of the 
+     * all Protege code will pass in a ProtegeOWLOntologyManager and Web-Protege will pass in another implementation of the
      * WriteSafeOWLOntologyManager.
      */
     protected AbstractOWLObjectHierarchyProvider(OWLOntologyManager owlOntologyManager) {
@@ -58,12 +54,6 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
     }
 
     @Override
-    public void setFilter(Predicate<N> filter) {
-        this.filter = checkNotNull(filter);
-        fireHierarchyChanged();
-    }
-
-    @Override
     public void clearFilter() {
         this.filter = n -> true;
         fireHierarchyChanged();
@@ -73,51 +63,39 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
     public Predicate<N> getFilter() {
         return filter;
     }
-//	protected ReentrantReadWriteLock getReadWriteLock() {
-//		return manager.getReadWriteLock();
-//	}
-//
-//	protected ReadLock getReadLock() {
-//		return manager.getReadLock();
-//	}
-//
-//	protected WriteLock getWriteLock() {
-//		return manager.getWriteLock();
-//	}
 
+    @Override
+    public void setFilter(Predicate<N> filter) {
+        this.filter = checkNotNull(filter);
+        fireHierarchyChanged();
+    }
 
+    @Override
     public void dispose() {
         synchronized (listeners) {
             listeners.clear();
         }
     }
 
-
+    @Override
     public Set<N> getAncestors(N object) {
-//    	getReadLock().lock();
-//        try {
-            Set<N> results = new HashSet<>();
-            getAncestors(results, object);
-            return results;
-//        } finally {
-//    		getReadLock().unlock();
-//        }
+        Set<N> results = new HashSet<>();
+        getAncestors(results, object);
+        return results;
     }
-
 
     private void getAncestors(Set<N> results, N object) {
         getParents(object).stream()
-                .filter(parent -> !results.contains(parent))
-                .forEach(parent -> {
-                    results.add(parent);
-                    getAncestors(results, parent);
+                .filter(x -> !results.contains(x))
+                .forEach(x -> {
+                    results.add(x);
+                    getAncestors(results, x);
                 });
     }
 
     @Override
     public Set<N> getChildren(N object) {
-        return getUnfilteredChildren(object)
-                .stream()
+        return getUnfilteredChildren(object).stream()
                 .filter(filter)
                 .collect(toSet());
     }
@@ -126,17 +104,12 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
         return Collections.emptySet();
     }
 
+    @Override
     public Set<N> getDescendants(N object) {
-//    	getReadLock().lock();
-//        try {
-            Set<N> results = new HashSet<>();
-            getDescendants(results, object);
-            return results;
-//        } finally {
-//    		getReadLock().unlock();
-//        }
+        Set<N> results = new HashSet<>();
+        getDescendants(results, object);
+        return results;
     }
-
 
     private void getDescendants(Set<N> results, N object) {
         getChildren(object).stream()
@@ -159,30 +132,24 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
      *
      * @return A <code>Set</code> of <code>List</code>s of <code>N</code>s
      */
+    @Override
     public Set<List<N>> getPathsToRoot(N obj) {
-//    	getReadLock().lock();
-//        try {
-            return setOfPaths(obj, new HashSet<>());
-//        } finally {
-//    		getReadLock().unlock();
-//        }
+        return setOfPaths(obj, new HashSet<>());
     }
 
-
     private Set<List<N>> setOfPaths(N obj, Set<N> processed) {
-        if (getRoots().contains(obj)) {
+        if (hasRoot(obj)) {
             return getSingleSetOfLists(obj);
         }
         Set<List<N>> paths = new HashSet<>();
         getParents(obj).stream()
-                .filter(par -> !processed.contains(par))
-                .forEach(par -> {
-                    processed.add(par);
-                    paths.addAll(append(obj, setOfPaths(par, processed)));
+                .filter(x -> !processed.contains(x))
+                .forEach(x -> {
+                    processed.add(x);
+                    paths.addAll(append(obj, setOfPaths(x, processed)));
                 });
         return paths;
     }
-
 
     private Set<List<N>> getSingleSetOfLists(N obj) {
         Set<List<N>> set = new HashSet<>();
@@ -191,7 +158,6 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
         set.add(list);
         return set;
     }
-
 
     private Set<List<N>> append(N obj, Set<List<N>> setOfPaths) {
         for (List<N> path : setOfPaths) {
@@ -202,20 +168,19 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-
     @SuppressWarnings("unused")
     protected void setFireEvents(boolean b) {
         fireEvents = b;
     }
 
-
+    @Override
     public void addListener(HierarchyProviderListener<N> listener) {
         synchronized (listeners) {
             listeners.add(listener);
         }
     }
 
-
+    @Override
     public void removeListener(HierarchyProviderListener<N> listener) {
         synchronized (listeners) {
             listeners.remove(listener);
@@ -236,16 +201,13 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
             try {
                 listener.nodeChanged(node);
             } catch (Throwable e) {
-                e.printStackTrace();
-                LOGGER.error("{}: Listener {} has thrown an exception.  Removing bad listener.",
-                        getClass().getName(),
-                        listener);
+                LOGGER.error("{}: Listener {} has thrown an exception: '{}'. Removing bad listener.",
+                        getClass().getName(), listener, e.getMessage(), e);
                 removeListener(listener);
                 throw new RuntimeException(e);
             }
         }
     }
-
 
     protected void fireHierarchyChanged() {
         if (!fireEvents) {
@@ -255,7 +217,8 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements Hierarchy
             try {
                 listener.hierarchyChanged();
             } catch (Throwable e) {
-                e.printStackTrace();
+                LOGGER.error("{}: Listener {} has thrown an exception: '{}'",
+                        getClass().getName(), listener, e.getMessage(), e);
             }
         }
     }

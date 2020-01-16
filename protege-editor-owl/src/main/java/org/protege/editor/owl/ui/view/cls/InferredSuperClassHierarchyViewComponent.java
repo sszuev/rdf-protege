@@ -2,7 +2,7 @@ package org.protege.editor.owl.ui.view.cls;
 
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.cls.InferredSuperClassHierarchyProvider;
 import org.protege.editor.owl.ui.framelist.OWLFrameList;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -52,7 +52,7 @@ public class InferredSuperClassHierarchyViewComponent extends AbstractSuperClass
     }
 
     @Override
-    protected Optional<HierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
+    protected Optional<OWLHierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
         return Optional.empty();
     }
 }

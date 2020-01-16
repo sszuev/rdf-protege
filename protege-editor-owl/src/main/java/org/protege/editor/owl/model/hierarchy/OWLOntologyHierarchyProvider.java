@@ -2,9 +2,9 @@ package org.protege.editor.owl.model.hierarchy;
 
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.event.EventType;
-import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 import java.util.*;
 
@@ -22,27 +22,20 @@ import java.util.*;
  * Date: 28-Oct-2007<br><br>
  */
 public class OWLOntologyHierarchyProvider extends AbstractOWLObjectHierarchyProvider<OWLOntology> {
-	
-	/*
-	 * The internal state of this class is synchronized by the roots object.
-	 */
 
-    private Set<OWLOntology> roots;
+    /*
+     * The internal state of this class is synchronized by the roots object.
+     */
+    private final Set<OWLOntology> roots;
+    private final Map<OWLOntology, Set<OWLOntology>> parent2ChildMap;
+    private final Map<OWLOntology, Set<OWLOntology>> child2ParentMap;
+    private final OWLModelManager mngr;
 
-    private Map<OWLOntology, Set<OWLOntology>> parent2ChildMap;
-
-    private Map<OWLOntology, Set<OWLOntology>> child2ParentMap;
-
-    private OWLModelManager mngr;
-
-    private OWLModelManagerListener modelManagerListener = event -> {
-        if(event.isType(EventType.ONTOLOGY_LOADED) ||
-           event.isType(EventType.ONTOLOGY_RELOADED) ||
-           event.isType(EventType.ONTOLOGY_CREATED)) {
+    private final OWLModelManagerListener modelManagerListener = event -> {
+        if (event.isOneOf(EventType.ONTOLOGY_LOADED, EventType.ONTOLOGY_RELOADED, EventType.ONTOLOGY_CREATED)) {
             rebuild();
         }
     };
-
 
     public OWLOntologyHierarchyProvider(OWLModelManager mngr) {
         super(mngr.getOWLOntologyManager());
@@ -52,29 +45,23 @@ public class OWLOntologyHierarchyProvider extends AbstractOWLObjectHierarchyProv
         child2ParentMap = new HashMap<>();
         rebuild();
         mngr.addListener(modelManagerListener);
-
-    }
-
-
-    public void setOntologies(Set<OWLOntology> ontologies) {
     }
 
     private void rebuild() {
-    	synchronized (roots) {
-    		roots.clear();
-    		parent2ChildMap.clear();
-    		child2ParentMap.clear();
-    		for(OWLOntology ont : mngr.getOntologies()) {
-    			for(OWLOntology imp : mngr.getOWLOntologyManager().getImports(ont)) {
-    				add(ont, imp);
-    			}
-    		}
-    		for(OWLOntology ont : mngr.getOntologies()) {
-    			if(!child2ParentMap.containsKey(ont)) {
-    				roots.add(ont);
-    			}
-    		}
-    	}
+        synchronized (roots) {
+            roots.clear();
+            parent2ChildMap.clear();
+            child2ParentMap.clear();
+            OWLOntologyManager m = mngr.getOWLOntologyManager();
+            for (OWLOntology ont : mngr.getOntologies()) {
+                m.imports(ont).forEach(x -> add(ont, x));
+            }
+            for (OWLOntology ont : mngr.getOntologies()) {
+                if (!child2ParentMap.containsKey(ont)) {
+                    roots.add(ont);
+                }
+            }
+        }
         fireHierarchyChanged();
     }
 
@@ -82,67 +69,56 @@ public class OWLOntologyHierarchyProvider extends AbstractOWLObjectHierarchyProv
      * only called inside of rebuild so the roots lock is taken.
      */
     private void add(OWLOntology ont, OWLOntology imp) {
-        getChildren(ont, true).add(imp);
-        getParents(imp, true).add(ont);
+        getChildrenForParent(ont).add(imp);
+        getParentsForChild(imp).add(ont);
     }
 
-    private Set<OWLOntology> getChildren(OWLOntology parent, boolean add) {
-    	synchronized (roots) {
-    		Set<OWLOntology> children = parent2ChildMap.get(parent);
-    		if(children == null) {
-    			children = new HashSet<>();
-    			if(add) {
-    				parent2ChildMap.put(parent, children);
-    			}
-    		}
-    		return children;
-    	}
+    private Set<OWLOntology> getChildrenForParent(OWLOntology parent) {
+        synchronized (roots) {
+            return parent2ChildMap.computeIfAbsent(parent, k -> new HashSet<>());
+        }
     }
 
-    private Set<OWLOntology> getParents(OWLOntology child, boolean add) {
-    	synchronized (roots) {
-    		Set<OWLOntology> parents = child2ParentMap.get(child);
-    		if(parents == null) {
-    			parents = new HashSet<>();
-    			if(add) {
-    				child2ParentMap.put(child, parents);
-    			}
-    		}
-    		return parents;
-    	}
+    private Set<OWLOntology> getParentsForChild(OWLOntology child) {
+        synchronized (roots) {
+            return child2ParentMap.computeIfAbsent(child, k -> new HashSet<>());
+        }
     }
 
+    @Override
+    public void setOntologies(Set<OWLOntology> ontologies) {
+    }
 
+    @Override
     public Set<OWLOntology> getRoots() {
-    	synchronized (roots) {
-    		return Collections.unmodifiableSet(roots);
-    	}
+        synchronized (roots) {
+            return Collections.unmodifiableSet(roots);
+        }
     }
 
-
+    @Override
     public Set<OWLOntology> getParents(OWLOntology object) {
-        return getParents(object, true);
+        return getParentsForChild(object);
     }
 
-
+    @Override
     public Set<OWLOntology> getEquivalents(OWLOntology object) {
         return Collections.emptySet();
     }
 
-
+    @Override
     public Set<OWLOntology> getUnfilteredChildren(OWLOntology object) {
-        return getChildren(object, true);
+        return getChildrenForParent(object);
     }
 
-
+    @Override
     public boolean containsReference(OWLOntology object) {
     	synchronized (roots) {
-    		return parent2ChildMap.containsKey(object) ||
-    				roots.contains(object);
-    	}
+            return parent2ChildMap.containsKey(object) || roots.contains(object);
+        }
     }
 
-
+    @Override
     public void dispose() {
         super.dispose();
         mngr.removeListener(modelManagerListener);

@@ -3,7 +3,10 @@ package org.protege.editor.owl.model.hierarchy;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -14,51 +17,41 @@ import static java.util.stream.Collectors.toList;
  * Bio-Health Informatics Group<br>
  * Date: 23-Jan-2007<br><br>
  */
-public class OWLObjectPropertyHierarchyProvider extends AbstractOWLPropertyHierarchyProvider<OWLClassExpression, OWLObjectPropertyExpression, OWLObjectProperty> {
+public class OWLObjectPropertyHierarchyProvider
+        extends AbstractOWLPropertyHierarchyProvider<OWLObjectPropertyExpression, OWLObjectProperty> {
 
     public OWLObjectPropertyHierarchyProvider(OWLOntologyManager owlOntologyManager) {
         super(owlOntologyManager);
     }
 
-
+    @Override
     protected Set<OWLObjectProperty> getPropertiesReferencedInChange(List<? extends OWLOntologyChange> changes) {
-        Set<OWLObjectProperty> properties = new HashSet<>();
-        for (OWLOntologyChange change : changes) {
-            if (change.isAxiomChange()) {
-                OWLAxiomChange axiomChange = (OWLAxiomChange) change;
-                for (OWLEntity entity : axiomChange.getSignature()) {
-                    if (entity.isOWLObjectProperty()) {
-                        properties.add(entity.asOWLObjectProperty());
-                    }
-                }
-            }
-        }
-        return properties;
+        return changes.stream().filter(OWLOntologyChange::isAxiomChange)
+                .flatMap(HasSignature::signature)
+                .filter(AsOWLObjectProperty::isOWLObjectProperty)
+                .map(AsOWLObjectProperty::asOWLObjectProperty)
+                .collect(Collectors.toSet());
     }
-
 
     /**
      * Gets the relevant properties in the specified ontology that are contained
      * within the property hierarchy.  For example, for an object property hierarchy
      * this would constitute the set of referenced object properties in the specified
      * ontology.
+     *
      * @param ont The ontology
      */
+    @Override
     protected Set<? extends OWLObjectProperty> getReferencedProperties(OWLOntology ont) {
-        return ont.getObjectPropertiesInSignature();
+        return ont.objectPropertiesInSignature().collect(Collectors.toSet());
     }
 
-
-    protected Set<? extends OWLSubPropertyAxiom> getSubPropertyAxiomForRHS(OWLObjectProperty prop, OWLOntology ont) {
-        return ont.getObjectSubPropertyAxiomsForSuperProperty(prop);
-    }
-
-
+    @Override
     protected OWLObjectProperty getRoot() {
         return getManager().getOWLDataFactory().getOWLTopObjectProperty();
     }
 
-
+    @Override
     protected boolean containsReference(OWLOntology ont, OWLObjectProperty prop) {
         return ont.containsObjectPropertyInSignature(prop.getIRI());
     }
@@ -67,21 +60,16 @@ public class OWLObjectPropertyHierarchyProvider extends AbstractOWLPropertyHiera
     protected Collection<OWLObjectProperty> getSuperProperties(OWLObjectProperty subProperty, Set<OWLOntology> ontologies) {
         return EntitySearcher.getSuperProperties(subProperty, ontologies.stream())
                 .filter(p -> !p.isAnonymous())
-                .map(p -> (OWLObjectProperty) p)
                 .collect(toList());
     }
 
     @Override
     protected Collection<OWLObjectProperty> getSubProperties(OWLObjectProperty superProp, Set<OWLOntology> ontologies) {
-        List<OWLObjectProperty> result = new ArrayList<>();
-        for(OWLOntology ont : ontologies) {
-            ont.getObjectSubPropertyAxiomsForSuperProperty(superProp)
-                    .stream()
-                    .map(OWLSubPropertyAxiom::getSubProperty)
-                    .filter(p -> !p.isAnonymous())
-                    .map(p -> (OWLObjectProperty) p)
-                    .forEach(result::add);
-        }
-        return result;
+        return ontologies.stream()
+                .flatMap(x -> x.objectSubPropertyAxiomsForSuperProperty(superProp))
+                .map(OWLSubPropertyAxiom::getSubProperty)
+                .filter(p -> !p.isAnonymous())
+                .map(AsOWLObjectProperty::asOWLObjectProperty)
+                .collect(Collectors.toList());
     }
 }

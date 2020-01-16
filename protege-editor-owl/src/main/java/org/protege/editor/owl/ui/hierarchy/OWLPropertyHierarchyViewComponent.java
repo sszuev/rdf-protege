@@ -1,8 +1,8 @@
 package org.protege.editor.owl.ui.hierarchy;
 
 import org.protege.editor.owl.model.OWLModelManager;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyManager;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.OWLPropertyHierarchyProvider;
 import org.protege.editor.owl.ui.view.AbstractOWLEntityHierarchyViewComponent;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -24,7 +24,7 @@ public class OWLPropertyHierarchyViewComponent extends AbstractOWLEntityHierarch
     private OWLPropertyHierarchyProvider hierarchyProvider;
 
     @Override
-    protected HierarchyProvider<OWLEntity> getHierarchyProvider() {
+    protected OWLHierarchyProvider<OWLEntity> getHierarchyProvider() {
         if (hierarchyProvider == null) {
             OWLModelManager modelManager = getOWLModelManager();
             OWLHierarchyManager hierarchyManager = modelManager.getOWLHierarchyManager();
@@ -85,7 +85,7 @@ public class OWLPropertyHierarchyViewComponent extends AbstractOWLEntityHierarch
     }
 
     @Override
-    protected Optional<HierarchyProvider<OWLEntity>> getInferredHierarchyProvider() {
+    protected Optional<OWLHierarchyProvider<OWLEntity>> getInferredHierarchyProvider() {
         return Optional.empty();
     }
 }

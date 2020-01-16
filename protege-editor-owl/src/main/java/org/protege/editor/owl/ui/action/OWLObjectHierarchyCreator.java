@@ -2,7 +2,7 @@ package org.protege.editor.owl.ui.action;
 
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.util.OWLEntitySetProvider;
@@ -24,11 +24,11 @@ public abstract class OWLObjectHierarchyCreator<E extends OWLEntity> {
 
     private OWLEntitySetProvider<E> entitySetProvider;
 
-    private HierarchyProvider<E> hierarchyProvider;
+    private OWLHierarchyProvider<E> hierarchyProvider;
 
 
     protected OWLObjectHierarchyCreator(OWLEditorKit editorKit, OWLEntitySetProvider<E> entitySetProvider,
-                                        HierarchyProvider<E> hierarchyProvider) {
+                                        OWLHierarchyProvider<E> hierarchyProvider) {
         this.editorKit = editorKit;
         this.entitySetProvider = entitySetProvider;
         this.hierarchyProvider = hierarchyProvider;

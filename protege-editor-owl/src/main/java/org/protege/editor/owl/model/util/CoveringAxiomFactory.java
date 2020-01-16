@@ -1,6 +1,6 @@
 package org.protege.editor.owl.model.util;
 
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLClassExpressionVisitor;
@@ -23,12 +23,12 @@ public class CoveringAxiomFactory implements OWLClassExpressionVisitor {
 
     private OWLDataFactory owlDataFactory;
 
-    private HierarchyProvider<OWLClass> provider;
+    private OWLHierarchyProvider<OWLClass> provider;
 
     private Set<OWLClassExpression> operands;
 
 
-    public CoveringAxiomFactory(OWLDataFactory owlDataFactory, HierarchyProvider<OWLClass> provider) {
+    public CoveringAxiomFactory(OWLDataFactory owlDataFactory, OWLHierarchyProvider<OWLClass> provider) {
         this.owlDataFactory = owlDataFactory;
         this.provider = provider;
         operands = new HashSet<>();

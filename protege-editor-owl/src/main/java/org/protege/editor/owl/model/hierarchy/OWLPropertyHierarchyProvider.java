@@ -4,6 +4,8 @@ import org.semanticweb.owlapi.model.*;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Matthew Horridge
@@ -12,18 +14,14 @@ import java.util.Set;
  */
 public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProvider<OWLEntity> {
 
-    private HierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider;
+    private final OWLHierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider;
+    private final OWLHierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider;
+    private final OWLHierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider;
 
-    private HierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider;
-
-    private HierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider;
-
-    public OWLPropertyHierarchyProvider(
-            OWLOntologyManager owlOntologyManager,
-            HierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider,
-            HierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider,
-            HierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider
-    ) {
+    public OWLPropertyHierarchyProvider(OWLOntologyManager owlOntologyManager,
+                                        OWLHierarchyProvider<OWLObjectProperty> objectPropertyHierarchyProvider,
+                                        OWLHierarchyProvider<OWLDataProperty> dataPropertyHierarchyProvider,
+                                        OWLHierarchyProvider<OWLAnnotationProperty> annotationPropertyHierarchyProvider) {
         super(owlOntologyManager);
         this.annotationPropertyHierarchyProvider = annotationPropertyHierarchyProvider;
         this.dataPropertyHierarchyProvider = dataPropertyHierarchyProvider;
@@ -86,8 +84,7 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
     }
 
     /**
-     * Sets the ontologies that this hierarchy provider should use
-     * in order to determine the hierarchy.
+     * Sets the ontologies that this hierarchy provider should use in order to determine the hierarchy.
      *
      * @param ontologies a {@code Set} of {@link OWLOntology ontologies}
      */
@@ -100,14 +97,22 @@ public class OWLPropertyHierarchyProvider extends AbstractOWLObjectHierarchyProv
 
     /**
      * Gets the objects that represent the roots of the hierarchy.
+     *
+     * @return {@link LinkedHashSet}
      */
     @Override
     public Set<OWLEntity> getRoots() {
-        LinkedHashSet<OWLEntity> roots = new LinkedHashSet<>();
-        roots.addAll(objectPropertyHierarchyProvider.getRoots());
-        roots.addAll(dataPropertyHierarchyProvider.getRoots());
-        roots.addAll(annotationPropertyHierarchyProvider.getRoots());
-        return roots;
+        return rootProperties().collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    @Override
+    public Stream<OWLEntity> roots() {
+        return rootProperties().distinct();
+    }
+
+    protected Stream<OWLEntity> rootProperties() {
+        return Stream.of(objectPropertyHierarchyProvider, dataPropertyHierarchyProvider, annotationPropertyHierarchyProvider)
+                .flatMap(OWLHierarchyProvider::roots);
     }
 
     @SuppressWarnings({"NullableProblems", "unchecked"})

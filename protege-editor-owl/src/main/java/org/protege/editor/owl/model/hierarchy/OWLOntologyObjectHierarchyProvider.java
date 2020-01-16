@@ -17,10 +17,10 @@ import java.util.Set;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public interface OWLOntologyObjectHierarchyProvider<N extends OWLObject> extends HierarchyProvider<N> {
+public interface OWLOntologyObjectHierarchyProvider<N extends OWLObject> extends OWLHierarchyProvider<N> {
 
+    @Override
     void setOntologies(Set<OWLOntology> ontologies);
-
 
     void handleOntologyChanges(List<? extends OWLOntologyChange> changes);
 }

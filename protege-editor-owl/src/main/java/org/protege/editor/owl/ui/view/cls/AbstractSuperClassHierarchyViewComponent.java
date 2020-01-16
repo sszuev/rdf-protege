@@ -1,7 +1,7 @@
 package org.protege.editor.owl.ui.view.cls;
 
 import org.protege.editor.owl.model.hierarchy.AbstractSuperClassHierarchyProvider;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLClass;
 
 
@@ -29,7 +29,7 @@ public abstract class AbstractSuperClassHierarchyViewComponent extends AbstractO
     }
 
 
-    protected final HierarchyProvider<OWLClass> getHierarchyProvider() {
+    protected final OWLHierarchyProvider<OWLClass> getHierarchyProvider() {
         return getOWLClassHierarchyProvider();
     }
 

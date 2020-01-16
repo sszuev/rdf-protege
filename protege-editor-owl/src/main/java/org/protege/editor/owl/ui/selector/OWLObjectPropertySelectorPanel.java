@@ -5,7 +5,7 @@ import org.protege.editor.core.ui.view.ViewComponentPlugin;
 import org.protege.editor.core.ui.view.ViewComponentPluginAdapter;
 import org.protege.editor.core.ui.workspace.Workspace;
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.renderer.OWLSystemColors;
 import org.protege.editor.owl.ui.view.AbstractOWLPropertyHierarchyViewComponent;
 import org.protege.editor.owl.ui.view.objectproperty.OWLObjectPropertyHierarchyViewComponent;
@@ -38,7 +38,7 @@ public class OWLObjectPropertySelectorPanel extends AbstractHierarchySelectorPan
         this(eKit, editable, eKit.getModelManager().getOWLHierarchyManager().getOWLObjectPropertyHierarchyProvider());
     }
 
-    public OWLObjectPropertySelectorPanel(OWLEditorKit eKit, boolean editable, HierarchyProvider<OWLObjectProperty> hp) {
+    public OWLObjectPropertySelectorPanel(OWLEditorKit eKit, boolean editable, OWLHierarchyProvider<OWLObjectProperty> hp) {
         super(eKit, editable, hp);
     }
 
@@ -65,7 +65,7 @@ public class OWLObjectPropertySelectorPanel extends AbstractHierarchySelectorPan
                             }
                         }
 
-                        protected HierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
+                        protected OWLHierarchyProvider<OWLObjectProperty> getHierarchyProvider() {
                             return OWLObjectPropertySelectorPanel.this.getHierarchyProvider();
                         }
                     };

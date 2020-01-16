@@ -9,7 +9,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.LiteralLabel;
 import org.apache.jena.shared.PrefixMapping;
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.tree.OWLObjectTreeCellRenderer;
 import org.protege.editor.owl.ui.tree.OWLObjectTreeNode;
 import org.protege.editor.owl.ui.tree.OWLTreePreferences;
@@ -31,6 +31,8 @@ import java.util.Set;
 /**
  * Represents a {@link javax.swing.JTree}-component for rendering {@link Triple}s-tree.
  * TODO: currently it is read-only.
+ * TODO: not fully ready
+ * <p>
  * Created by @ssz on 23.11.2019.
  */
 @SuppressWarnings("WeakerAccess")
@@ -99,10 +101,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         if (!prefs.isAutoExpandEnabled()) {
             return;
         }
-        HierarchyProvider<Triple> prov = getProvider();
-        for (Triple root : prov.getRoots()) {
-            autoExpand(root, 0);
-        }
+        getProvider().roots().forEach(x -> autoExpand(x, 0));
     }
 
     private void autoExpand(Triple node, int currentDepth) {
@@ -111,7 +110,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         if (currentDepth >= maxDepth) {
             return;
         }
-        HierarchyProvider<Triple> prov = getProvider();
+        OWLHierarchyProvider<Triple> prov = getProvider();
         int childCountLimit = prefs.getAutoExpansionChildLimit();
         Set<Triple> children = prov.getChildren(node);
         if (children.size() <= childCountLimit) {
@@ -171,11 +170,12 @@ public class RDFTripleTree extends ObjectTree<Triple> {
     }
 
     protected void handleMouseEvent(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-            TreePath treePath = getPathForLocation(e.getX(), e.getY());
-            if (treePath != null) {
-                handlePopupMenuInvoked(treePath, e.getPoint());
-            }
+        if (!e.isPopupTrigger()) {
+            return;
+        }
+        TreePath treePath = getPathForLocation(e.getX(), e.getY());
+        if (treePath != null) {
+            handlePopupMenuInvoked(treePath, e.getPoint());
         }
     }
 

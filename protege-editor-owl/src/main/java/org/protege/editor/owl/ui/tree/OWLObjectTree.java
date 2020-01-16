@@ -1,7 +1,7 @@
 package org.protege.editor.owl.ui.tree;
 
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.OWLObjectComparator;
 import org.semanticweb.owlapi.model.OWLObject;
 
@@ -19,18 +19,18 @@ import java.util.Set;
  */
 public class OWLObjectTree<N extends OWLObject> extends ObjectTree<N> {
 
-    public OWLObjectTree(OWLEditorKit eKit, HierarchyProvider<N> provider) {
+    public OWLObjectTree(OWLEditorKit eKit, OWLHierarchyProvider<N> provider) {
         this(eKit, provider, null);
     }
 
     public OWLObjectTree(OWLEditorKit eKit,
-                         HierarchyProvider<N> provider,
+                         OWLHierarchyProvider<N> provider,
                          Comparator<? super N> objectComparator) {
         this(eKit, provider, provider.getRoots(), objectComparator);
     }
 
     public OWLObjectTree(OWLEditorKit eKit,
-                         HierarchyProvider<N> provider,
+                         OWLHierarchyProvider<N> provider,
                          Set<N> rootObjects,
                          Comparator<? super N> owlObjectComparator) {
         super(eKit, provider, rootObjects, owlObjectComparator);

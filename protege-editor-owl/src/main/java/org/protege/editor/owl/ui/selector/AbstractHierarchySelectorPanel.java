@@ -1,7 +1,7 @@
 package org.protege.editor.owl.ui.selector;
 
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLEntity;
 
 /**
@@ -14,17 +14,17 @@ import org.semanticweb.owlapi.model.OWLEntity;
  */
 public abstract class AbstractHierarchySelectorPanel<O extends OWLEntity> extends AbstractSelectorPanel<O> {
 
-    private HierarchyProvider<O> hp;
+    private OWLHierarchyProvider<O> hp;
 
 
-    public AbstractHierarchySelectorPanel(OWLEditorKit editorKit, boolean editable, HierarchyProvider<O> hp) {
+    public AbstractHierarchySelectorPanel(OWLEditorKit editorKit, boolean editable, OWLHierarchyProvider<O> hp) {
         super(editorKit, editable, false);
         this.hp = hp;
         createUI();
     }
 
 
-    public HierarchyProvider<O> getHierarchyProvider() {
+    public OWLHierarchyProvider<O> getHierarchyProvider() {
         return hp;
     }
 }

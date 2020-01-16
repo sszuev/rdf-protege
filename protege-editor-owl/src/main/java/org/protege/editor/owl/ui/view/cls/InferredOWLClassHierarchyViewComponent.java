@@ -1,6 +1,6 @@
 package org.protege.editor.owl.ui.view.cls;
 
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.framelist.OWLFrameList;
 import org.protege.editor.owl.ui.view.AbstractOWLEntityHierarchyViewComponent;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -33,12 +33,12 @@ public class InferredOWLClassHierarchyViewComponent extends AbstractOWLEntityHie
     }
 
 
-    protected HierarchyProvider<OWLClass> getHierarchyProvider() {
+    protected OWLHierarchyProvider<OWLClass> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getInferredOWLClassHierarchyProvider();
     }
 
     @Override
-    protected Optional<HierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
+    protected Optional<OWLHierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
         return Optional.empty();
     }
 

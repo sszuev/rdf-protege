@@ -1,6 +1,6 @@
 package org.protege.editor.owl.ui.action;
 
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.AddAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -35,7 +35,7 @@ public class MakePrimitiveSiblingsDisjoint extends SelectedOWLClassAction {
             return;
         }
         // TODO: Extract this and make less dependent on hierarchy provider
-        HierarchyProvider<OWLClass> provider = getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider();
+        OWLHierarchyProvider<OWLClass> provider = getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider();
         Set<OWLClass> clses = new HashSet<>();
         for (OWLClass par : provider.getParents(selCls)) {
             clses.addAll(provider.getChildren(par));

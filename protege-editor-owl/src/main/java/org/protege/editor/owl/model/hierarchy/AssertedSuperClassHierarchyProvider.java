@@ -13,49 +13,39 @@ import java.util.Set;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 14-Sep-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class AssertedSuperClassHierarchyProvider extends AbstractSuperClassHierarchyProvider {
-
-    private OWLModelManager owlModelManager;
-
+    private final OWLModelManager owlModelManager;
 
     public AssertedSuperClassHierarchyProvider(OWLModelManager owlModelManager) {
         super(owlModelManager.getOWLOntologyManager());
         this.owlModelManager = owlModelManager;
     }
 
-
+    @Override
     public Set<OWLClass> getUnfilteredChildren(OWLClass object) {
         return owlModelManager.getOWLHierarchyManager().getOWLClassHierarchyProvider().getParents(object);
     }
 
-
+    @Override
     public Set<OWLClass> getEquivalents(OWLClass object) {
         return Collections.emptySet();
     }
 
+    @Override
+    public void setOntologies(Set<OWLOntology> ontologies) {
+    }
 
+    @Override
     public Set<OWLClass> getParents(OWLClass object) {
         return owlModelManager.getOWLHierarchyManager().getOWLClassHierarchyProvider().getChildren(object);
     }
 
-
+    @Override
     public boolean containsReference(OWLClass object) {
         return false;
-    }
-
-
-    public void rebuild() {
-    }
-
-
-    /**
-     * Sets the ontologies that this hierarchy provider should use
-     * in order to determine the hierarchy.
-     */
-    public void setOntologies(Set<OWLOntology> ontologies) {
     }
 }

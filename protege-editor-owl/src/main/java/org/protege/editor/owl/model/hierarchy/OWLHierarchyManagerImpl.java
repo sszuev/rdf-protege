@@ -22,11 +22,11 @@ import java.util.Set;
  */
 public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
 
-    private HierarchyProvider<OWLClass> assertedClassHierarchyProvider;
+    private OWLHierarchyProvider<OWLClass> assertedClassHierarchyProvider;
     private InferredOWLClassHierarchyProvider inferredClassHierarchyProvider;
-    private HierarchyProvider<OWLObjectProperty> assertedObjectPropertyHierarchyProvider;
-    private HierarchyProvider<OWLObjectProperty> inferredObjectPropertyHierarchyProvider;
-    private HierarchyProvider<OWLDataProperty> assertedDataPropertyHierarchyProvider;
+    private OWLHierarchyProvider<OWLObjectProperty> assertedObjectPropertyHierarchyProvider;
+    private OWLHierarchyProvider<OWLObjectProperty> inferredObjectPropertyHierarchyProvider;
+    private OWLHierarchyProvider<OWLDataProperty> assertedDataPropertyHierarchyProvider;
     private OWLAnnotationPropertyHierarchyProvider assertedAnnotationPropertyHierarchyProvider;
     private IndividualsByTypeHierarchyProvider individualsByTypeHierarchyProvider;
     private TripleHierarchyProvider tripleHierarchyProvider;
@@ -45,7 +45,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     }
 
     @Override
-    public HierarchyProvider<OWLClass> getOWLClassHierarchyProvider() {
+    public OWLHierarchyProvider<OWLClass> getOWLClassHierarchyProvider() {
         if (assertedClassHierarchyProvider == null) {
             assertedClassHierarchyProvider = new AssertedClassHierarchyProvider(mngr.getOWLOntologyManager());
             assertedClassHierarchyProvider.setOntologies(mngr.getActiveOntologies());
@@ -54,7 +54,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     }
 
     @Override
-    public HierarchyProvider<OWLClass> getInferredOWLClassHierarchyProvider() {
+    public OWLHierarchyProvider<OWLClass> getInferredOWLClassHierarchyProvider() {
         if (inferredClassHierarchyProvider == null) {
             inferredClassHierarchyProvider = new InferredOWLClassHierarchyProvider(mngr, mngr.getOWLOntologyManager());
         }
@@ -62,7 +62,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     }
 
     @Override
-    public HierarchyProvider<OWLObjectProperty> getOWLObjectPropertyHierarchyProvider() {
+    public OWLHierarchyProvider<OWLObjectProperty> getOWLObjectPropertyHierarchyProvider() {
         if (assertedObjectPropertyHierarchyProvider == null) {
             assertedObjectPropertyHierarchyProvider = new OWLObjectPropertyHierarchyProvider(mngr.getOWLOntologyManager());
             assertedObjectPropertyHierarchyProvider.setOntologies(mngr.getActiveOntologies());
@@ -71,7 +71,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     }
 
     @Override
-    public HierarchyProvider<OWLDataProperty> getOWLDataPropertyHierarchyProvider() {
+    public OWLHierarchyProvider<OWLDataProperty> getOWLDataPropertyHierarchyProvider() {
         if (assertedDataPropertyHierarchyProvider == null) {
             assertedDataPropertyHierarchyProvider = new OWLDataPropertyHierarchyProvider(mngr.getOWLOntologyManager());
             assertedDataPropertyHierarchyProvider.setOntologies(mngr.getActiveOntologies());
@@ -98,7 +98,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     }
 
     @Override
-    public HierarchyProvider<OWLObjectProperty> getInferredOWLObjectPropertyHierarchyProvider() {
+    public OWLHierarchyProvider<OWLObjectProperty> getInferredOWLObjectPropertyHierarchyProvider() {
         if (inferredObjectPropertyHierarchyProvider == null) {
             inferredObjectPropertyHierarchyProvider = new InferredObjectPropertyHierarchyProvider(mngr);
             inferredObjectPropertyHierarchyProvider.setOntologies(mngr.getActiveOntologies());

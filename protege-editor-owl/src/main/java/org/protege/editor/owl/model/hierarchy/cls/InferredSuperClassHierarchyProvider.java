@@ -9,6 +9,7 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -16,7 +17,7 @@ import java.util.Set;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 14-Sep-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
@@ -24,20 +25,18 @@ public class InferredSuperClassHierarchyProvider extends AbstractSuperClassHiera
 
     private OWLReasoner reasoner;
 
-
     public InferredSuperClassHierarchyProvider(OWLModelManager manager) {
         super(manager.getOWLOntologyManager());
     }
-
 
     public void setReasoner(OWLReasoner reasoner) {
         this.reasoner = reasoner;
         fireHierarchyChanged();
     }
 
-
+    @SuppressWarnings("unused")
     protected Set<? extends OWLClassExpression> getEquivalentClasses(OWLClass cls) {
-    	OWLReasoner myReasoner = reasoner;
+        OWLReasoner myReasoner = reasoner;
         // Get the equivalent classes from the reasoner
         if (myReasoner == null) {
             return Collections.emptySet();
@@ -46,64 +45,48 @@ public class InferredSuperClassHierarchyProvider extends AbstractSuperClassHiera
             // We don't want every class in the ontology
             return Collections.emptySet();
         }
-        return myReasoner.getEquivalentClasses(cls).getEntities();
+        return myReasoner.getEquivalentClasses(cls).entities().collect(Collectors.toSet());
     }
 
-
+    @Override
     public Set<OWLClass> getUnfilteredChildren(OWLClass object) {
-    	OWLReasoner myReasoner = reasoner;
-//    	getReadLock().lock();
-    	try {
-    		// Simply get the superclasses from the reasoner
-    		if (myReasoner == null) {
-    			return Collections.emptySet();
-    		}
-    		if (!myReasoner.isSatisfiable(object)) {
-    			// We don't want every class in the ontology!!
-    			return Collections.emptySet();
-    		}
-    		return myReasoner.getSuperClasses(object, true).getFlattened();
-    	}
-    	finally {
-//    		getReadLock().unlock();
-    	}
+        OWLReasoner myReasoner = reasoner;
+        // Simply get the superclasses from the reasoner
+        if (myReasoner == null) {
+            return Collections.emptySet();
+        }
+        if (!myReasoner.isSatisfiable(object)) {
+            // We don't want every class in the ontology!!
+            return Collections.emptySet();
+        }
+        return myReasoner.getSuperClasses(object, true).entities().collect(Collectors.toSet());
     }
 
-
+    @Override
     public Set<OWLClass> getEquivalents(OWLClass object) {
         return Collections.emptySet();
     }
 
-
-    public Set<OWLClass> getParents(OWLClass object) {
-    	OWLReasoner myReasoner = reasoner;
-//    	getReadLock().lock();
-    	try {
-    		// Simply get the superclasses from the reasoner
-    		if (myReasoner == null) {
-    			return Collections.emptySet();
-    		}
-    		if (!myReasoner.isSatisfiable(object)) {
-    			// We don't want every class in the ontology!!
-    			return Collections.emptySet();
-    		}
-    		return myReasoner.getSubClasses(object, true).getFlattened();
-    	}
-    	finally {
-//    		getReadLock().unlock();
-    	}
+    @Override
+    public void setOntologies(Set<OWLOntology> ontologies) {
     }
 
+    @Override
+    public Set<OWLClass> getParents(OWLClass object) {
+        OWLReasoner myReasoner = reasoner;
+        // Simply get the superclasses from the reasoner
+        if (myReasoner == null) {
+            return Collections.emptySet();
+        }
+        if (!myReasoner.isSatisfiable(object)) {
+            // We don't want every class in the ontology!!
+            return Collections.emptySet();
+        }
+        return myReasoner.getSubClasses(object, true).entities().collect(Collectors.toSet());
+    }
 
+    @Override
     public boolean containsReference(OWLClass object) {
         return false;
-    }
-
-
-    /**
-     * Sets the ontologies that this hierarchy provider should use
-     * in order to determine the hierarchy.
-     */
-    public void setOntologies(Set<OWLOntology> ontologies) {
     }
 }

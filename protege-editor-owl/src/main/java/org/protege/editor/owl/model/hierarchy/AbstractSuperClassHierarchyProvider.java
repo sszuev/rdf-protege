@@ -15,33 +15,23 @@ import java.util.Set;
 
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
-
  * A "reverse hierarchy" of superclass relationships.
  * Children are superclasses of their parents.
  */
 public abstract class AbstractSuperClassHierarchyProvider extends AbstractOWLObjectHierarchyProvider<OWLClass> {
-	
-    private volatile OWLClass rootClass;
-
+    private volatile OWLClass root;
 
     public AbstractSuperClassHierarchyProvider(OWLOntologyManager manager) {
         super(manager);
     }
 
-
-    public void setRoot(OWLClass cls) {
-        rootClass = cls;
+    public void setRoot(OWLClass clazz) {
+        root = clazz;
         fireHierarchyChanged();
     }
 
-
+    @Override
     public Set<OWLClass> getRoots() {
-    	OWLClass myRoot = rootClass;
-        if (myRoot == null) {
-            return Collections.emptySet();
-        }
-        else {
-            return Collections.singleton(myRoot);
-        }
+        return root == null ? Collections.emptySet() : Collections.singleton(root);
     }
 }

@@ -4,7 +4,7 @@ import org.protege.editor.core.ui.RefreshableComponent;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.renderer.OWLEntityRendererListener;
 import org.protege.editor.owl.ui.renderer.OWLModelManagerEntityRenderer;
 import org.semanticweb.owlapi.model.OWLEntity;
@@ -24,25 +24,18 @@ import java.util.Set;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 01-Jun-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> implements RefreshableComponent {
 
     private OWLModelManagerListener listener;
-
     private OWLEntityRendererListener rendererListener;
+    protected OWLModelManagerEntityRenderer currentRenderer = null; // only use to clean up old listeners
 
-    public OWLModelManagerEntityRenderer currentRenderer = null; // only use to clean up old listeners
-
-    public OWLModelManagerTree(OWLEditorKit owlEditorKit, HierarchyProvider<N> provider) {
+    public OWLModelManagerTree(OWLEditorKit owlEditorKit, OWLHierarchyProvider<N> provider) {
         super(owlEditorKit, provider);
-        initialise(owlEditorKit);
-    }
-
-    public OWLModelManagerTree(OWLEditorKit owlEditorKit, HierarchyProvider<N> provider, Set<N> rootObjects) {
-        super(owlEditorKit, provider, rootObjects, owlEditorKit.getModelManager().getOWLObjectComparator());
         initialise(owlEditorKit);
     }
 
@@ -57,30 +50,25 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         autoExpandTree();
     }
 
+    @Override
     public void reload() {
         super.reload();
         autoExpandTree();
     }
 
-
-    public void setHighlightKeywords(boolean b) {
+    protected void setHighlightKeywords(boolean b) {
         TreeCellRenderer ren = getCellRenderer();
         if (ren instanceof OWLObjectTreeCellRenderer) {
             ((OWLObjectTreeCellRenderer) ren).setHighlightKeywords(b);
         }
-
     }
-
 
     private void autoExpandTree() {
         OWLTreePreferences prefs = OWLTreePreferences.getInstance();
         if (!prefs.isAutoExpandEnabled()) {
             return;
         }
-        HierarchyProvider<N> prov = getProvider();
-        for (N root : prov.getRoots()) {
-            autoExpand(root, 0);
-        }
+        getProvider().roots().forEach(x -> autoExpand(x, 0));
     }
 
     private void autoExpand(N node, int currentDepth) {
@@ -89,17 +77,18 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         if (currentDepth >= maxDepth) {
             return;
         }
-        HierarchyProvider<N> prov = getProvider();
+        OWLHierarchyProvider<N> prov = getProvider();
         int childCountLimit = prefs.getAutoExpansionChildLimit();
         Set<N> children = prov.getChildren(node);
-        if (children.size() <= childCountLimit) {
-            for (OWLObjectTreeNode<N> treeNode : getNodes(node)) {
-                TreePath path = new TreePath(treeNode.getPath());
-                expandPath(path);
-            }
-            for(N child : prov.getChildren(node)) {
-                autoExpand(child, currentDepth + 1);
-            }
+        if (children.size() > childCountLimit) {
+            return;
+        }
+        for (OWLObjectTreeNode<N> treeNode : getNodes(node)) {
+            TreePath path = new TreePath(treeNode.getPath());
+            expandPath(path);
+        }
+        for (N child : prov.getChildren(node)) {
+            autoExpand(child, currentDepth + 1);
         }
     }
 
@@ -114,23 +103,23 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         refreshEntityRenderer();
     }
 
-
+    @SuppressWarnings("unchecked")
     private void handleRenderingChanged(OWLEntity entity) {
+        Set<OWLObjectTreeNode<N>> res;
         try {
-            for (OWLObjectTreeNode<N> node : getNodes((N) entity)) {
-                DefaultTreeModel model = (DefaultTreeModel) getModel();
-                model.nodeStructureChanged(node);
-            }
+            res = getNodes((N) entity);
+        } catch (ClassCastException ignore) {
+            return;
         }
-        catch (ClassCastException e) {
-
+        for (OWLObjectTreeNode<N> node : res) {
+            DefaultTreeModel model = (DefaultTreeModel) getModel();
+            model.nodeStructureChanged(node);
         }
     }
 
-
     private void refreshEntityRenderer() {
         invalidate();
-        if (currentRenderer != null){
+        if (currentRenderer != null) {
             currentRenderer.removeListener(rendererListener);
         }
         currentRenderer = getOWLModelManager().getOWLEntityRenderer();
@@ -139,11 +128,12 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
 
     private void installPopupMenu() {
         addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 handleMouseEvent(e);
             }
 
-
+            @Override
             public void mouseReleased(MouseEvent e) {
                 handleMouseEvent(e);
             }
@@ -151,17 +141,20 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
     }
 
     protected void handleMouseEvent(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-            TreePath treePath = getPathForLocation(e.getX(), e.getY());
-            if (treePath != null) {
-                handlePopupMenuInvoked(treePath, e.getPoint());
-            }
+        if (!e.isPopupTrigger()) {
+            return;
+        }
+        TreePath treePath = getPathForLocation(e.getX(), e.getY());
+        if (treePath != null) {
+            handlePopupMenuInvoked(treePath, e.getPoint());
         }
     }
 
-    protected void handlePopupMenuInvoked(TreePath path, Point pt) {
+    @SuppressWarnings("unused")
+    protected void handlePopupMenuInvoked(TreePath path, Point pt) { // TODO: wtf ?
     }
 
+    @Override
     public void dispose() {
         super.dispose();
         getOWLModelManager().removeListener(listener);

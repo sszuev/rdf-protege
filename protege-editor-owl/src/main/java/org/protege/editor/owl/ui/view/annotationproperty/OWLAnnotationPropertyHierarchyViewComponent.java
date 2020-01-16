@@ -2,7 +2,7 @@ package org.protege.editor.owl.ui.view.annotationproperty;
 
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.action.AbstractDeleteEntityAction;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
@@ -64,12 +64,12 @@ public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEnti
     }
 
 
-    protected HierarchyProvider<OWLAnnotationProperty> getHierarchyProvider() {
+    protected OWLHierarchyProvider<OWLAnnotationProperty> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLAnnotationPropertyHierarchyProvider();
     }
 
     @Override
-    protected Optional<HierarchyProvider<OWLAnnotationProperty>> getInferredHierarchyProvider() {
+    protected Optional<OWLHierarchyProvider<OWLAnnotationProperty>> getInferredHierarchyProvider() {
         return Optional.empty();
     }
 

@@ -3,7 +3,7 @@ package org.protege.editor.owl.ui.view.cls;
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
 import org.protege.editor.owl.ui.action.DeleteClassAction;
@@ -184,12 +184,12 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
     }
 
 
-    protected HierarchyProvider<OWLClass> getHierarchyProvider() {
+    protected OWLHierarchyProvider<OWLClass> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider();
     }
 
     @Override
-    protected Optional<HierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
+    protected Optional<OWLHierarchyProvider<OWLClass>> getInferredHierarchyProvider() {
         return Optional.of(getOWLModelManager().getOWLHierarchyManager().getInferredOWLClassHierarchyProvider());
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
