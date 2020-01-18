@@ -2,7 +2,9 @@ package org.protege.editor.owl.ui.tree;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Set;
 
 
 /**
@@ -16,24 +18,12 @@ import java.util.*;
  */
 public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
 
-    private ObjectTree<N> tree;
-    private boolean isLoaded;
-    private final Set<N> equivalentObjects; // todo: wtf?
-
-    public OWLObjectTreeNode(ObjectTree<N> tree) {
-        this.tree = tree;
-        this.equivalentObjects = new HashSet<>();
-    }
+    private final ObjectTree<N> tree;
+    private volatile boolean isLoaded;
 
     public OWLObjectTreeNode(Object userObject, ObjectTree<N> tree) {
         super(userObject);
         this.tree = tree;
-        isLoaded = false;
-        equivalentObjects = new HashSet<>();
-    }
-
-    public void addEquivalentObject(N object) {
-        equivalentObjects.add(object);
     }
 
     public Set<N> getEquivalentObjects() {
@@ -65,24 +55,12 @@ public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
     }
 
     protected synchronized void loadChildrenIfNecessary() {
+        // todo: not sure why it is synchronized -- need investigate and add documentation
         if (isLoaded) {
             return;
         }
         isLoaded = true;
-        // TODO: wtf?
-        Object parentObject = null;
-        OWLObjectTreeNode<N> parentNode = (OWLObjectTreeNode) getParent();
-        if (getParent() != null) {
-            parentObject = parentNode.getOWLObject();
-        }
-        List<OWLObjectTreeNode<N>> nodes = tree.getChildNodes(this);
-        for (OWLObjectTreeNode<N> child : nodes) {
-//                if (parentObject != null && parentObject.equals(child.getOWLObject())) {
-//                    // Cycle!!
-//                } else {
-            add(child);
-//                }
-        }
+        tree.getChildNodes(this).forEach(this::add);
     }
 
     @SuppressWarnings("unchecked")
@@ -119,8 +97,9 @@ public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
         return getChildCount() == 0;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Enumeration children() {
+    public Enumeration<N> children() {
         loadChildrenIfNecessary();
         return super.children();
     }

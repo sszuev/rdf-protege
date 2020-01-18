@@ -3,7 +3,6 @@ package org.protege.editor.owl.ui.view.rdf;
 import com.github.owlcs.ontapi.jena.vocabulary.RDF;
 import com.github.owlcs.ontapi.jena.vocabulary.XSD;
 import org.apache.jena.graph.BlankNodeId;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.LiteralLabel;
@@ -30,21 +29,20 @@ import java.util.Set;
 
 /**
  * Represents a {@link javax.swing.JTree}-component for rendering {@link Triple}s-tree.
- * TODO: currently it is read-only.
- * TODO: not fully ready
+ * TODO: currently it is not fully ready: it is read-only and ugly.
  * <p>
  * Created by @ssz on 23.11.2019.
  */
 @SuppressWarnings("WeakerAccess")
 public class RDFTripleTree extends ObjectTree<Triple> {
 
-//    private OWLModelManagerListener listener;
+    //    private OWLModelManagerListener listener;
 //    private OWLEntityRendererListener rendererListener;
 //    public OWLModelManagerEntityRenderer currentRenderer = null; // only use to clean up old listeners
 
-    public RDFTripleTree(OWLEditorKit eKit, TripleHierarchyProvider provider) {
-        super(eKit, provider);
-        initialise(eKit);
+    public RDFTripleTree(OWLEditorKit kit, TripleHierarchyProvider provider) {
+        super(kit, provider);
+        initialise(kit);
     }
 
     @Override
@@ -53,9 +51,13 @@ public class RDFTripleTree extends ObjectTree<Triple> {
     }
 
     @Override
-    public Comparator<? super Triple> getNodeComparator() {
-        Graph g = getProvider().getGraph();
-        return GraphUtils.isBig(g) ? null : GraphUtils.getComparator(g);
+    protected Comparator<? super Triple> getRootNodeComparator() {
+        return getProvider().getComparator();
+    }
+
+    @Override
+    protected Comparator<? super Triple> getChildNodeComparator() {
+        return getProvider().getComparator();
     }
 
     @Override

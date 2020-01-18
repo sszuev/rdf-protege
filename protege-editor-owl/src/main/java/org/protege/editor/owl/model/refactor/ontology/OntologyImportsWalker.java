@@ -7,11 +7,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.util.HashSet;
 import java.util.Set;
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
 
 /**
  * Author: drummond<br>

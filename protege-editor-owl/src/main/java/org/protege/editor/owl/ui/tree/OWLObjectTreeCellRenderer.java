@@ -22,7 +22,7 @@ public class OWLObjectTreeCellRenderer extends OWLCellRenderer {
         super(owlEditorKit);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,

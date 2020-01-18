@@ -23,25 +23,22 @@ public class OWLObjectTree<N extends OWLObject> extends ObjectTree<N> {
         this(eKit, provider, null);
     }
 
-    public OWLObjectTree(OWLEditorKit eKit,
+    public OWLObjectTree(OWLEditorKit kit,
                          OWLHierarchyProvider<N> provider,
-                         Comparator<? super N> objectComparator) {
-        this(eKit, provider, provider.getRoots(), objectComparator);
+                         Comparator<? super N> comparator) {
+        this(kit, provider, provider.getRoots(), getNodeComparator(comparator, kit));
     }
 
     public OWLObjectTree(OWLEditorKit eKit,
                          OWLHierarchyProvider<N> provider,
                          Set<N> rootObjects,
-                         Comparator<? super N> owlObjectComparator) {
-        super(eKit, provider, rootObjects, owlObjectComparator);
+                         Comparator<? super N> comparator) {
+        super(eKit, provider, rootObjects, comparator);
     }
 
-    /**
-     * @return the comparator used to order sibling tree nodes
-     */
-    @Override
-    public Comparator<? super N> getNodeComparator() {
-        return comparator != null ? comparator : eKit.getOWLModelManager().getOWLObjectComparator();
+    @SuppressWarnings("unchecked")
+    private static <N> Comparator<? super N> getNodeComparator(Comparator<? super N> comparator, OWLEditorKit kit) {
+        return comparator != null ? comparator : (Comparator<? super N>) kit.getOWLModelManager().getOWLObjectComparator();
     }
 
     @Override

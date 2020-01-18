@@ -341,14 +341,15 @@ public abstract class ObjectTree<N> extends JTree
         return provider;
     }
 
-    /**
-     * @return the comparator used to order sibling tree nodes
-     */
-    public Comparator<? super N> getNodeComparator() {
+    public abstract Comparator<? super N> getCopyComparator();
+
+    protected Comparator<? super N> getRootNodeComparator() {
         return comparator;
     }
 
-    public abstract Comparator<? super N> getCopyComparator();
+    protected Comparator<? super N> getChildNodeComparator() {
+        return comparator;
+    }
 
     /**
      * Sets the tree ordering and reloads the tree contents.
@@ -372,7 +373,7 @@ public abstract class ObjectTree<N> extends JTree
         List<OWLObjectTreeNode<N>> result = new ArrayList<>();
         Set<N> parents = getParentObjectsForNode(parent);
         Collection<N> children = provider.getChildren(parent.getOWLObject());
-        Comparator<? super N> comp = getNodeComparator();
+        Comparator<? super N> comp = getChildNodeComparator();
         if (comp != null) {
             List<N> sorted = new ArrayList<>(children);
             sorted.sort(comp);
@@ -411,7 +412,6 @@ public abstract class ObjectTree<N> extends JTree
 
     protected OWLObjectTreeNode<N> createTreeNode(N x) {
         OWLObjectTreeNode<N> res = new OWLObjectTreeNode<>(x, this);
-        provider.equivalents(x).forEach(res::addEquivalentObject);
         getNodes(x).add(res);
         return res;
     }
@@ -779,10 +779,10 @@ public abstract class ObjectTree<N> extends JTree
      * www.cs.man.ac.uk/~horridgm<br><br>
      */
     public class RootNode extends OWLObjectTreeNode<N> {
-        private Set<N> roots;
+        private Collection<N> roots;
 
-        RootNode(Set<N> roots) {
-            super(ObjectTree.this);
+        RootNode(Collection<N> roots) {
+            super(null, ObjectTree.this);
             this.roots = roots;
         }
 
@@ -793,7 +793,7 @@ public abstract class ObjectTree<N> extends JTree
             }
             setLoaded();
             Collection<N> res = this.roots;
-            Comparator<? super N> comp = getNodeComparator();
+            Comparator<? super N> comp = getRootNodeComparator();
             if (comp != null) {
                 List<N> sorted = new ArrayList<>(res);
                 sorted.sort(comp);

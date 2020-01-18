@@ -1,13 +1,15 @@
 package org.protege.editor.owl.ui.view.rdf;
 
-import com.github.owlcs.ontapi.Ontology;
+import com.github.owlcs.ontapi.OWLAdapter;
 import com.github.owlcs.ontapi.jena.OntModelFactory;
 import com.github.owlcs.ontapi.jena.utils.Graphs;
+import com.github.owlcs.ontapi.jena.utils.Iter;
 import org.apache.jena.graph.BlankNodeId;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -26,20 +28,37 @@ import java.util.stream.Stream;
 public class TripleHierarchyProvider implements OWLHierarchyProvider<Triple> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TripleHierarchyProvider.class);
 
-    private Graph graph;
+    private static final Map<Graph, Comparator<?>> COMPARATORS_CACHE = new WeakHashMap<>();
 
     private final List<HierarchyProviderListener<Triple>> listeners = new CopyOnWriteArrayList<>();
     private final Map<BlankNodeId, String> ids = new HashMap<>();
+    private Graph graph;
+
+    static int characteristics(Graph graph) {
+        return Graphs.isDistinct(graph) ? Spliterator.NONNULL | Spliterator.DISTINCT : Spliterator.NONNULL;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Comparator<? super Triple> createComparatorFor(Graph g) {
+        return g == null ? null : (Comparator<? super Triple>) COMPARATORS_CACHE.computeIfAbsent(g,
+                k -> GraphUtils.isBig(k) ? null : GraphUtils.getComparator(k));
+    }
 
     @Override
     public void setOntology(OWLOntology o) {
-        this.graph = ((Ontology) o).asGraphModel().getGraph(); // UnionGraph with all hierarchy
+        // this.graph = ((Ontology) o).asGraphModel().getGraph(); // <-- concurrent union graph
+        // todo: currently only the base (GraphMeme) graph is used. for simplification. temporary ?
+        this.graph = OWLAdapter.get().asBaseModel(OWLAdapter.get().asONT(o)).getBase().getBaseGraph();
         fireHierarchyChanged();
     }
 
     @Override
     public void setOntologies(Set<OWLOntology> ontologies) {
         setOntology(Objects.requireNonNull(ontologies).iterator().next());
+    }
+
+    protected Comparator<? super Triple> getComparator() {
+        return createComparatorFor(graph);
     }
 
     public PrefixMapping getPrefixes() {
@@ -51,32 +70,74 @@ public class TripleHierarchyProvider implements OWLHierarchyProvider<Triple> {
     }
 
     public String getBlankNodeLable(BlankNodeId id) {
+        // todo: move mapper to model manager -> need share blank node labels between components
         return ids.computeIfAbsent(id, i -> "_:b" + ids.size());
     }
 
     @Override
-    public Set<Triple> getRoots() {
+    public final Set<Triple> getRoots() {
         if (graph == null) return Collections.emptySet();
         LOGGER.debug("Start collecting roots for {}", Graphs.getName(graph));
-        Set<Triple> res = graph.find().filterKeep(triple -> GraphUtils.isRoot(graph, triple.getSubject())).toSet();
+        Set<Triple> res = listRoots().toSet();
         LOGGER.debug("There are {} root triples in {}", graph.size(), Graphs.getName(graph));
         return res;
     }
 
     @Override
-    public Set<Triple> getChildren(Triple triple) {
-        if (graph == null) return Collections.emptySet();
-        Node o = triple.getObject();
-        if (!o.isBlank()) return Collections.emptySet();
-        return graph.find(o, Node.ANY, Node.ANY).toSet();
+    public final Stream<Triple> roots() {
+        // todo: not really used now
+        if (graph == null) return Stream.empty();
+        int characteristics = characteristics(graph);
+        long size = -1;
+        if (Graphs.isSized(graph)) {
+            size = Graphs.size(graph);
+            characteristics = characteristics | Spliterator.SIZED;
+        }
+        return Iter.asStream(listRoots(), size, characteristics);
+    }
+
+    protected ExtendedIterator<Triple> listRoots() {
+        return graph.find().filterKeep(x -> GraphUtils.isRoot(graph, x.getSubject()));
     }
 
     @Override
-    public Set<Triple> getParents(Triple triple) {
+    public final Set<Triple> getChildren(Triple triple) {
+        if (graph == null) return Collections.emptySet();
+        Node o = triple.getObject();
+        if (!o.isBlank()) return Collections.emptySet();
+        return listChildren(o).toSet();
+    }
+
+    @Override
+    public final Stream<Triple> children(Triple triple) {
+        if (graph == null) return Stream.empty();
+        Node o = triple.getObject();
+        if (!o.isBlank()) return Stream.empty();
+        return Iter.asStream(listChildren(o), -1, characteristics(graph));
+    }
+
+    protected ExtendedIterator<Triple> listChildren(Node o) {
+        return graph.find(o, Node.ANY, Node.ANY);
+    }
+
+    @Override
+    public final Set<Triple> getParents(Triple triple) {
         if (graph == null) return Collections.emptySet();
         Node s = triple.getSubject();
         if (!s.isBlank()) return Collections.emptySet();
-        return graph.find(Node.ANY, Node.ANY, s).toSet();
+        return listParents(s).toSet();
+    }
+
+    @Override
+    public final Stream<Triple> parents(Triple triple) {
+        if (graph == null) return Stream.empty();
+        Node s = triple.getSubject();
+        if (!s.isBlank()) return Stream.empty();
+        return Iter.asStream(listParents(s), -1, characteristics(graph));
+    }
+
+    protected ExtendedIterator<Triple> listParents(Node s) {
+        return graph.find(Node.ANY, Node.ANY, s);
     }
 
     @Override
@@ -143,9 +204,9 @@ public class TripleHierarchyProvider implements OWLHierarchyProvider<Triple> {
     }
 
     protected void fireHierarchyChanged() {
-        listeners().forEach(listener -> {
+        listeners().forEach(x -> {
             try {
-                listener.hierarchyChanged();
+                x.hierarchyChanged();
             } catch (Throwable e) {
                 LOGGER.error("Hierarchy change exception: '{}'", e.getMessage(), e);
             }
