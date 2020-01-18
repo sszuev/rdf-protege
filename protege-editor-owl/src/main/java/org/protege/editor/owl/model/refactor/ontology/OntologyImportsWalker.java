@@ -8,50 +8,44 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import java.util.HashSet;
 import java.util.Set;
 /*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
+ * Copyright (C) 2007, University of Manchester
+ *
+ *
+ */
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Aug 20, 2008<br><br>
  */
 public class OntologyImportsWalker {
 
-    private OWLOntologyHierarchyProvider hp;
-
-    private Set<OWLOntology> ontologies;
-
+    private final OWLOntologyHierarchyProvider hp;
+    private final Set<OWLOntology> ontologies;
 
     public OntologyImportsWalker(OWLModelManager mngr, Set<OWLOntology> ontologies) {
         this.hp = new OWLOntologyHierarchyProvider(mngr);
         this.ontologies = ontologies;
         hp.setOntologies(ontologies);
-
     }
-
 
     public Set<OWLOntology> getLowestOntologiesToContainReference(OWLEntity entity) {
         Set<OWLOntology> referencingOntologies = getReferencingOntologies(entity);
         return getLeaves(referencingOntologies);
     }
 
-
     private Set<OWLOntology> getReferencingOntologies(OWLEntity entity) {
         Set<OWLOntology> referencingOntologies = new HashSet<>();
-        for (OWLOntology ont : ontologies){
-            if (ont.containsEntityInSignature(entity)){
+        for (OWLOntology ont : ontologies) {
+            if (ont.containsEntityInSignature(entity)) {
                 referencingOntologies.add(ont);
             }
         }
         return referencingOntologies;
     }
-
 
     /**
      * Where 2 ontologies import each other (they are both ancestors of each other)
@@ -62,26 +56,21 @@ public class OntologyImportsWalker {
      */
     private Set<OWLOntology> getLeaves(Set<OWLOntology> onts) {
         Set<OWLOntology> leaves = new HashSet<>(onts);
-        for (OWLOntology ont : onts){
-            if (leaves.size() > 1){
-                Set<OWLOntology> ancestors = hp.getAncestors(ont);
-                ancestors.remove(ont);
-                for (OWLOntology ancestor : ancestors){
-                    if (leaves.size() > 1){
-                        leaves.remove(ancestor);
-                    }
-                    else{
-                        break;
-                    }
-                }
-            }
-            else{
+        for (OWLOntology ont : onts) {
+            if (leaves.size() <= 1) {
                 break;
+            }
+            Set<OWLOntology> ancestors = hp.getAncestors(ont);
+            ancestors.remove(ont);
+            for (OWLOntology ancestor : ancestors) {
+                if (leaves.size() <= 1) {
+                    break;
+                }
+                leaves.remove(ancestor);
             }
         }
         return leaves;
     }
-
 
     public void dispose() {
         hp.dispose();

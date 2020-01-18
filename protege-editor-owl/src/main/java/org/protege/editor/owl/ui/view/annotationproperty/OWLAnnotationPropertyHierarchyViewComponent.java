@@ -15,15 +15,11 @@ import org.semanticweb.owlapi.util.OWLEntitySetProvider;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Optional;
 import java.util.stream.Stream;
-
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
 
 /**
  * Author: drummond<br>
@@ -33,28 +29,33 @@ import java.util.stream.Stream;
  * Bio Health Informatics Group<br>
  * Date: Apr 23, 2009<br><br>
  */
-public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEntityHierarchyViewComponent<OWLAnnotationProperty>
+public class OWLAnnotationPropertyHierarchyViewComponent
+        extends AbstractOWLEntityHierarchyViewComponent<OWLAnnotationProperty>
         implements CreateNewChildTarget, CreateNewSiblingTarget, SelectionDriver {
 
+    @Override
     protected void performExtraInitialisation() throws Exception {
-        addAction(new AbstractOWLTreeAction<OWLAnnotationProperty>("Add sub property", new AddChildIcon(new OWLAnnotationPropertyIcon()),
-                getTree().getSelectionModel()) {
+        addAction(new AbstractOWLTreeAction<OWLAnnotationProperty>("Add sub property",
+                new AddChildIcon(new OWLAnnotationPropertyIcon()), getTree().getSelectionModel()) {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 createNewChild();
             }
 
+            @Override
             protected boolean canPerform(OWLAnnotationProperty prop) {
                 return canCreateNewChild();
             }
         }, "A", "A");
 
-        addAction(new AbstractOWLTreeAction<OWLAnnotationProperty>("Add sibling property", new AddSiblingIcon(new OWLAnnotationPropertyIcon()),
-                getTree().getSelectionModel()) {
-
+        addAction(new AbstractOWLTreeAction<OWLAnnotationProperty>("Add sibling property",
+                new AddSiblingIcon(new OWLAnnotationPropertyIcon()), getTree().getSelectionModel()) {
+            @Override
             public void actionPerformed(ActionEvent event) {
                 createNewSibling();
             }
 
+            @Override
             protected boolean canPerform(OWLAnnotationProperty cls) {
                 return canCreateNewSibling();
             }
@@ -63,7 +64,7 @@ public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEnti
         addAction(new DeleteAnnotationPropertyAction(), "B", "A");
     }
 
-
+    @Override
     protected OWLHierarchyProvider<OWLAnnotationProperty> getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getOWLAnnotationPropertyHierarchyProvider();
     }
@@ -73,25 +74,25 @@ public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEnti
         return Optional.empty();
     }
 
+    @Override
     protected OWLObject updateView() {
         return updateView(getOWLWorkspace().getOWLSelectionModel().getLastSelectedAnnotationProperty());
     }
 
-
+    @Override
     public List<OWLAnnotationProperty> find(String match) {
         return new ArrayList<>(getOWLModelManager().getOWLEntityFinder().getMatchingOWLAnnotationProperties(match));
     }
 
-
+    @Override
     public boolean canCreateNewChild() {
         return true;
     }
 
-
+    @Override
     public void createNewChild() {
-        List<OWLOntologyChange> changes = new ArrayList<>();
         OWLEntityCreationSet<OWLAnnotationProperty> set = getOWLWorkspace().createOWLAnnotationProperty();
-        changes.addAll(set.getOntologyChanges());
+        List<OWLOntologyChange> changes = new ArrayList<>(set.getOntologyChanges());
         OWLDataFactory df = getOWLModelManager().getOWLDataFactory();
         OWLAnnotationProperty selProp = getSelectedEntity();
         if (selProp != null) {
@@ -102,12 +103,12 @@ public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEnti
         setGlobalSelection(set.getOWLEntity());
     }
 
-
+    @Override
     public boolean canCreateNewSibling() {
         return getSelectedEntity() != null;
     }
 
-
+    @Override
     public void createNewSibling() {
         OWLAnnotationProperty property = getTree().getSelectedOWLObject();
         if (property == null) {
@@ -117,33 +118,28 @@ public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEnti
         }
         // We need to apply the changes in the active ontology
         OWLEntityCreationSet<OWLAnnotationProperty> creationSet = getOWLWorkspace().createOWLAnnotationProperty();
-        if (creationSet != null) {
-            // Combine the changes that are required to create the OWLAnnotationProperty, with the
-            // changes that are required to make it a sibling property.
-            List<OWLOntologyChange> changes = new ArrayList<>();
-            changes.addAll(creationSet.getOntologyChanges());
-            OWLModelManager mngr = getOWLModelManager();
-            OWLDataFactory df = mngr.getOWLDataFactory();
-            for (OWLAnnotationProperty par : getHierarchyProvider().getParents(property)) {
-                OWLAxiom ax = df.getOWLSubAnnotationPropertyOfAxiom(creationSet.getOWLEntity(), par);
-                changes.add(new AddAxiom(mngr.getActiveOntology(), ax));
-            }
-            mngr.applyChanges(changes);
-            setGlobalSelection(creationSet.getOWLEntity());
+        if (creationSet == null) {
+            return;
         }
+        // Combine the changes that are required to create the OWLAnnotationProperty, with the
+        // changes that are required to make it a sibling property.
+        List<OWLOntologyChange> changes = new ArrayList<>(creationSet.getOntologyChanges());
+        OWLModelManager mngr = getOWLModelManager();
+        OWLDataFactory df = mngr.getOWLDataFactory();
+        OWLOntology o = mngr.getActiveOntology();
+        getHierarchyProvider()
+                .parents(property)
+                .map(x -> new AddAxiom(o, df.getOWLSubAnnotationPropertyOfAxiom(creationSet.getOWLEntity(), x)))
+                .forEach(changes::add);
+        mngr.applyChanges(changes);
+        setGlobalSelection(creationSet.getOWLEntity());
     }
 
-
     private class InternalOWLEntitySetProvider implements OWLEntitySetProvider<OWLAnnotationProperty> {
-
-        public Set<OWLAnnotationProperty> getEntities() {
-            return new HashSet<>(getTree().getSelectedOWLObjects());
+        @Override
+        public Stream<OWLAnnotationProperty> entities() {
+            return new HashSet<>(getTree().getSelectedOWLObjects()).stream();
         }
-
-		@Override
-		public Stream<OWLAnnotationProperty> entities() {
-			return getEntities().stream();
-		}
     }
 
     @Override
@@ -162,20 +158,18 @@ public class OWLAnnotationPropertyHierarchyViewComponent extends AbstractOWLEnti
          * WARNING... Using an anonymous class instead of the InternalOWLEntitySetProvider class
          * below activates the java compiler bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6348760.
          * This bug has been fixed in Java 6 and in several Java 5 IDE compilers but it has not - as far
-         * as I can tell - been fixed by apple's Java 5 compiler or the Sun Java 5 compilers.  At svn 
+         * as I can tell - been fixed by apple's Java 5 compiler or the Sun Java 5 compilers.  At svn
          * revision 14332, ant clean followed by ant equinox or ant install (depending on whether you are using
          * the top level build file) will result in a java.lang.AssertionError.
-         * It took a fair bit of effort to track this down.  
+         * It took a fair bit of effort to track this down.
          */
         public DeleteAnnotationPropertyAction() {
             super("Delete selected properties",
                     new DeleteEntityIcon(new OWLAnnotationPropertyIcon(OWLEntityIcon.FillType.HOLLOW)),
-                    getOWLEditorKit(),
-                    getHierarchyProvider(),
-                    new InternalOWLEntitySetProvider());
+                    getOWLEditorKit(), getHierarchyProvider(), new InternalOWLEntitySetProvider());
         }
 
-
+        @Override
         protected String getPluralDescription() {
             return "properties";
         }

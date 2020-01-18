@@ -92,7 +92,6 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         getOWLModelManager().applyChanges(changes);
     }
 
-
     private void handleMove(OWLObject child, OWLObject fromParent, OWLObject toParent) {
         if (!(child instanceof OWLNamedIndividual)) {
             return;

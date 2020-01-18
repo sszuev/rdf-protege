@@ -293,15 +293,16 @@ public class AssertedClassHierarchyProvider extends AbstractOWLObjectHierarchyPr
                         .forEach(x -> res.add(x.asOWLClass()));
             }
             Set<OWLClass> ancestors = getAncestors(object);
-            if (ancestors.contains(object)) {
-                for (OWLClass cls : ancestors) {
-                    if (getAncestors(cls).contains(object)) {
-                        res.add(cls);
-                    }
-                }
-                res.remove(object);
-                res.remove(root);
+            if (!ancestors.contains(object)) {
+                return res;
             }
+            for (OWLClass cls : ancestors) {
+                if (getAncestors(cls).contains(object)) {
+                    res.add(cls);
+                }
+            }
+            res.remove(object);
+            res.remove(root);
             return res;
         } finally {
             ontologySetReadLock.unlock();

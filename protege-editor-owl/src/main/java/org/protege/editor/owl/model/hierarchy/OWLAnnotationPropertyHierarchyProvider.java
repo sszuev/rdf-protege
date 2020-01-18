@@ -78,20 +78,12 @@ public class OWLAnnotationPropertyHierarchyProvider extends AbstractOWLObjectHie
     public Set<OWLAnnotationProperty> getUnfilteredChildren(OWLAnnotationProperty object) {
         ontologySetReadLock.lock();
         try {
-            Set<OWLAnnotationProperty> res = new HashSet<>();
-            for (OWLOntology ont : ontologies) {
-                ont.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF).forEach(x -> {
-                    if (!object.equals(x.getSuperProperty())) {
-                        return;
-                    }
-                    OWLAnnotationProperty subProp = x.getSubProperty();
-                    // prevent cycles
-                    if (!getAncestors(subProp).contains(subProp)) {
-                        res.add(subProp);
-                    }
-                });
-            }
-            return res;
+            return ontologies.stream()
+                    .flatMap(x -> x.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF))
+                    .filter(x -> object.equals(x.getSuperProperty()))
+                    .map(OWLSubAnnotationPropertyOfAxiom::getSubProperty)
+                    .filter(p -> !getAncestors(p).contains(p))
+                    .collect(Collectors.toSet());
         } finally {
             ontologySetReadLock.unlock();
         }
@@ -144,22 +136,23 @@ public class OWLAnnotationPropertyHierarchyProvider extends AbstractOWLObjectHie
      * @param changes {@code List}
      */
     private void handleChanges(List<? extends OWLOntologyChange> changes) {
-        Set<OWLAnnotationProperty> properties = new HashSet<>(getPropertiesReferencedInChange(changes));
-        for (OWLAnnotationProperty prop : properties) {
+        for (OWLAnnotationProperty prop : getPropertiesReferencedInChange(changes)) {
             if (isRoot(prop)) {
                 roots.add(prop);
+                fireNodeChanged(prop);
+                continue;
+            }
+            Set<OWLAnnotationProperty> ancestors = getAncestors(prop);
+            if (!ancestors.contains(prop)) {
+                roots.remove(prop);
             } else {
-                if (!getAncestors(prop).contains(prop)) {
-                    roots.remove(prop);
-                } else {
-                    roots.add(prop);
-                    for (OWLAnnotationProperty anc : getAncestors(prop)) {
-                        if (!getAncestors(anc).contains(prop)) {
-                            continue;
-                        }
-                        roots.add(anc);
-                        fireNodeChanged(anc);
+                roots.add(prop);
+                for (OWLAnnotationProperty anc : ancestors) {
+                    if (!getAncestors(anc).contains(prop)) {
+                        continue;
                     }
+                    roots.add(anc);
+                    fireNodeChanged(anc);
                 }
             }
             fireNodeChanged(prop);
@@ -197,8 +190,7 @@ public class OWLAnnotationPropertyHierarchyProvider extends AbstractOWLObjectHie
         // any super properties (i.e. it is not on
         // the LHS of a subproperty axiom
         // Assume the property is a root property to begin with
-        boolean isRoot = getParents(prop).isEmpty();
-        if (isRoot && (containsReference(prop) || prop.isBuiltIn())) {
+        if (!hasParents(prop) && (containsReference(prop) || prop.isBuiltIn())) {
             return true;
         }
         // Additional condition: If we have  P -> Q and Q -> P, then

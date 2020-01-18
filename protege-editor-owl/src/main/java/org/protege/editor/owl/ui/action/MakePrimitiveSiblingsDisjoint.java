@@ -9,9 +9,9 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.search.EntitySearcher;
 
 import java.awt.event.ActionEvent;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -37,10 +37,7 @@ public class MakePrimitiveSiblingsDisjoint extends SelectedOWLClassAction {
         OWLModelManager m = getOWLModelManager();
         // TODO: Extract this and make less dependent on hierarchy provider
         OWLHierarchyProvider<OWLClass> provider = m.getOWLHierarchyManager().getOWLClassHierarchyProvider();
-        Set<OWLClass> clses = new HashSet<>();
-        for (OWLClass par : provider.getParents(selCls)) {
-            provider.children(par).forEach(clses::add);
-        }
+        Set<OWLClass> clses = provider.parents(selCls).flatMap(provider::children).collect(Collectors.toSet());
         for (Iterator<OWLClass> it = clses.iterator(); it.hasNext(); ) {
             OWLClass cls = it.next();
             for (OWLOntology ont : m.getActiveOntologies()) {

@@ -11,19 +11,21 @@ import java.util.*;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 01-Jun-2006<br><br>
-
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
 
-    private ObjectTree tree;
-
+    private ObjectTree<N> tree;
     private boolean isLoaded;
+    private final Set<N> equivalentObjects; // todo: wtf?
 
-    private Set<N> equivalentObjects;
+    public OWLObjectTreeNode(ObjectTree<N> tree) {
+        this.tree = tree;
+        this.equivalentObjects = new HashSet<>();
+    }
 
-    public OWLObjectTreeNode(Object userObject, ObjectTree tree) {
+    public OWLObjectTreeNode(Object userObject, ObjectTree<N> tree) {
         super(userObject);
         this.tree = tree;
         isLoaded = false;
@@ -35,17 +37,13 @@ public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
     }
 
     public Set<N> getEquivalentObjects() {
-        if (getUserObject() == null) {
+        N o = getOWLObject();
+        if (o == null) {
             return Collections.emptySet();
         }
-        Set<N> equivalents = tree.getProvider().getEquivalents(getUserObject());
-        equivalents.remove(getUserObject());
-        return equivalents;
-    }
-
-    public OWLObjectTreeNode(ObjectTree tree) {
-        this.tree = tree;
-        this.equivalentObjects = new HashSet<>();
+        Set<N> res = tree.getProvider().getEquivalents(o);
+        res.remove(o);
+        return res;
     }
 
     @Override
@@ -53,6 +51,7 @@ public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
         return getUserObject() == null;
     }
 
+    @SuppressWarnings("unchecked")
     public N getOWLObject() {
         return (N) getUserObject();
     }
@@ -61,8 +60,8 @@ public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
         return isLoaded;
     }
 
-    protected void setLoaded(boolean loaded) {
-        isLoaded = loaded;
+    protected void setLoaded() {
+        isLoaded = true;
     }
 
     protected synchronized void loadChildrenIfNecessary() {

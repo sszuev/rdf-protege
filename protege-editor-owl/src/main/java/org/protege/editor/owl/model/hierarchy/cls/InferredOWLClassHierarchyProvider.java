@@ -90,14 +90,6 @@ public class InferredOWLClassHierarchyProvider extends AbstractOWLObjectHierarch
     }
 
     @Override
-    public Set<OWLClass> getDescendants(OWLClass object) {
-        if (!getReasoner().isConsistent()) {
-            return Collections.emptySet();
-        }
-        return getReasoner().getSubClasses(object, false).entities().collect(Collectors.toSet());
-    }
-
-    @Override
     public Set<OWLClass> getParents(OWLClass object) {
         if (!getReasoner().isConsistent()) {
             return Collections.emptySet();
@@ -107,9 +99,17 @@ public class InferredOWLClassHierarchyProvider extends AbstractOWLObjectHierarch
         } else if (!getReasoner().isSatisfiable(object)) {
             return Collections.singleton(owlNothing);
         }
-        Set<OWLClass> parents = getReasoner().getSuperClasses(object, true).entities().collect(Collectors.toSet());
-        parents.remove(object);
-        return parents;
+        Set<OWLClass> res = getReasoner().getSuperClasses(object, true).entities().collect(Collectors.toSet());
+        res.remove(object);
+        return res;
+    }
+
+    @Override
+    public Set<OWLClass> getDescendants(OWLClass object) {
+        if (!getReasoner().isConsistent()) {
+            return Collections.emptySet();
+        }
+        return getReasoner().getSubClasses(object, false).entities().collect(Collectors.toSet());
     }
 
     @Override

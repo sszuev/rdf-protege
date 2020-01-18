@@ -12,6 +12,8 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -24,106 +26,97 @@ public class InheritedAnonymousClassesFrameSection extends AbstractOWLFrameSecti
 
     private static final String LABEL = "SubClass Of (Anonymous Ancestor)";
 
-    private Set<OWLClass> processedClasses = new HashSet<>();
-
+    private final Set<OWLClass> processedClasses = new HashSet<>();
 
     public InheritedAnonymousClassesFrameSection(OWLEditorKit editorKit, OWLFrame<? extends OWLClass> frame) {
         super(editorKit, LABEL, "Anonymous Ancestor Class", frame);
     }
 
-
+    @Override
     protected OWLSubClassOfAxiom createAxiom(OWLClassExpression object) {
         return null; // canAdd() = false
     }
 
-
+    @Override
     public OWLObjectEditor<OWLClassExpression> getObjectEditor() {
         return null; // canAdd() = false
     }
 
-
-    protected void refill(OWLOntology ontology) {
-        Set<OWLClass> clses = getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider().getAncestors(getRootObject());
+    @Override
+    protected void refill(OWLOntology o) {
+        Set<OWLClass> clses = getOWLModelManager().getOWLHierarchyManager()
+                .getOWLClassHierarchyProvider().getAncestors(getRootObject());
         clses.remove(getRootObject());
+        OWLEditorKit kit = getOWLEditorKit();
         for (OWLClass cls : clses) {
-            for (OWLSubClassOfAxiom ax : ontology.getSubClassAxiomsForSubClass(cls)) {
-                if (ax.getSuperClass().isAnonymous()) {
-                    addRow(new InheritedAnonymousClassesFrameSectionRow(getOWLEditorKit(), this, ontology, cls, ax));
-                }
-            }
-            for (OWLEquivalentClassesAxiom ax : ontology.getEquivalentClassesAxioms(cls)) {
-                    addRow(new InheritedAnonymousClassesFrameSectionRow(getOWLEditorKit(), this, ontology, cls, ax));
-            }
+            Stream.concat(o.subClassAxiomsForSubClass(cls).filter(ax -> ax.getSuperClass().isAnonymous()),
+                    o.equivalentClassesAxioms(cls))
+                    .forEach(ax -> addRow(new InheritedAnonymousClassesFrameSectionRow(kit, this, o, cls, ax)));
             processedClasses.add(cls);
         }
     }
 
-
+    @Override
     protected void refillInferred() {
         getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERRED_SUPER_CLASSES,
-                () -> {
-                    refillInferredDoIt();
-                });
+                this::refillInferredDoIt);
     }
-    
+
     private void refillInferredDoIt() {
         OWLReasoner reasoner = getOWLModelManager().getReasoner();
         if (!reasoner.isConsistent()) {
             return;
         }
-        if(!reasoner.isSatisfiable(getRootObject())) {
+        if (!reasoner.isSatisfiable(getRootObject())) {
             return;
         }
-        Set<OWLClass> clses = getReasoner().getSuperClasses(getRootObject(), true).getFlattened();
-        clses.remove(getRootObject());
-        for (OWLClass cls : clses) {
-            if (!processedClasses.contains(cls)) {
-                for (OWLOntology ontology : getOWLModelManager().getActiveOntology().getImportsClosure()) {
-                    for (OWLSubClassOfAxiom ax : ontology.getSubClassAxiomsForSubClass(cls)) {
-                        OWLClassExpression superClass = ax.getSuperClass();
-                        if (superClass.isAnonymous()) {
-                            OWLSubClassOfAxiom entailedAxiom = getOWLDataFactory().getOWLSubClassOfAxiom(getRootObject(), superClass);
-                            addRow(new InheritedAnonymousClassesFrameSectionRow(getOWLEditorKit(),
-                                                                                this,
-                                                                                null,
-                                                                                cls,
-                                                                                entailedAxiom));
-                        }
-                    }
-                    for (OWLEquivalentClassesAxiom ax : ontology.getEquivalentClassesAxioms(cls)) {
-                        Set<OWLClassExpression> descs = new HashSet<>(ax.getClassExpressions());
-                        descs.remove(getRootObject());
-                        for (OWLClassExpression superCls : descs) {
-                        	if (superCls.isAnonymous()) {
-                                OWLSubClassOfAxiom entailedAxiom = getOWLDataFactory().getOWLSubClassOfAxiom(getRootObject(), superCls);
-                                addRow(new InheritedAnonymousClassesFrameSectionRow(getOWLEditorKit(),
-                        				this,
-                        				null,
-                        				cls, entailedAxiom));
-                        	}
-                        }
-                    }
-                }
-            }
-        }
+        OWLEditorKit kit = getOWLEditorKit();
+        OWLDataFactory df = getOWLDataFactory();
+        OWLOntology active = getOWLModelManager().getActiveOntology();
+        OWLClass root = getRootObject();
+        getReasoner().getSuperClasses(getRootObject(), true).entities()
+                .filter(x -> !processedClasses.contains(x) && !x.equals(root))
+                .forEach(c -> active.importsClosure().forEach(o -> {
+                    o.subClassAxiomsForSubClass(c)
+                            .filter(x -> x.getSuperClass().isAnonymous())
+                            .forEach(x -> {
+                                OWLSubClassOfAxiom entailed = df.getOWLSubClassOfAxiom(root, x.getSuperClass());
+                                addRow(new InheritedAnonymousClassesFrameSectionRow(kit,
+                                        InheritedAnonymousClassesFrameSection.this, null, c, entailed));
+                            });
+
+                    o.equivalentClassesAxioms(c)
+                            .forEach(ax -> {
+                                Set<OWLClassExpression> descs = ax.classExpressions().collect(Collectors.toSet());
+                                descs.remove(root);
+                                for (OWLClassExpression superCls : descs) {
+                                    if (!superCls.isAnonymous()) {
+                                        continue;
+                                    }
+                                    OWLSubClassOfAxiom entailed = df.getOWLSubClassOfAxiom(root, superCls);
+                                    addRow(new InheritedAnonymousClassesFrameSectionRow(kit,
+                                            InheritedAnonymousClassesFrameSection.this, null, c, entailed));
+                                }
+                            });
+                }));
     }
 
-
+    @Override
     public boolean canAdd() {
         return false;
     }
-    
+
     @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
-    	return change.isAxiomChange() && (change.getAxiom() instanceof OWLSubClassOfAxiom || change.getAxiom() instanceof OWLEquivalentClassesAxiom);
+        return change.isAxiomChange() && (change.getAxiom() instanceof OWLSubClassOfAxiom || change.getAxiom() instanceof OWLEquivalentClassesAxiom);
     }
 
-
+    @Override
     protected void clear() {
         processedClasses.clear();
     }
 
-
+    @Override
     public Comparator<OWLFrameSectionRow<OWLClass, OWLClassAxiom, OWLClassExpression>> getRowComparator() {
         return null;
     }

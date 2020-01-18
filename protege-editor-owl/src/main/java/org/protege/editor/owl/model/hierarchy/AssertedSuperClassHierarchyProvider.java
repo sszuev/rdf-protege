@@ -6,6 +6,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Stream;
 
 
 /**
@@ -27,7 +28,13 @@ public class AssertedSuperClassHierarchyProvider extends AbstractSuperClassHiera
 
     @Override
     public Set<OWLClass> getUnfilteredChildren(OWLClass object) {
-        return owlModelManager.getOWLHierarchyManager().getOWLClassHierarchyProvider().getParents(object);
+        //return owlModelManager.getOWLHierarchyManager().getOWLClassHierarchyProvider().getParents(object);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected Stream<OWLClass> unfilteredChildren(OWLClass object) {
+        return owlModelManager.getOWLHierarchyManager().getOWLClassHierarchyProvider().parents(object);
     }
 
     @Override

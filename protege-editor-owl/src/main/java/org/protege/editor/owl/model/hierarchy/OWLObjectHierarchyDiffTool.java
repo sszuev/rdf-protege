@@ -15,6 +15,7 @@ import java.util.Set;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
+@Deprecated
 public class OWLObjectHierarchyDiffTool<N extends OWLObject> {
 
     private OWLHierarchyProvider<N> fromProv;

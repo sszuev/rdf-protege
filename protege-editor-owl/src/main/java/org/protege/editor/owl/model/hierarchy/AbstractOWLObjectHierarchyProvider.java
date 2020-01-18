@@ -49,7 +49,6 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLHierar
         fireEvents = true;
     }
 
-
     public OWLOntologyManager getManager() {
         return manager;
     }
@@ -86,7 +85,7 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLHierar
     }
 
     private void getAncestors(Set<N> results, N object) {
-        getParents(object).stream()
+        parents(object)
                 .filter(x -> !results.contains(x))
                 .forEach(x -> {
                     results.add(x);
@@ -150,7 +149,7 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLHierar
             return getSingleSetOfLists(obj);
         }
         Set<List<N>> paths = new HashSet<>();
-        getParents(obj).stream()
+        parents(obj)
                 .filter(x -> !processed.contains(x))
                 .forEach(x -> {
                     processed.add(x);

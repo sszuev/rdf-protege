@@ -411,9 +411,7 @@ public abstract class ObjectTree<N> extends JTree
 
     protected OWLObjectTreeNode<N> createTreeNode(N x) {
         OWLObjectTreeNode<N> res = new OWLObjectTreeNode<>(x, this);
-        for (N equiv : provider.getEquivalents(x)) {
-            res.addEquivalentObject(equiv);
-        }
+        provider.equivalents(x).forEach(res::addEquivalentObject);
         getNodes(x).add(res);
         return res;
     }
@@ -793,7 +791,7 @@ public abstract class ObjectTree<N> extends JTree
             if (isLoaded()) {
                 return;
             }
-            setLoaded(true);
+            setLoaded();
             Collection<N> res = this.roots;
             Comparator<? super N> comp = getNodeComparator();
             if (comp != null) {

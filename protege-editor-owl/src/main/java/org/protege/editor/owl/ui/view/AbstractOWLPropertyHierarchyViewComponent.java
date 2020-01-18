@@ -202,12 +202,10 @@ public abstract class AbstractOWLPropertyHierarchyViewComponent<O extends OWLPro
         // changes that are required to make it a sibling property.
         List<OWLOntologyChange> changes = new ArrayList<>(creationSet.getOntologyChanges());
         OWLOntology ont = getOWLModelManager().getActiveOntology();
-        for (O parentProperty : getHierarchyProvider().getParents(property)) {
-            if (shouldAddAsParentOfNewlyCreatedProperty(parentProperty)) {
-                OWLAxiom ax = getSubPropertyAxiom(creationSet.getOWLEntity(), parentProperty);
-                changes.add(new AddAxiom(ont, ax));
-            }
-        }
+        getHierarchyProvider().parents(property)
+                .filter(this::shouldAddAsParentOfNewlyCreatedProperty)
+                .map(x -> new AddAxiom(ont, getSubPropertyAxiom(creationSet.getOWLEntity(), x)))
+                .forEach(changes::add);
         getOWLModelManager().applyChanges(changes);
         getTree().setSelectedOWLObject(creationSet.getOWLEntity());
     }
