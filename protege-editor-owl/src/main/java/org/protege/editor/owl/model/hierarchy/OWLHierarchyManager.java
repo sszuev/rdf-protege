@@ -1,7 +1,7 @@
 package org.protege.editor.owl.model.hierarchy;
 
 import org.protege.editor.core.Disposable;
-import org.protege.editor.owl.ui.view.rdf.TripleHierarchyProvider;
+import org.protege.editor.owl.ui.view.rdf.RDFHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -41,5 +41,5 @@ public interface OWLHierarchyManager extends Disposable {
 
     IndividualsByTypeHierarchyProvider getOWLIndividualsByTypeHierarchyProvider();
 
-    TripleHierarchyProvider getRDFTripleHierarchyProvider();
+    RDFHierarchyProvider getRDFTripleHierarchyProvider();
 }

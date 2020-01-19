@@ -33,7 +33,7 @@ import java.util.Map;
  * <p>
  * Created by @ssz on 23.11.2019.
  *
- * @see TripleHierarchyProvider
+ * @see RDFHierarchyProvider
  */
 @SuppressWarnings("WeakerAccess")
 public class RDFTripleTree extends ObjectTree<Triple> {
@@ -42,7 +42,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
 //    private OWLEntityRendererListener rendererListener;
 //    public OWLModelManagerEntityRenderer currentRenderer = null; // only use to clean up old listeners
 
-    public RDFTripleTree(OWLEditorKit kit, TripleHierarchyProvider provider) {
+    public RDFTripleTree(OWLEditorKit kit, RDFHierarchyProvider provider) {
         super(kit, provider);
         initialise(kit);
     }
@@ -73,8 +73,8 @@ public class RDFTripleTree extends ObjectTree<Triple> {
     }
 
     @Override
-    public TripleHierarchyProvider getProvider() {
-        return (TripleHierarchyProvider) provider;
+    public RDFHierarchyProvider getProvider() {
+        return (RDFHierarchyProvider) provider;
     }
 
     @Override
@@ -212,7 +212,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
                 Node s = t.getSubject();
                 Node p = t.getPredicate();
                 Node o = t.getObject();
-                String s_txt = toSubjectTxt(s, pm);
+                String s_txt = value instanceof RDFHierarchyProvider.RootTriple ? toSubjectTxt(s, pm) : "";
                 String p_txt = toPredicateTxt(p, pm);
                 String o_txt = toObjectTxt(o, pm);
                 String txt = String.format("%s %s %s", s_txt, p_txt, o_txt);

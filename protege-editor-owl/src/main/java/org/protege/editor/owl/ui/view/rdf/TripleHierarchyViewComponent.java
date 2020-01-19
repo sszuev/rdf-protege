@@ -209,7 +209,7 @@ public class TripleHierarchyViewComponent extends SelectionViewComponent
         // TODO:
     }
 
-    protected TripleHierarchyProvider getHierarchyProvider() {
+    protected RDFHierarchyProvider getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getRDFTripleHierarchyProvider();
     }
 

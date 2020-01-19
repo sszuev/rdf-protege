@@ -5,7 +5,7 @@ import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.hierarchy.cls.InferredOWLClassHierarchyProvider;
 import org.protege.editor.owl.model.hierarchy.property.InferredObjectPropertyHierarchyProvider;
-import org.protege.editor.owl.ui.view.rdf.TripleHierarchyProvider;
+import org.protege.editor.owl.ui.view.rdf.RDFHierarchyProvider;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -29,7 +29,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     private OWLHierarchyProvider<OWLDataProperty> assertedDataPropertyHierarchyProvider;
     private OWLAnnotationPropertyHierarchyProvider assertedAnnotationPropertyHierarchyProvider;
     private IndividualsByTypeHierarchyProvider individualsByTypeHierarchyProvider;
-    private TripleHierarchyProvider tripleHierarchyProvider;
+    private RDFHierarchyProvider tripleHierarchyProvider;
 
     private OWLModelManager mngr;
 
@@ -157,9 +157,9 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     }
 
     @Override
-    public TripleHierarchyProvider getRDFTripleHierarchyProvider() {
+    public RDFHierarchyProvider getRDFTripleHierarchyProvider() {
         if (tripleHierarchyProvider != null) return tripleHierarchyProvider;
-        TripleHierarchyProvider res = new TripleHierarchyProvider();
+        RDFHierarchyProvider res = new RDFHierarchyProvider();
         res.setOntology(mngr.getActiveOntology());
         return tripleHierarchyProvider = res;
     }

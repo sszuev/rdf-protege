@@ -32,10 +32,10 @@ import java.util.stream.Stream;
  * Created by @ssz on 23.11.2019.
  */
 @SuppressWarnings("WeakerAccess")
-public class TripleHierarchyProvider implements OWLHierarchyProvider<Triple> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TripleHierarchyProvider.class);
+public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RDFHierarchyProvider.class);
 
-    public static final Comparator<String> STRING_URI_COMPARATOR = Comparator.comparingInt(TripleHierarchyProvider::nsToInt)
+    public static final Comparator<String> STRING_URI_COMPARATOR = Comparator.comparingInt(RDFHierarchyProvider::nsToInt)
             .thenComparing(Function.identity());
     public static final Comparator<Node> NODE_URI_COMPARATOR = Comparator.comparing(Node::getURI, STRING_URI_COMPARATOR);
     public static final Comparator<Triple> TRIPLE_PREDICATE_COMPARATOR =
