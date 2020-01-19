@@ -22,16 +22,18 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents a {@link javax.swing.JTree}-component for rendering {@link Triple}s-tree.
  * TODO: currently it is not fully ready: it is read-only and ugly.
  * <p>
  * Created by @ssz on 23.11.2019.
+ *
+ * @see TripleHierarchyProvider
  */
 @SuppressWarnings("WeakerAccess")
 public class RDFTripleTree extends ObjectTree<Triple> {
@@ -48,16 +50,6 @@ public class RDFTripleTree extends ObjectTree<Triple> {
     @Override
     public Comparator<? super Triple> getCopyComparator() {
         return null;
-    }
-
-    @Override
-    protected Comparator<? super Triple> getRootNodeComparator() {
-        return getProvider().getComparator();
-    }
-
-    @Override
-    protected Comparator<? super Triple> getChildNodeComparator() {
-        return getProvider().getComparator();
     }
 
     @Override
@@ -114,7 +106,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         }
         OWLHierarchyProvider<Triple> prov = getProvider();
         int childCountLimit = prefs.getAutoExpansionChildLimit();
-        Set<Triple> children = prov.getChildren(node);
+        Collection<Triple> children = prov.getChildren(node);
         if (children.size() <= childCountLimit) {
             for (OWLObjectTreeNode<Triple> treeNode : getNodes(node)) {
                 TreePath path = new TreePath(treeNode.getPath());

@@ -16,6 +16,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.Set;
 
 
@@ -79,7 +80,7 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         }
         OWLHierarchyProvider<N> prov = getProvider();
         int childCountLimit = prefs.getAutoExpansionChildLimit();
-        Set<N> children = prov.getChildren(node);
+        Collection<N> children = prov.getChildren(node);
         if (children.size() > childCountLimit) {
             return;
         }

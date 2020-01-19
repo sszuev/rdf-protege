@@ -5,8 +5,8 @@ import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.OWLObjectComparator;
 import org.semanticweb.owlapi.model.OWLObject;
 
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.Set;
 
 /**
  * Author: Matthew Horridge<br>
@@ -31,7 +31,7 @@ public class OWLObjectTree<N extends OWLObject> extends ObjectTree<N> {
 
     public OWLObjectTree(OWLEditorKit eKit,
                          OWLHierarchyProvider<N> provider,
-                         Set<N> rootObjects,
+                         Collection<N> rootObjects,
                          Comparator<? super N> comparator) {
         super(eKit, provider, rootObjects, comparator);
     }

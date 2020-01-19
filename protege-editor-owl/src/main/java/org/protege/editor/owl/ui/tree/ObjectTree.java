@@ -64,7 +64,7 @@ public abstract class ObjectTree<N> extends JTree
 
     public ObjectTree(OWLEditorKit eKit,
                       OWLHierarchyProvider<N> provider,
-                      Set<N> rootObjects,
+                      Collection<N> rootObjects,
                       Comparator<? super N> owlObjectComparator) {
         this.eKit = eKit;
         setupLineStyle();
@@ -215,7 +215,7 @@ public abstract class ObjectTree<N> extends JTree
             return;
         }
         // Remove children that aren't there any more
-        Set<N> children = provider.getChildren(node);
+        Collection<N> children = provider.getChildren(node);
 
         Set<OWLObjectTreeNode<N>> nodesToRemove = new HashSet<>();
         for (OWLObjectTreeNode<N> treeNode : treeNodes) {
@@ -302,8 +302,7 @@ public abstract class ObjectTree<N> extends JTree
         // Reload the tree
         nodeMap.clear();
         // TODO: getRoots needs to be changed - the user might have specified specific roots
-        Set<N> roots = provider.getRoots();
-        RootNode rootNode = new RootNode(roots);
+        RootNode rootNode = new RootNode(provider.getRoots());
         ((DefaultTreeModel) getModel()).setRoot(rootNode);
         setSelectedOWLObject(currentSelection);
     }
@@ -770,13 +769,7 @@ public abstract class ObjectTree<N> extends JTree
     }
 
     /**
-     * Author: Matthew Horridge<br>
-     * The University Of Manchester<br>
-     * Medical Informatics Group<br>
-     * Date: 01-Jun-2006<br><br>
-     * <p>
-     * matthew.horridge@cs.man.ac.uk<br>
-     * www.cs.man.ac.uk/~horridgm<br><br>
+     * The root {@link OWLObjectTreeNode}.
      */
     public class RootNode extends OWLObjectTreeNode<N> {
         private Collection<N> roots;

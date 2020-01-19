@@ -4,7 +4,7 @@ import org.protege.editor.owl.model.OWLModelManager;
 import org.semanticweb.owlapi.model.*;
 
 import java.awt.event.ActionEvent;
-import java.util.Set;
+import java.util.Collection;
 
 
 /**
@@ -36,7 +36,7 @@ public class AddCoveringAxiomAction extends SelectedOWLClassAction {
         if (clazz == null) {
             throw new IllegalStateException();
         }
-        Set<OWLClass> children = m.getOWLHierarchyManager().getOWLClassHierarchyProvider().getChildren(clazz);
+        Collection<OWLClass> children = m.getOWLHierarchyManager().getOWLClassHierarchyProvider().getChildren(clazz);
         OWLClassExpression coveringDesc = df.getOWLObjectUnionOf(children);
         OWLSubClassOfAxiom ax = df.getOWLSubClassOfAxiom(clazz, coveringDesc);
         m.applyChange(new AddAxiom(m.getActiveOntology(), ax));
