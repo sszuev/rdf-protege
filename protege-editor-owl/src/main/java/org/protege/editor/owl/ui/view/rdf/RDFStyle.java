@@ -23,14 +23,14 @@ public enum RDFStyle {
     URI_RDF(RDF.getURI(), new Color(10, 94, 168)),
     URI_RDFS(RDFS.getURI(), new Color(16, 40, 181, 227)),
     URI_XSD(XSD.getURI(), new Color(50, 70, 44, 246)),
-    URI_OWL(OWL.getURI(), new Color(178, 0, 178)),
-    BLANK(null, new Color(156, 5, 5, 241)) {
+    URI_OWL(OWL.getURI(), new Color(57, 0, 127)),
+    BLANK(null, new Color(49, 9, 31, 255)) {
         @Override
         public boolean belong(Node node) {
             return node.isBlank();
         }
     },
-    LITERAL(null, new Color(178, 178, 178)) {
+    LITERAL(null, new Color(0, 127, 90, 238)) {
         @Override
         public boolean belong(Node node) {
             return node.isLiteral();

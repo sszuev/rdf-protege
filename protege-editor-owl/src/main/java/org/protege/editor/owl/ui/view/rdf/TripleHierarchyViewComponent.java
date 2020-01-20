@@ -32,12 +32,12 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * TODO:
+ * TODO: under developing
  * Created by @ssz on 23.11.2019.
  *
- * @see org.protege.editor.owl.ui.view.cls.ToldOWLClassHierarchyViewComponent - example
+ * @see org.semanticweb.owlapi.io.RDFTriple
  */
-public class TripleHierarchyViewComponent extends SelectionViewComponent
+public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewComponent
         implements Findable<Triple>, SelectionDriver,
         CreateNewTarget, CreateNewChildTarget, CreateNewSiblingTarget, Deleteable, HasDisplayDeprecatedEntities {
 

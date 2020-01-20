@@ -28,7 +28,6 @@ import java.util.List;
 public abstract class ViewComponent extends JComponent implements ProtegePluginInstance {
 
     private Workspace workspace;
-
     private View view;
 
     private final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
@@ -37,16 +36,13 @@ public abstract class ViewComponent extends JComponent implements ProtegePluginI
         this.workspace = plugin.getWorkspace();
     }
 
-
     public void setView(View view) {
         this.view = view;
     }
 
-
     public View getView() {
         return view;
     }
-
 
     public Workspace getWorkspace() {
         return workspace;
@@ -62,7 +58,6 @@ public abstract class ViewComponent extends JComponent implements ProtegePluginI
         }
     }
 
-
     protected void addAction(ProtegeAction action, String group, String groupIndex) {
         if (view != null) {
             view.addAction(action, group, groupIndex);
@@ -73,7 +68,6 @@ public abstract class ViewComponent extends JComponent implements ProtegePluginI
     protected void addAction(DisposableAction action, String group, String groupIndex) {
         addAction(new ViewActionAdapter(action), group, groupIndex);
     }
-
 
     protected boolean isPinned() {
         if (view != null) {
@@ -95,7 +89,6 @@ public abstract class ViewComponent extends JComponent implements ProtegePluginI
 
     @Override
     public void dispose() {
-        handlerRegistrations.stream()
-                .forEach(HandlerRegistration::removeHandler);
+        handlerRegistrations.forEach(HandlerRegistration::removeHandler);
     }
 }

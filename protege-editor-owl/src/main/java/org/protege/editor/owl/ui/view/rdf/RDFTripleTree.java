@@ -203,29 +203,11 @@ public class RDFTripleTree extends ObjectTree<Triple> {
 
         @Override
         protected void prepareTextPane(Object value, boolean selected) {
-            PrefixMapping pm = getProvider().getPrefixes();
             textPane.setBorder(null);
             StyledDocument doc = textPane.getStyledDocument();
             resetStyles(doc);
             if (value instanceof Triple) {
-                Triple t = (Triple) value;
-                Node s = t.getSubject();
-                Node p = t.getPredicate();
-                Node o = t.getObject();
-                String s_txt = value instanceof RDFHierarchyProvider.RootTriple ? toSubjectTxt(s, pm) : "";
-                String p_txt = toPredicateTxt(p, pm);
-                String o_txt = toObjectTxt(o, pm);
-                String txt = String.format("%s %s %s", s_txt, p_txt, o_txt);
-                int s_start = 0;
-                int s_length = s_txt.length();
-                int p_start = s_txt.length() + 1;
-                int p_length = p_txt.length();
-                int o_start = s_txt.length() + +p_txt.length() + 2;
-                int o_length = o_txt.length();
-                textPane.setText(txt);
-                setStyle(doc, s, s_start, s_length);
-                setStyle(doc, p, p_start, p_length);
-                setStyle(doc, o, o_start, o_length);
+                setTripleText((Triple) value, doc);
             } else {
                 textPane.setText(value == null ? "" : String.valueOf(value));
             }
@@ -235,6 +217,31 @@ public class RDFTripleTree extends ObjectTree<Triple> {
                 doc.setParagraphAttributes(0, doc.getLength(), foreground, false);
             }
             textPane.setFont(plainFont);
+        }
+
+        private void setTripleText(Triple t, StyledDocument doc) {
+            boolean root = t instanceof RDFHierarchyProvider.RootTriple;
+            Node s = t.getSubject();
+            Node p = t.getPredicate();
+            Node o = t.getObject();
+            PrefixMapping pm = getProvider().getPrefixes();
+
+            String s_txt = root ? toSubjectTxt(s, pm) : "";
+            String p_txt = toPredicateTxt(p, pm);
+            String o_txt = toObjectTxt(o, pm);
+            String txt = String.format("%s %s %s", s_txt, p_txt, o_txt);
+            int s_start = 0;
+            int s_length = s_txt.length();
+            int p_start = s_txt.length() + 1;
+            int p_length = p_txt.length();
+            int o_start = s_txt.length() + +p_txt.length() + 2;
+            int o_length = o_txt.length();
+            textPane.setText(txt);
+            setStyle(doc, s, s_start, s_length);
+            setStyle(doc, p, p_start, p_length);
+            setStyle(doc, o, o_start, o_length);
+            if (root)
+                doc.setCharacterAttributes(0, txt.length(), boldStyle, false);
         }
 
         private void setStyle(StyledDocument doc, Node n, int start, int length) {

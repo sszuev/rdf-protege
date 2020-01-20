@@ -118,7 +118,8 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
     private static Set<Triple> collectOrderedRoots(Graph graph) {
         // header always first
         Set<Triple> res = new LinkedHashSet<>();
-        graph.find(Node.ANY, RDF.type.asNode(), OWL.Ontology.asNode()).forEachRemaining(res::add);
+        graph.find(Node.ANY, RDF.type.asNode(), OWL.Ontology.asNode())
+                .mapWith(RootTriple::new).forEachRemaining(res::add);
         collectRoots(graph, res);
         return res;
     }

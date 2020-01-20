@@ -78,8 +78,8 @@ public class OWLCellRenderer implements TableCellRenderer, TreeCellRenderer, Lis
     private ActiveEntityVisitor activeEntityVisitor = new ActiveEntityVisitor();
     private Composite disabledComposite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
     private Style plainStyle;
-    private Style boldStyle;
-    private Style nonBoldStyle;
+    protected Style boldStyle;
+    protected Style nonBoldStyle;
     protected Style selectionForeground;
     protected Style foreground;
     private Style linkStyle;
