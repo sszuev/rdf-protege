@@ -118,10 +118,6 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         }
     }
 
-    OWLTreePreferences getTreePreferences() {
-        return OWLTreePreferences.getInstance();
-    }
-
     private void setupListener() {
 //        listener = event -> {
 //            if (event.isType(EventType.ENTITY_RENDERER_CHANGED)) {

@@ -306,7 +306,11 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
         return listeners.stream();
     }
 
-    protected void fireHierarchyChanged() {
+    /**
+     * Fires all listeners.
+     * Usually to rebuild {@link org.protege.editor.owl.ui.tree.ObjectTree tree}.
+     */
+    public void fireHierarchyChanged() {
         listeners().forEach(x -> {
             try {
                 x.hierarchyChanged();

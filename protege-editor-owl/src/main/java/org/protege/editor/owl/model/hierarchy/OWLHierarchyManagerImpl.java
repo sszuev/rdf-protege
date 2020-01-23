@@ -11,6 +11,7 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -31,84 +32,90 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     private IndividualsByTypeHierarchyProvider individualsByTypeHierarchyProvider;
     private RDFHierarchyProvider tripleHierarchyProvider;
 
-    private OWLModelManager mngr;
+    private final OWLModelManager manager;
 
-    private OWLModelManagerListener listener = event -> {
+    private final OWLModelManagerListener listener = event -> {
         if (event.isType(EventType.ACTIVE_ONTOLOGY_CHANGED) || event.isType(EventType.ONTOLOGY_RELOADED)) {
             rebuildAsNecessary();
         }
     };
 
-    public OWLHierarchyManagerImpl(OWLModelManager mngr) {
-        this.mngr = mngr;
-        mngr.addListener(listener);
+    public OWLHierarchyManagerImpl(OWLModelManager manager) {
+        this.manager = Objects.requireNonNull(manager);
+        manager.addListener(listener);
     }
 
     @Override
     public OWLHierarchyProvider<OWLClass> getOWLClassHierarchyProvider() {
-        if (assertedClassHierarchyProvider == null) {
-            assertedClassHierarchyProvider = new AssertedClassHierarchyProvider(mngr.getOWLOntologyManager());
-            assertedClassHierarchyProvider.setOntologies(mngr.getActiveOntologies());
+        if (assertedClassHierarchyProvider != null) {
+            return assertedClassHierarchyProvider;
         }
-        return assertedClassHierarchyProvider;
+        AssertedClassHierarchyProvider res = new AssertedClassHierarchyProvider(manager.getOWLOntologyManager());
+        res.setOntologies(manager.getActiveOntologies());
+        return this.assertedClassHierarchyProvider = res;
     }
 
     @Override
     public OWLHierarchyProvider<OWLClass> getInferredOWLClassHierarchyProvider() {
-        if (inferredClassHierarchyProvider == null) {
-            inferredClassHierarchyProvider = new InferredOWLClassHierarchyProvider(mngr, mngr.getOWLOntologyManager());
+        if (inferredClassHierarchyProvider != null) {
+            return inferredClassHierarchyProvider;
         }
-        return inferredClassHierarchyProvider;
+        return inferredClassHierarchyProvider = new InferredOWLClassHierarchyProvider(manager, manager.getOWLOntologyManager());
     }
 
     @Override
     public OWLHierarchyProvider<OWLObjectProperty> getOWLObjectPropertyHierarchyProvider() {
-        if (assertedObjectPropertyHierarchyProvider == null) {
-            assertedObjectPropertyHierarchyProvider = new OWLObjectPropertyHierarchyProvider(mngr.getOWLOntologyManager());
-            assertedObjectPropertyHierarchyProvider.setOntologies(mngr.getActiveOntologies());
+        if (assertedObjectPropertyHierarchyProvider != null) {
+            return assertedObjectPropertyHierarchyProvider;
         }
-        return assertedObjectPropertyHierarchyProvider;
+        OWLObjectPropertyHierarchyProvider res = new OWLObjectPropertyHierarchyProvider(manager.getOWLOntologyManager());
+        res.setOntologies(manager.getActiveOntologies());
+        return this.assertedObjectPropertyHierarchyProvider = res;
     }
 
     @Override
     public OWLHierarchyProvider<OWLDataProperty> getOWLDataPropertyHierarchyProvider() {
-        if (assertedDataPropertyHierarchyProvider == null) {
-            assertedDataPropertyHierarchyProvider = new OWLDataPropertyHierarchyProvider(mngr.getOWLOntologyManager());
-            assertedDataPropertyHierarchyProvider.setOntologies(mngr.getActiveOntologies());
+        if (assertedDataPropertyHierarchyProvider != null) {
+            return assertedDataPropertyHierarchyProvider;
         }
-        return assertedDataPropertyHierarchyProvider;
+        OWLDataPropertyHierarchyProvider res = new OWLDataPropertyHierarchyProvider(manager.getOWLOntologyManager());
+        res.setOntologies(manager.getActiveOntologies());
+        return this.assertedDataPropertyHierarchyProvider = res;
     }
 
     @Override
     public OWLAnnotationPropertyHierarchyProvider getOWLAnnotationPropertyHierarchyProvider() {
-        if (assertedAnnotationPropertyHierarchyProvider == null) {
-            assertedAnnotationPropertyHierarchyProvider = new OWLAnnotationPropertyHierarchyProvider(mngr.getOWLOntologyManager());
-            assertedAnnotationPropertyHierarchyProvider.setOntologies(mngr.getOntologies());
+        if (assertedAnnotationPropertyHierarchyProvider != null) {
+            return assertedAnnotationPropertyHierarchyProvider;
         }
-        return assertedAnnotationPropertyHierarchyProvider;
+        OWLAnnotationPropertyHierarchyProvider res = new OWLAnnotationPropertyHierarchyProvider(manager.getOWLOntologyManager());
+        res.setOntologies(manager.getOntologies());
+        return this.assertedAnnotationPropertyHierarchyProvider = res;
     }
 
     @Override
     public IndividualsByTypeHierarchyProvider getOWLIndividualsByTypeHierarchyProvider() {
-        if (individualsByTypeHierarchyProvider == null) {
-            individualsByTypeHierarchyProvider = new IndividualsByTypeHierarchyProvider(mngr.getOWLOntologyManager());
-            individualsByTypeHierarchyProvider.setOntologies(mngr.getActiveOntologies());
+        if (individualsByTypeHierarchyProvider != null) {
+            return individualsByTypeHierarchyProvider;
         }
-        return individualsByTypeHierarchyProvider;
+        IndividualsByTypeHierarchyProvider res = new IndividualsByTypeHierarchyProvider(manager.getOWLOntologyManager());
+        res.setOntologies(manager.getActiveOntologies());
+        return this.individualsByTypeHierarchyProvider = res;
     }
 
     @Override
     public OWLHierarchyProvider<OWLObjectProperty> getInferredOWLObjectPropertyHierarchyProvider() {
-        if (inferredObjectPropertyHierarchyProvider == null) {
-            inferredObjectPropertyHierarchyProvider = new InferredObjectPropertyHierarchyProvider(mngr);
-            inferredObjectPropertyHierarchyProvider.setOntologies(mngr.getActiveOntologies());
+        if (inferredObjectPropertyHierarchyProvider != null) {
+            return inferredObjectPropertyHierarchyProvider;
         }
-        return inferredObjectPropertyHierarchyProvider;
+        InferredObjectPropertyHierarchyProvider res = new InferredObjectPropertyHierarchyProvider(manager);
+        res.setOntologies(manager.getActiveOntologies());
+        return this.inferredObjectPropertyHierarchyProvider = res;
     }
 
     @Override
     public void dispose() throws Exception {
-        mngr.removeListener(listener);
+        manager.removeListener(listener);
 
         if (assertedClassHierarchyProvider != null) {
             assertedClassHierarchyProvider.dispose();
@@ -134,7 +141,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     }
 
     private void rebuildAsNecessary() {
-        Set<OWLOntology> ontologies = mngr.getActiveOntologies();
+        Set<OWLOntology> ontologies = manager.getActiveOntologies();
         // Rebuild the various hierarchies
         if (assertedClassHierarchyProvider != null) {
             getOWLClassHierarchyProvider().setOntologies(ontologies);
@@ -152,7 +159,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
             getOWLAnnotationPropertyHierarchyProvider().setOntologies(ontologies);
         }
         if (tripleHierarchyProvider != null) {
-            tripleHierarchyProvider.setOntology(mngr.getActiveOntology());
+            tripleHierarchyProvider.setOntology(manager.getActiveOntology());
         }
     }
 
@@ -160,7 +167,7 @@ public class OWLHierarchyManagerImpl implements OWLHierarchyManager {
     public RDFHierarchyProvider getRDFTripleHierarchyProvider() {
         if (tripleHierarchyProvider != null) return tripleHierarchyProvider;
         RDFHierarchyProvider res = new RDFHierarchyProvider();
-        res.setOntology(mngr.getActiveOntology());
+        res.setOntology(manager.getActiveOntology());
         return tripleHierarchyProvider = res;
     }
 }

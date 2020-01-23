@@ -682,6 +682,9 @@ public class OWLModelManagerImpl extends AbstractModelManager
                 return;
             }
             manager.applyChanges(minimizedChanges);
+            // graph is changed -> need to reload RDF view if it is present
+            // todo: any change will cause roots recalculation - this is not good
+            getOWLHierarchyManager().getRDFTripleHierarchyProvider().fireHierarchyChanged();
         } catch (OWLOntologyChangeException e) {
             throw new OWLRuntimeException(e);
         }

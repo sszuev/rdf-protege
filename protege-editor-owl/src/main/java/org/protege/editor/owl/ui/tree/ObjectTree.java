@@ -45,18 +45,36 @@ public abstract class ObjectTree<N> extends JTree
         implements ObjectDropTarget<N>, Copyable<N>,
         OWLObjectDragSource, HasExpandAll, HasCopySubHierarchyToClipboard, RefreshableComponent {
 
-    private Map<N, Set<ObjectTreeNode<N>>> nodeMap;
-
     protected final OWLEditorKit eKit;
     protected final OWLHierarchyProvider<N> provider;
-    private HierarchyProviderListener<N> listener;
+    private final Map<N, Set<ObjectTreeNode<N>>> nodeMap;
+    private final HierarchyProviderListener<N> listener;
     protected Comparator<? super N> comparator;
     private OWLTreeDragAndDropHandler<N> dragAndDropHandler;
-    @SuppressWarnings("FieldCanBeLocal")
+
+    // todo: unused fields:
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean dragOriginator;
+    @SuppressWarnings("unused")
     private Point mouseDownPos;
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Optional<PopupMenuId> popupMenuId = Optional.empty();
+
+    private PopupMenuId popupMenuId;
+    private int dropRow = -1;
+    /**
+     * A timer that is used to automatically expand nodes if the
+     * mouse hovers over a node during a drag and drop operation.
+     */
+    private Timer expandNodeTimer = new Timer(800, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (dropRow != -1) {
+                TreePath path = getPathForRow(dropRow);
+                expandPath(path);
+                expandNodeTimer.stop();
+            }
+        }
+    });
+    private Stroke s = new BasicStroke(2.0f);
 
     public ObjectTree(OWLEditorKit eKit, OWLHierarchyProvider<N> provider) {
         this(eKit, provider, provider.getRoots(), null);
@@ -64,14 +82,14 @@ public abstract class ObjectTree<N> extends JTree
 
     public ObjectTree(OWLEditorKit eKit,
                       OWLHierarchyProvider<N> provider,
-                      Collection<N> rootObjects,
+                      Collection<N> roots,
                       Comparator<? super N> owlObjectComparator) {
         this.eKit = eKit;
         setupLineStyle();
         ToolTipManager.sharedInstance().registerComponent(this);
         this.comparator = owlObjectComparator;
         this.provider = provider;
-        nodeMap = new HashMap<>();
+        this.nodeMap = new HashMap<>();
         listener = new HierarchyProviderListener<N>() {
             @Override
             public void hierarchyChanged() {
@@ -84,14 +102,14 @@ public abstract class ObjectTree<N> extends JTree
             }
         };
         provider.addListener(listener);
-        setModel(new DefaultTreeModel(new RootNode(rootObjects)));
+        setModel(new DefaultTreeModel(new RootNode(roots)));
         setShowsRootHandles(true);
         setRootVisible(false);
         setRowHeight(18);
         setScrollsOnExpand(true);
         setAutoscrolls(true);
         setExpandsSelectedPaths(true);
-        //DropTarget dt = new DropTarget(this, new OWLObjectTreeDropTargetListener(this, OWLTreePreferences.getInstance()));
+        //DropTarget dt = new DropTarget(this, new OWLObjectTreeDropTargetListener(this, getTreePreferences()));
         DragSource dragSource = DragSource.getDefaultDragSource();
         dragSource.createDefaultDragGestureRecognizer(this,
                 DnDConstants.ACTION_COPY_OR_MOVE,
@@ -122,12 +140,12 @@ public abstract class ObjectTree<N> extends JTree
         getSelectionModel().addTreeSelectionListener(event -> scrollPathToVisible(event.getNewLeadSelectionPath()));
     }
 
+    protected OWLTreePreferences getTreePreferences() {
+        return OWLTreePreferences.getInstance();
+    }
+
     private void setupLineStyle() {
-        if (OWLTreePreferences.getInstance().isPaintLines()) {
-            putClientProperty("JTree.lineStyle", "Angled");
-        } else {
-            putClientProperty("JTree.lineStyle", "None");
-        }
+        putClientProperty("JTree.lineStyle", getTreePreferences().isPaintLines() ? "Angled" : "None");
     }
 
     private void expandDescendantsOfRowAt(final int x, int y) {
@@ -155,23 +173,24 @@ public abstract class ObjectTree<N> extends JTree
     }
 
     /**
+     * Clears the popupMenuId for this tree.
+     * todo: unused method
+     */
+    public void clearPopupMenuId() {
+        this.popupMenuId = null;
+    }
+
+    private Optional<PopupMenuId> getPopupMenuId() {
+        return Optional.ofNullable(popupMenuId);
+    }
+
+    /**
      * Sets the popupMenuId for this tree.
      *
      * @param popupMenuId The id.  Not {@code null}.
      */
     public void setPopupMenuId(PopupMenuId popupMenuId) {
-        this.popupMenuId = Optional.of(popupMenuId);
-    }
-
-    /**
-     * Clears the popupMenuId for this tree.
-     */
-    public void clearPopupMenuId() {
-        this.popupMenuId = Optional.empty();
-    }
-
-    private Optional<PopupMenuId> getPopupMenuId() {
-        return popupMenuId;
+        this.popupMenuId = popupMenuId;
     }
 
     private void showPopupMenu(MouseEvent e) {
@@ -201,7 +220,7 @@ public abstract class ObjectTree<N> extends JTree
         // If we are displaying the node which had the child added or removed
         // then we update the node
 
-        final Set<ObjectTreeNode<N>> treeNodes = nodeMap.get(node);
+        Set<ObjectTreeNode<N>> treeNodes = nodeMap.get(node);
 
         // The parents/children might have changed
         if (treeNodes == null || treeNodes.isEmpty()) {
@@ -298,13 +317,12 @@ public abstract class ObjectTree<N> extends JTree
      * Note that this will collapse all expanded paths except for the current selection.
      */
     public void reload() {
-        N currentSelection = getSelectedOWLObject();
+        N current = getSelectedOWLObject();
         // Reload the tree
         nodeMap.clear();
         // TODO: getRoots needs to be changed - the user might have specified specific roots
-        RootNode rootNode = new RootNode(provider.getRoots());
-        ((DefaultTreeModel) getModel()).setRoot(rootNode);
-        setSelectedOWLObject(currentSelection);
+        ((DefaultTreeModel) getModel()).setRoot(new RootNode(provider.getRoots()));
+        setSelectedOWLObject(current);
     }
 
     private void expandDescendantsOfRow(int row) {
@@ -342,6 +360,14 @@ public abstract class ObjectTree<N> extends JTree
 
     public abstract Comparator<? super N> getCopyComparator();
 
+//    private void removeDescendantNodesFromMap(OWLObjectTreeNode<N> parentNode) {
+//        Enumeration e = parentNode.depthFirstEnumeration();
+//        while (e.hasMoreElements()) {
+//            OWLObjectTreeNode<N> curNode = (OWLObjectTreeNode<N>) e.nextElement();
+//            getNodes(curNode.getOWLObject()).remove(curNode);
+//        }
+//    }
+
     protected Comparator<? super N> getRootNodeComparator() {
         return comparator;
     }
@@ -359,14 +385,6 @@ public abstract class ObjectTree<N> extends JTree
         this.comparator = owlObjectComparator;
         reload();
     }
-
-//    private void removeDescendantNodesFromMap(OWLObjectTreeNode<N> parentNode) {
-//        Enumeration e = parentNode.depthFirstEnumeration();
-//        while (e.hasMoreElements()) {
-//            OWLObjectTreeNode<N> curNode = (OWLObjectTreeNode<N>) e.nextElement();
-//            getNodes(curNode.getOWLObject()).remove(curNode);
-//        }
-//    }
 
     protected List<ObjectTreeNode<N>> getChildNodes(ObjectTreeNode<N> parent) {
         List<ObjectTreeNode<N>> result = new ArrayList<>();
@@ -399,8 +417,7 @@ public abstract class ObjectTree<N> extends JTree
     }
 
     /**
-     * Gets the set of nodes that represent the specified
-     * object
+     * Gets the set of nodes that represent the specified object.
      *
      * @param n The object whose nodes are to be retrieved.
      * @return The nodes that represent the specified object.
@@ -415,24 +432,11 @@ public abstract class ObjectTree<N> extends JTree
         return res;
     }
 
-    /**
-     * If the object is contained in a collapsed branch then the branch is expanded.
-     *
-     * @param selObject the object to select if it exists in the tree
-     */
-    public void setSelectedOWLObject(N selObject) {
-        setSelectedOWLObject(selObject, false);
-    }
-
     public void setSelectedOWLObject(N selObject, boolean selectAll) {
         if (selObject == null) {
             return;
         }
         setSelectedOWLObjects(Collections.singleton(selObject), selectAll);
-    }
-
-    public void setSelectedOWLObjects(Set<N> owlObjects) {
-        setSelectedOWLObjects(owlObjects, false);
     }
 
     public void setSelectedOWLObjects(Set<N> owlObjects, boolean selectAll) {
@@ -519,6 +523,15 @@ public abstract class ObjectTree<N> extends JTree
         return ((ObjectTreeNode<N>) path.getLastPathComponent()).getObjectNode();
     }
 
+    /**
+     * If the object is contained in a collapsed branch then the branch is expanded.
+     *
+     * @param selObject the object to select if it exists in the tree
+     */
+    public void setSelectedOWLObject(N selObject) {
+        setSelectedOWLObject(selObject, false);
+    }
+
     @SuppressWarnings("unchecked")
     public List<N> getSelectedOWLObjects() {
         List<N> res = new ArrayList<>();
@@ -530,6 +543,10 @@ public abstract class ObjectTree<N> extends JTree
             res.add((((ObjectTreeNode<N>) path.getLastPathComponent()).getObjectNode()));
         }
         return res;
+    }
+
+    public void setSelectedOWLObjects(Set<N> owlObjects) {
+        setSelectedOWLObjects(owlObjects, false);
     }
 
     @Override
@@ -548,7 +565,7 @@ public abstract class ObjectTree<N> extends JTree
             return false;
         }
 
-        if (!OWLTreePreferences.getInstance().isTreeDragAndDropEnabled()) {
+        if (!getTreePreferences().isTreeDragAndDropEnabled()) {
             return false;
         }
 
@@ -623,23 +640,11 @@ public abstract class ObjectTree<N> extends JTree
         return eKit.getModelManager();
     }
 
-    private int dropRow = -1;
-
     /**
-     * A timer that is used to automatically expand nodes if the
-     * mouse hovers over a node during a drag and drop operation.
+     * todo: unused method
+     *
+     * @return int
      */
-    private Timer expandNodeTimer = new Timer(800, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (dropRow != -1) {
-                TreePath path = getPathForRow(dropRow);
-                expandPath(path);
-                expandNodeTimer.stop();
-            }
-        }
-    });
-
     public int getDropRow() {
         return dropRow;
     }
@@ -676,25 +681,24 @@ public abstract class ObjectTree<N> extends JTree
         return r;
     }
 
-    private Stroke s = new BasicStroke(2.0f);
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         // Paint drop node
-        if (OWLTreePreferences.getInstance().isTreeDragAndDropEnabled() && dropRow != -1) {
-            Rectangle r = getRowBounds(dropRow);
-            if (r == null) {
-                return;
-            }
-
-            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            ((Graphics2D) g).setStroke(s);
-            Color color = UIManager.getDefaults().getColor("Tree.selectionBorderColor");
-            g.setColor(color);
-            g.drawRoundRect(r.x, r.y, r.width, r.height, 7, 7);
+        if (!getTreePreferences().isTreeDragAndDropEnabled() || dropRow == -1) {
+            return;
         }
+        Rectangle r = getRowBounds(dropRow);
+        if (r == null) {
+            return;
+        }
+
+        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        ((Graphics2D) g).setStroke(s);
+        Color color = UIManager.getDefaults().getColor("Tree.selectionBorderColor");
+        g.setColor(color);
+        g.drawRoundRect(r.x, r.y, r.width, r.height, 7, 7);
     }
 
     @Override
