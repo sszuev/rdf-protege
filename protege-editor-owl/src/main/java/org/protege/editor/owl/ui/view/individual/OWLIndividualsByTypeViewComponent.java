@@ -240,10 +240,10 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         OWLClass targetType = null;
         while (selectionPath != null) {
             Object path = selectionPath.getLastPathComponent();
-            if (path instanceof OWLObjectTreeNode) {
-                OWLObjectTreeNode<?> node = (OWLObjectTreeNode<?>) path;
-                if (node.getOWLObject() instanceof OWLClass) {
-                    targetType = (OWLClass) node.getOWLObject();
+            if (path instanceof ObjectTreeNode) {
+                ObjectTreeNode<?> node = (ObjectTreeNode<?>) path;
+                if (node.getObjectNode() instanceof OWLClass) {
+                    targetType = (OWLClass) node.getObjectNode();
                     break;
                 }
             }

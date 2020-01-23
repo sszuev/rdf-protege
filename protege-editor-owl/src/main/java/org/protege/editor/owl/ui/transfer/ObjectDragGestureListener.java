@@ -9,33 +9,27 @@ import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
- * Author: Matthew Horridge<br>
- * The University Of Manchester<br>
- * Medical Informatics Group<br>
- * Date: 04-Jun-2006<br><br>
-
- * matthew.horridge@cs.man.ac.uk<br>
- * www.cs.man.ac.uk/~horridgm<br><br>
+ * TODO: handle unused methods
+ *
+ * @param <X> - any object
  */
-public abstract class OWLObjectDragGestureListener<X> implements DragGestureListener {
+public abstract class ObjectDragGestureListener<X> implements DragGestureListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ObjectDragGestureListener.class);
 
     private final Cursor dragCursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
-
     private final JComponent component;
-
     private final OWLEditorKit owlEditorKit;
 
-    private static final Logger logger = LoggerFactory.getLogger(OWLObjectDragGestureListener.class);
-
-
-    protected OWLObjectDragGestureListener(OWLEditorKit owlEditorKit, JComponent component) {
-        this.component = component;
-        this.owlEditorKit = owlEditorKit;
+    protected ObjectDragGestureListener(OWLEditorKit owlEditorKit, JComponent component) {
+        this.component = Objects.requireNonNull(component);
+        this.owlEditorKit = Objects.requireNonNull(owlEditorKit);
     }
 
+    @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
         if (!canPerformDrag()) {
             return;
@@ -43,13 +37,12 @@ public abstract class OWLObjectDragGestureListener<X> implements DragGestureList
         if (getSelectedObjects().isEmpty()) {
             return;
         }
-        TransferableOWLObject transferable = new TransferableOWLObject(owlEditorKit.getModelManager(),
-                                                                       getSelectedObjects());
+        TransferableOWLObject to = new TransferableOWLObject(owlEditorKit.getModelManager(), getSelectedObjects());
         setupDragOriginator();
         try {
-            dge.startDrag(dragCursor, transferable, new OWLDragSourceAdapter(component));
+            dge.startDrag(dragCursor, to, new OWLDragSourceAdapter(component));
         } catch (InvalidDnDOperationException e) {
-            logger.debug("Invalid drop operation");
+            LOGGER.debug("Invalid drop operation");
         }
     }
 

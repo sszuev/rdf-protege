@@ -2,16 +2,17 @@ package org.protege.editor.owl.ui.view.rdf;
 
 import org.apache.jena.graph.Triple;
 import org.protege.editor.core.ui.menu.PopupMenuId;
+import org.protege.editor.core.ui.view.DisposableAction;
 import org.protege.editor.core.ui.view.View;
 import org.protege.editor.core.ui.view.ViewMode;
 import org.protege.editor.owl.model.selection.SelectionDriver;
+import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
-import org.protege.editor.owl.ui.renderer.AddChildIcon;
-import org.protege.editor.owl.ui.renderer.AddSiblingIcon;
+import org.protege.editor.owl.ui.renderer.DeleteEntityIcon;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
 import org.protege.editor.owl.ui.renderer.OWLClassIcon;
+import org.protege.editor.owl.ui.renderer.OWLEntityIcon;
 import org.protege.editor.owl.ui.tree.OWLTreeDragAndDropHandler;
-import org.protege.editor.owl.ui.tree.OWLTreePreferences;
 import org.protege.editor.owl.ui.tree.ObjectTree;
 import org.protege.editor.owl.ui.view.*;
 import org.semanticweb.owlapi.model.OWLObject;
@@ -26,32 +27,28 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * TODO: under developing
  * Created by @ssz on 23.11.2019.
  *
- * @see org.semanticweb.owlapi.io.RDFTriple
+ * @see RDFTripleTree
  */
 public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewComponent
-        implements Findable<Triple>, SelectionDriver,
-        CreateNewTarget, CreateNewChildTarget, CreateNewSiblingTarget, Deleteable, HasDisplayDeprecatedEntities {
+        implements Findable<Triple>, SelectionDriver, CreateNewTarget, Deleteable, HasDisplayDeprecatedEntities {
 
-    private static final OWLClassIcon OWL_CLASS_ICON = new OWLClassIcon();
-    private static final Icon ADD_SUB_ICON = new AddChildIcon(OWL_CLASS_ICON);
-    private static final Icon ADD_SIBLING_ICON = new AddSiblingIcon(OWL_CLASS_ICON);
+    private static final Icon ADD_ICON = OWLIcons.getIcon("ontology.png");
+    private static final Icon DELETE_ICON = new DeleteEntityIcon(new OWLClassIcon(OWLClassIcon.Type.PRIMITIVE, OWLEntityIcon.FillType.HOLLOW));
+
     private static final String ADD_GROUP = "A";
     private static final String DELETE_GROUP = "B";
     private static final String FIRST_SLOT = "A";
-    private static final String SECOND_SLOT = "B";
+
     private final ViewModeComponent<ObjectTree<Triple>> viewModeComponent = new ViewModeComponent<>();
     private ObjectTree<Triple> tree;
     private TreeSelectionListener listener;
-    private Deleter hierarchyDeleter;
     private ChangeListenerMediator deletableChangeListenerMediator = new ChangeListenerMediator();
 
     @Override
@@ -73,7 +70,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         tree = new RDFTripleTree(getOWLEditorKit(), getHierarchyProvider());
 
         // render keywords should be on now for class expressions
-        final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
+        TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
         if (treeCellRenderer instanceof OWLCellRenderer) {
             ((OWLCellRenderer) treeCellRenderer).setHighlightKeywords(true);
         }
@@ -81,11 +78,11 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         viewModeComponent.add(tree, ViewMode.ASSERTED, true);
 
         performExtraInitialisation();
-        Triple entity = getSelectedNode();
-        if (entity != null) {
-            // todo:
-            //setGlobalSelection(entity);
-        }
+        // todo:
+        //Triple entity = getSelectedNode();
+        //if (entity != null) {
+        //setGlobalSelection(entity);
+        //}
         TreeModelListener treeModelListener = new TreeModelListener() {
             @Override
             public void treeNodesChanged(TreeModelEvent e) {
@@ -123,90 +120,56 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
     }
 
     public void performExtraInitialisation() {
-        // Add in the manipulation actions - we won't need to keep track
-        // of these, as this will be done by the view - i.e. we won't
-        // need to dispose of these actions.
+        DisposableAction add = new AbstractOWLTreeAction<Triple>("Add root triple", ADD_ICON, getTree().getSelectionModel()) {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                createNewObject();
+            }
 
-        AbstractOWLTreeAction<Triple> addSubTripleAction =
-                new AbstractOWLTreeAction<Triple>("Add subtriple",
-                        ADD_SUB_ICON,
-                        getTree().getSelectionModel()) {
-                    @Override
-                    public void actionPerformed(ActionEvent event) {
-                        createNewChild();
-                    }
+            @Override
+            protected boolean canPerform(Triple cls) {
+                return canCreateNew();
+            }
+        };
 
-                    @Override
-                    protected boolean canPerform(Triple cls) {
-                        return canCreateNewChild();
-                    }
-                };
+        addAction(add, ADD_GROUP, FIRST_SLOT);
 
-        addAction(addSubTripleAction, ADD_GROUP, FIRST_SLOT);
+        // TODO:
+        OWLSelectionViewAction delete = new OWLSelectionViewAction("Delete triple", DELETE_ICON) {
+            @Override
+            public void updateState() {
 
-        AbstractOWLTreeAction<Triple> addSiblingTripleAction =
-                new AbstractOWLTreeAction<Triple>("Add sibling triple",
-                        ADD_SIBLING_ICON,
-                        getTree().getSelectionModel()) {
-                    @Override
-                    public void actionPerformed(ActionEvent event) {
-                        createNewSibling();
-                    }
+            }
 
-                    @Override
-                    protected boolean canPerform(Triple cls) {
-                        return canCreateNewSibling();
-                    }
-                };
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-        addAction(addSiblingTripleAction, ADD_GROUP, SECOND_SLOT);
+            }
 
-        /*DeleteClassAction deleteClassAction =
-                new DeleteClassAction(getOWLEditorKit(),
-                        () -> getTree().getSelectedOWLObjects().stream()) {
-                    @Override
-                    public void updateState() {
-                        super.updateState();
-                        if (isEnabled()) {
-                            setEnabled(canDelete());
-                        }
-                    }
-                };
+            @Override
+            public void dispose() {
 
-        addAction(deleteClassAction, DELETE_GROUP, FIRST_SLOT);*/
+            }
+        };
 
+        addAction(delete, DELETE_GROUP, FIRST_SLOT);
+
+        // TODO: right now D'N'D is not allowed
         getTree().setDragAndDropHandler(new OWLTreeDragAndDropHandler<Triple>() {
             @Override
-            public boolean canDrop(Object child, Object parent) { //todo:
-                //return OWLTreePreferences.getInstance().isTreeDragAndDropEnabled() && child instanceof OWLClass;
+            public boolean canDrop(Object child, Object parent) {
                 return false;
             }
 
             @Override
             public void move(Triple child, Triple fromParent, Triple toParent) {
-                if (!OWLTreePreferences.getInstance().isTreeDragAndDropEnabled()) {
-                    return;
-                }
-                handleMove(child, fromParent, toParent);
             }
 
             @Override
             public void add(Triple child, Triple parent) {
-                if (!OWLTreePreferences.getInstance().isTreeDragAndDropEnabled()) {
-                    return;
-                }
-                handleAdd(child, parent);
             }
         });
         getTree().setPopupMenuId(new PopupMenuId("[TripleHierarchy]"));
-    }
-
-    private void handleAdd(Triple child, Triple parent) {
-        // TODO:
-    }
-
-    private void handleMove(Triple child, Triple fromParent, Triple toParent) {
-        // TODO:
     }
 
     protected RDFHierarchyProvider getHierarchyProvider() {
@@ -219,27 +182,21 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
     }
 
     @Override
-    public boolean canCreateNewChild() {
-        return canCreateNew() && !getSelectedEntities().isEmpty();
-    }
-
-    @Override
-    public boolean canCreateNewSibling() {
-        return canCreateNew() && !getSelectedEntities().isEmpty();
-    }
-
-    @Override
-    public void createNewChild() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void createNewObject() {
-        throw new UnsupportedOperationException();
-    }
+        // TODO: not ready
+        /*TreePath path = getTree().getSelectionModel().getSelectionPath();
+        OWLObjectTreeNode<Triple> t = (OWLObjectTreeNode<Triple>) path.getLastPathComponent(); // todo: npe if unselected
 
-    @Override
-    public void createNewSibling() {
+        JPanel panel = new JPanel();
+        JTextArea a = new JTextArea();
+        a.setText("SELECTED PATH = " + path + " || " + t + " || " + t.getOWLObject());
+        panel.add(a);
+        int res = new UIHelper(getOWLEditorKit()).showValidatingDialog("Create a new triple",
+                panel, null);
+        if (res == JOptionPane.OK_OPTION) {
+            // todo:
+        }*/
+
         throw new UnsupportedOperationException();
     }
 
@@ -250,7 +207,6 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
 
     @Override
     public Optional<OWLObject> getSelection() {
-        //return Optional.ofNullable(getSelectedEntity());
         return Optional.empty();
     }
 
@@ -269,12 +225,14 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
     private void ensureSelection() {
         SwingUtilities.invokeLater(() -> {
             Triple entity = getSelectedNode();
-            if (entity != null) {
-                Triple treeSel = getTree().getSelectedOWLObject();
-                if (treeSel == null || !treeSel.equals(entity)) {
-                    getTree().setSelectedOWLObject(entity);
-                }
+            if (entity == null) {
+                return;
             }
+            Triple t = getTree().getSelectedOWLObject();
+            if (Objects.equals(t, entity)) {
+                return;
+            }
+            getTree().setSelectedOWLObject(entity);
         });
     }
 
@@ -292,16 +250,17 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         deletableChangeListenerMediator.fireStateChanged(this);
         Triple triple = getSelectedNode();
         if (triple != null) {
-            final View view = getView();
+            View view = getView();
             if (view != null && !view.isPinned()) {
                 view.setPinned(true); // so that we don't follow the selection
                 // todo:
                 //setGlobalSelection(selEntity);
                 view.setPinned(false);
-            } else {
-                // todo:
-                //setGlobalSelection(selEntity);
             }
+            // todo:
+            /*else {
+                setGlobalSelection(selEntity);
+            }*/
         } else {
             setGlobalSelection(null);
         }
@@ -342,7 +301,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
 
     @Override
     public void handleDelete() {
-        hierarchyDeleter.performDeletion();
+        // TODO:
     }
 
     @Override
@@ -368,21 +327,5 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         //return !OWLUtilities.isDeprecated(getOWLModelManager(), e);
         return false;
     }
-
-    /**
-     * TODO:
-     *
-     * @see org.protege.editor.owl.ui.action.OWLObjectHierarchyDeleter
-     */
-    static class Deleter {
-
-        public Deleter() {
-        }
-
-        public void performDeletion() {
-
-        }
-    }
-
 }
 

@@ -21,6 +21,6 @@ public abstract class OWLSelectionViewAction extends DisposableAction implements
         super(name, icon);
     }
 
-
+    @Override
     public abstract void updateState();
 }

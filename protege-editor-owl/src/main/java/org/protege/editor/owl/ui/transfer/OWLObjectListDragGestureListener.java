@@ -6,8 +6,8 @@ import org.semanticweb.owlapi.model.OWLObject;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -15,44 +15,38 @@ import java.util.List;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 04-Jul-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public class OWLObjectListDragGestureListener extends OWLObjectDragGestureListener<OWLObject> {
+public class OWLObjectListDragGestureListener extends ObjectDragGestureListener<OWLObject> {
 
-    private OWLObjectList owlObjectList;
+    private final OWLObjectList<OWLObject> list;
 
-
-    public OWLObjectListDragGestureListener(OWLEditorKit owlEditorKit, OWLObjectList owlObjectList) {
-        super(owlEditorKit, owlObjectList);
-        this.owlObjectList = owlObjectList;
+    @SuppressWarnings("unchecked")
+    public OWLObjectListDragGestureListener(OWLEditorKit kit, OWLObjectList<? extends OWLObject> list) {
+        super(kit, list);
+        this.list = (OWLObjectList<OWLObject>) Objects.requireNonNull(list);
     }
 
+    @Override
     protected Point getImageOffset() {
         return new Point(0, 0);
     }
 
+    @Override
     protected JComponent getRendererComponent() {
-        return (JComponent) owlObjectList.getCellRenderer().getListCellRendererComponent(owlObjectList,
-                                                                                         owlObjectList.getSelectedValue(),
-                                                                                         owlObjectList.getSelectedIndex(),
-                                                                                         true,
-                                                                                         true);
+        return (JComponent) list.getCellRenderer()
+                .getListCellRendererComponent(list, list.getSelectedValue(), list.getSelectedIndex(), true, true);
     }
 
+    @Override
     protected Dimension getRendererComponentSize() {
         return getRendererComponent().getPreferredSize();
     }
 
     @Override
     protected List<OWLObject> getSelectedObjects() {
-        List<OWLObject> selObjects = new ArrayList<>();
-        for (Object o : owlObjectList.getSelectedValuesList()) {
-            if (o instanceof OWLObject) {
-                selObjects.add((OWLObject) o);
-            }
-        }
-        return selObjects;
+        return list.getSelectedValuesList();
     }
 }

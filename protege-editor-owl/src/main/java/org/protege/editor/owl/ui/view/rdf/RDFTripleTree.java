@@ -10,9 +10,9 @@ import org.apache.jena.shared.PrefixMapping;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.tree.OWLObjectTreeCellRenderer;
-import org.protege.editor.owl.ui.tree.OWLObjectTreeNode;
 import org.protege.editor.owl.ui.tree.OWLTreePreferences;
 import org.protege.editor.owl.ui.tree.ObjectTree;
+import org.protege.editor.owl.ui.tree.ObjectTreeNode;
 
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -108,7 +108,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         int childCountLimit = prefs.getAutoExpansionChildLimit();
         Collection<Triple> children = prov.getChildren(node);
         if (children.size() <= childCountLimit) {
-            for (OWLObjectTreeNode<Triple> treeNode : getNodes(node)) {
+            for (ObjectTreeNode<Triple> treeNode : getNodes(node)) {
                 TreePath path = new TreePath(treeNode.getPath());
                 expandPath(path);
             }
@@ -134,7 +134,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
     }
 
     private void handleRenderingChanged(Triple entity) {
-        for (OWLObjectTreeNode<Triple> node : getNodes(entity)) {
+        for (ObjectTreeNode<Triple> node : getNodes(entity)) {
             DefaultTreeModel model = (DefaultTreeModel) getModel();
             model.nodeStructureChanged(node);
         }

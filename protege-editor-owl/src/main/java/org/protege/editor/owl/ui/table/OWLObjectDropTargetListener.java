@@ -1,7 +1,7 @@
 package org.protege.editor.owl.ui.table;
 
 import org.protege.editor.owl.ui.transfer.OWLObjectDataFlavor;
-import org.protege.editor.owl.ui.transfer.OWLObjectDropTarget;
+import org.protege.editor.owl.ui.transfer.ObjectDropTarget;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.util.OWLObjectDuplicator;
 import org.slf4j.Logger;
@@ -36,10 +36,10 @@ public class OWLObjectDropTargetListener implements DropTargetListener {
 
     private JComponent component;
 
-    private OWLObjectDropTarget target;
+    private ObjectDropTarget target;
 
 
-    public OWLObjectDropTargetListener(OWLObjectDropTarget target) {
+    public OWLObjectDropTargetListener(ObjectDropTarget target) {
         this.component = target.getComponent();
         this.target = target;
     }

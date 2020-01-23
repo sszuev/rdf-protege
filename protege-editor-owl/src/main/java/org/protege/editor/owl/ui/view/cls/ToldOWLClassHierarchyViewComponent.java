@@ -10,9 +10,9 @@ import org.protege.editor.owl.ui.action.DeleteClassAction;
 import org.protege.editor.owl.ui.renderer.AddChildIcon;
 import org.protege.editor.owl.ui.renderer.AddSiblingIcon;
 import org.protege.editor.owl.ui.renderer.OWLClassIcon;
-import org.protege.editor.owl.ui.tree.OWLObjectTreeNode;
 import org.protege.editor.owl.ui.tree.OWLTreeDragAndDropHandler;
 import org.protege.editor.owl.ui.tree.OWLTreePreferences;
+import org.protege.editor.owl.ui.tree.ObjectTreeNode;
 import org.protege.editor.owl.ui.view.CreateNewChildTarget;
 import org.protege.editor.owl.ui.view.CreateNewSiblingTarget;
 import org.protege.editor.owl.ui.view.CreateNewTarget;
@@ -255,12 +255,12 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
         // We need to apply the changes in the active ontology
         OWLEntityCreationSet<OWLClass> creationSet = getOWLWorkspace().createOWLClass();
         if (creationSet != null) {
-            OWLObjectTreeNode<OWLClass> parentNode
-                    = (OWLObjectTreeNode<OWLClass>) getTree().getSelectionPath().getParentPath().getLastPathComponent();
-            if (parentNode == null || parentNode.getOWLObject() == null) {
+            ObjectTreeNode<OWLClass> parentNode
+                    = (ObjectTreeNode<OWLClass>) getTree().getSelectionPath().getParentPath().getLastPathComponent();
+            if (parentNode == null || parentNode.getObjectNode() == null) {
                 return;
             }
-            OWLClass parentCls = parentNode.getOWLObject();
+            OWLClass parentCls = parentNode.getObjectNode();
 
             // Combine the changes that are required to create the OWLClass, with the
             // changes that are required to make it a sibling class.

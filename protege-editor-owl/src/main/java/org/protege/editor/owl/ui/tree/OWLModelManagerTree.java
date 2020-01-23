@@ -84,7 +84,7 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
         if (children.size() > childCountLimit) {
             return;
         }
-        for (OWLObjectTreeNode<N> treeNode : getNodes(node)) {
+        for (ObjectTreeNode<N> treeNode : getNodes(node)) {
             TreePath path = new TreePath(treeNode.getPath());
             expandPath(path);
         }
@@ -106,13 +106,13 @@ public class OWLModelManagerTree<N extends OWLObject> extends OWLObjectTree<N> i
 
     @SuppressWarnings("unchecked")
     private void handleRenderingChanged(OWLEntity entity) {
-        Set<OWLObjectTreeNode<N>> res;
+        Set<ObjectTreeNode<N>> res;
         try {
             res = getNodes((N) entity);
         } catch (ClassCastException ignore) {
             return;
         }
-        for (OWLObjectTreeNode<N> node : res) {
+        for (ObjectTreeNode<N> node : res) {
             DefaultTreeModel model = (DefaultTreeModel) getModel();
             model.nodeStructureChanged(node);
         }

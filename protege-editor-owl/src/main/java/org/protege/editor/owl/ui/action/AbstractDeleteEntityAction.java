@@ -8,6 +8,7 @@ import org.semanticweb.owlapi.util.OWLEntitySetProvider;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.Objects;
 
 
 /**
@@ -18,48 +19,34 @@ import java.awt.event.ActionEvent;
  */
 public abstract class AbstractDeleteEntityAction<E extends OWLEntity> extends OWLSelectionViewAction {
 
-    private OWLObjectHierarchyDeleter<E> deleter;
+    private final OWLObjectHierarchyDeleter<E> deleter;
+    protected final OWLEntitySetProvider<E> entitySetProvider;
 
-    private OWLEntitySetProvider<E> entitySetProvider;
-
-
-    protected AbstractDeleteEntityAction(String name, Icon icon, OWLEditorKit owlEditorKit,
-                                         OWLHierarchyProvider<E> hp,
-                                         OWLEntitySetProvider<E> entitySetProvider) {
+    protected AbstractDeleteEntityAction(String name, Icon icon, OWLEditorKit kit,
+                                         OWLHierarchyProvider<E> hierarchyProvider, OWLEntitySetProvider<E> entitiesProvider) {
         super(name, icon);
-        this.entitySetProvider = entitySetProvider;
-        this.deleter = new OWLObjectHierarchyDeleter<>(owlEditorKit,
-                                                        hp,
-                                                        entitySetProvider,
-                                                        getPluralDescription());
+        this.entitySetProvider = Objects.requireNonNull(entitiesProvider);
+        this.deleter = new OWLObjectHierarchyDeleter<>(kit, hierarchyProvider, entitiesProvider, getPluralDescription());
     }
 
-
+    @Override
     public void updateState() {
-        setEnabled(!entitySetProvider.getEntities().isEmpty());
+        setEnabled(entitySetProvider.entities().findFirst().isPresent());
     }
 
-
+    @Override
     public void dispose() {
         deleter.dispose();
-        deleter = null;
     }
 
-
+    @Override
     public void actionPerformed(ActionEvent e) {
         deleter.performDeletion();
     }
 
-
-    protected void notifySelectionChange() {
-        updateState();
-    }
-
-
     /**
-     * Returns the plural name of a set of entities e.g.
-     * classes, properties, individuals. This is used in
-     * the UI e.g. "Delete selected classes"
+     * Returns the plural name of a set of entities e.g. classes, properties, individuals.
+     * This is used in the UI e.g. "Delete selected classes"
      */
     protected abstract String getPluralDescription();
 }

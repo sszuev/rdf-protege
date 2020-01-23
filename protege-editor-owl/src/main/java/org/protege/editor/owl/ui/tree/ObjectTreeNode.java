@@ -8,26 +8,22 @@ import java.util.Set;
 
 
 /**
- * TODO: rename
- * Author: Matthew Horridge<br>
- * The University Of Manchester<br>
- * Medical Informatics Group<br>
- * Date: 01-Jun-2006<br><br>
- * matthew.horridge@cs.man.ac.uk<br>
- * www.cs.man.ac.uk/~horridgm<br><br>
+ * Describes an element of {@link ObjectTree tree}.
+ *
+ * @param <N> - anything
  */
-public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
+public class ObjectTreeNode<N> extends DefaultMutableTreeNode {
 
     private final ObjectTree<N> tree;
     private volatile boolean isLoaded;
 
-    public OWLObjectTreeNode(Object userObject, ObjectTree<N> tree) {
+    public ObjectTreeNode(Object userObject, ObjectTree<N> tree) {
         super(userObject);
         this.tree = tree;
     }
 
     public Set<N> getEquivalentObjects() {
-        N o = getOWLObject();
+        N o = getObjectNode();
         if (o == null) {
             return Collections.emptySet();
         }
@@ -42,7 +38,7 @@ public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
     }
 
     @SuppressWarnings("unchecked")
-    public N getOWLObject() {
+    public N getObjectNode() {
         return (N) getUserObject();
     }
 
@@ -65,9 +61,9 @@ public class OWLObjectTreeNode<N> extends DefaultMutableTreeNode {
 
     @SuppressWarnings("unchecked")
     @Override
-    public OWLObjectTreeNode<N> getChildAt(int childIndex) {
+    public ObjectTreeNode<N> getChildAt(int childIndex) {
         loadChildrenIfNecessary();
-        return (OWLObjectTreeNode<N>) super.getChildAt(childIndex);
+        return (ObjectTreeNode<N>) super.getChildAt(childIndex);
     }
 
     @Override

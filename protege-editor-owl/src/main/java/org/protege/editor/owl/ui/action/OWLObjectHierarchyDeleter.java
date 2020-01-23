@@ -28,23 +28,17 @@ import java.util.stream.Collectors;
  */
 public class OWLObjectHierarchyDeleter<E extends OWLEntity> {
 
-    private final Logger logger = LoggerFactory.getLogger(OWLObjectHierarchyDeleter.class);
-
-    private OWLEditorKit owlEditorKit;
-
-    private OWLEntitySetProvider<E> entitySetProvider;
-
-    private OWLHierarchyProvider<E> hierarchyProvider;
-
-    private String pluralName;
+    private static final Logger LOGGER = LoggerFactory.getLogger(OWLObjectHierarchyDeleter.class);
 
     private static final String DELETE_PREFS_KEY = "delete.preferences";
-
     private static final String ALWAYS_DELETE_CONFIRM = "delete.confirm.always";
-
     private static final String ALWAYS_CONFIRM_WHEN_DELETE_DESCENDANTS = "delete.confirm.descendants";
-
     private static final String DELETE_DESCENDANTS = "delete.descendants";
+
+    private OWLEditorKit owlEditorKit;
+    private OWLEntitySetProvider<E> entitySetProvider;
+    private OWLHierarchyProvider<E> hierarchyProvider;
+    private String pluralName;
 
     public OWLObjectHierarchyDeleter(OWLEditorKit owlEditorKit,
                                      OWLHierarchyProvider<E> hierarchyProvider,
@@ -127,6 +121,26 @@ public class OWLObjectHierarchyDeleter<E extends OWLEntity> {
         }
     }
 
+    private void delete(Set<E> ents) {
+        OWLEntityDeleter.deleteEntities(ents, getOWLEditorKit().getOWLModelManager());
+    }
+
+    private void deleteDescendants(Set<E> selectedEntities) {
+        LOGGER.info(LogBanner.start("Deleting descendants"));
+        LOGGER.info("Deleting descendants of {}", selectedEntities);
+        Set<E> ents = new HashSet<>();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        for (E ent : selectedEntities) {
+            LOGGER.info("Retrieving descendants of {}", ent);
+            ents.add(ent);
+            hierarchyProvider.descendants(ent).forEach(ents::add);
+        }
+        stopwatch.stop();
+        LOGGER.info("Retrieved {} entities to delete in {} ms", ents.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        delete(ents);
+        LOGGER.info(LogBanner.end());
+    }
+
     private boolean hasAssertedSubs(Set<E> entities) {
         for (E entity : entities) {
             if (hierarchyProvider.hasDescendants(entity)) {
@@ -134,25 +148,5 @@ public class OWLObjectHierarchyDeleter<E extends OWLEntity> {
             }
         }
         return false;
-    }
-
-    private void delete(Set<E> ents) {
-        OWLEntityDeleter.deleteEntities(ents, getOWLEditorKit().getOWLModelManager());
-    }
-
-    private void deleteDescendants(Set<E> selectedEntities) {
-        logger.info(LogBanner.start("Deleting descendants"));
-        logger.info("Deleting descendants of {}", selectedEntities);
-        Set<E> ents = new HashSet<>();
-        Stopwatch stopwatch = Stopwatch.createStarted();
-        for (E ent : selectedEntities) {
-            logger.info("Retrieving descendants of {}", ent);
-            ents.add(ent);
-            hierarchyProvider.descendants(ent).forEach(ents::add);
-        }
-        stopwatch.stop();
-        logger.info("Retrieved {} entities to delete in {} ms", ents.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        delete(ents);
-        logger.info(LogBanner.end());
     }
 }

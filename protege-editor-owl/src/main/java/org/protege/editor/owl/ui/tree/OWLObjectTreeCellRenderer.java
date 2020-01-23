@@ -31,10 +31,10 @@ public class OWLObjectTreeCellRenderer extends OWLCellRenderer {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
-        if (value instanceof OWLObjectTreeNode){
-            OWLObjectTreeNode node = (OWLObjectTreeNode) value;
+        if (value instanceof ObjectTreeNode) {
+            ObjectTreeNode node = (ObjectTreeNode) value;
             setEquivalentObjects(node.getEquivalentObjects());
-            value = node.getOWLObject();
+            value = node.getObjectNode();
         }
         return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
     }

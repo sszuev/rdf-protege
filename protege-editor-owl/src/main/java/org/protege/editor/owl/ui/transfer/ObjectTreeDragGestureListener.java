@@ -8,41 +8,31 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 /**
- * TODO: rename
- * Author: Matthew Horridge<br>
- * The University Of Manchester<br>
- * Medical Informatics Group<br>
- * Date: 04-Jun-2006<br><br>
-
- * matthew.horridge@cs.man.ac.uk<br>
- * www.cs.man.ac.uk/~horridgm<br><br>
+ * @param <N> - anything
  */
-public class OWLObjectTreeDragGestureListener<N> extends OWLObjectDragGestureListener<N> {
+public class ObjectTreeDragGestureListener<N> extends ObjectDragGestureListener<N> {
 
     private final ObjectTree<N> tree;
 
-    public OWLObjectTreeDragGestureListener(OWLEditorKit owlEditorKit, ObjectTree<N> tree) {
+    public ObjectTreeDragGestureListener(OWLEditorKit owlEditorKit, ObjectTree<N> tree) {
         super(owlEditorKit, tree);
         this.tree = tree;
     }
 
     @Override
     protected List<N> getSelectedObjects() {
-        return new ArrayList<N>(tree.getSelectedOWLObjects());
+        return new ArrayList<>(tree.getSelectedOWLObjects());
     }
 
     @Override
     protected JComponent getRendererComponent() {
         return (JComponent) tree.getCellRenderer().getTreeCellRendererComponent(tree,
-                tree.getSelectionPath().getLastPathComponent(),
-                false,
-                true,
-                true,
-                0,
-                false);
+                Optional.ofNullable(tree.getSelectionPath()).map(TreePath::getLastPathComponent).orElse(null),
+                false, true, true, 0, false);
     }
 
     @Override

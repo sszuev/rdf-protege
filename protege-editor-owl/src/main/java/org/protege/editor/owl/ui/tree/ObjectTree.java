@@ -8,8 +8,8 @@ import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.transfer.OWLObjectDragSource;
-import org.protege.editor.owl.ui.transfer.OWLObjectDropTarget;
-import org.protege.editor.owl.ui.transfer.OWLObjectTreeDragGestureListener;
+import org.protege.editor.owl.ui.transfer.ObjectDropTarget;
+import org.protege.editor.owl.ui.transfer.ObjectTreeDragGestureListener;
 import org.protege.editor.owl.ui.view.Copyable;
 import org.protege.editor.owl.ui.view.HasCopySubHierarchyToClipboard;
 import org.protege.editor.owl.ui.view.HasExpandAll;
@@ -42,10 +42,10 @@ import java.util.*;
  */
 @SuppressWarnings({"WeakerAccess"})
 public abstract class ObjectTree<N> extends JTree
-        implements OWLObjectDropTarget<N>, Copyable<N>,
+        implements ObjectDropTarget<N>, Copyable<N>,
         OWLObjectDragSource, HasExpandAll, HasCopySubHierarchyToClipboard, RefreshableComponent {
 
-    private Map<N, Set<OWLObjectTreeNode<N>>> nodeMap;
+    private Map<N, Set<ObjectTreeNode<N>>> nodeMap;
 
     protected final OWLEditorKit eKit;
     protected final OWLHierarchyProvider<N> provider;
@@ -95,7 +95,7 @@ public abstract class ObjectTree<N> extends JTree
         DragSource dragSource = DragSource.getDefaultDragSource();
         dragSource.createDefaultDragGestureRecognizer(this,
                 DnDConstants.ACTION_COPY_OR_MOVE,
-                new OWLObjectTreeDragGestureListener<>(eKit, this));
+                new ObjectTreeDragGestureListener<>(eKit, this));
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -201,7 +201,7 @@ public abstract class ObjectTree<N> extends JTree
         // If we are displaying the node which had the child added or removed
         // then we update the node
 
-        final Set<OWLObjectTreeNode<N>> treeNodes = nodeMap.get(node);
+        final Set<ObjectTreeNode<N>> treeNodes = nodeMap.get(node);
 
         // The parents/children might have changed
         if (treeNodes == null || treeNodes.isEmpty()) {
@@ -217,45 +217,45 @@ public abstract class ObjectTree<N> extends JTree
         // Remove children that aren't there any more
         Collection<N> children = provider.getChildren(node);
 
-        Set<OWLObjectTreeNode<N>> nodesToRemove = new HashSet<>();
-        for (OWLObjectTreeNode<N> treeNode : treeNodes) {
+        Set<ObjectTreeNode<N>> nodesToRemove = new HashSet<>();
+        for (ObjectTreeNode<N> treeNode : treeNodes) {
             for (int i = 0; i < treeNode.getChildCount(); i++) {
-                OWLObjectTreeNode<N> childTreeNode = treeNode.getChildAt(i);
-                if (children.contains(childTreeNode.getOWLObject())) {
+                ObjectTreeNode<N> childTreeNode = treeNode.getChildAt(i);
+                if (children.contains(childTreeNode.getObjectNode())) {
                     continue;
                 }
                 nodesToRemove.add(childTreeNode);
             }
         }
 
-        for (OWLObjectTreeNode<N> nodeToRemove : nodesToRemove) {
+        for (ObjectTreeNode<N> nodeToRemove : nodesToRemove) {
             // update the nodeMap to remove this parent from the child
-            final Set<OWLObjectTreeNode<N>> childNodes = getNodes(nodeToRemove.getOWLObject());
-            final Set<OWLObjectTreeNode<N>> updatedChildNodes = new HashSet<>();
-            for (OWLObjectTreeNode<N> childNode : childNodes) {
-                @SuppressWarnings("unchecked") OWLObjectTreeNode<N> p = (OWLObjectTreeNode<N>) childNode.getParent();
+            final Set<ObjectTreeNode<N>> childNodes = getNodes(nodeToRemove.getObjectNode());
+            final Set<ObjectTreeNode<N>> updatedChildNodes = new HashSet<>();
+            for (ObjectTreeNode<N> childNode : childNodes) {
+                @SuppressWarnings("unchecked") ObjectTreeNode<N> p = (ObjectTreeNode<N>) childNode.getParent();
                 if (!treeNodes.contains(p)) {
                     updatedChildNodes.add(childNode);
                 }
             }
-            nodeMap.put(nodeToRemove.getOWLObject(), updatedChildNodes);
+            nodeMap.put(nodeToRemove.getObjectNode(), updatedChildNodes);
             ((DefaultTreeModel) getModel()).removeNodeFromParent(nodeToRemove);
         }
 
         // Add new children
         Set<N> existingChildren = new HashSet<>();
-        for (OWLObjectTreeNode<N> treeNode : treeNodes) {
+        for (ObjectTreeNode<N> treeNode : treeNodes) {
             for (int i = 0; i < treeNode.getChildCount(); i++) {
-                existingChildren.add(treeNode.getChildAt(i).getOWLObject());
+                existingChildren.add(treeNode.getChildAt(i).getObjectNode());
             }
         }
 
-        for (OWLObjectTreeNode<N> treeNode : treeNodes) {
+        for (ObjectTreeNode<N> treeNode : treeNodes) {
             for (N child : children) {
                 if (existingChildren.contains(child)) {
                     continue;
                 }
-                OWLObjectTreeNode<N> childTreeNode = createTreeNode(child);
+                ObjectTreeNode<N> childTreeNode = createTreeNode(child);
                 ((DefaultTreeModel) getModel()).insertNodeInto(childTreeNode, treeNode, 0);
             }
         }
@@ -264,8 +264,8 @@ public abstract class ObjectTree<N> extends JTree
             DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) getModel().getRoot();
             for (int i = 0; i < treeNode.getChildCount(); i++) {
                 @SuppressWarnings("unchecked")
-                OWLObjectTreeNode<N> n = (OWLObjectTreeNode<N>) treeNode.getChildAt(i);
-                if (n.getOWLObject().equals(node)) {
+                ObjectTreeNode<N> n = (ObjectTreeNode<N>) treeNode.getChildAt(i);
+                if (n.getObjectNode().equals(node)) {
                     return;
                 }
             }
@@ -275,8 +275,8 @@ public abstract class ObjectTree<N> extends JTree
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getModel().getRoot();
         for (int i = 0; i < rootNode.getChildCount(); i++) {
             @SuppressWarnings("unchecked")
-            OWLObjectTreeNode<N> n = (OWLObjectTreeNode<N>) rootNode.getChildAt(i);
-            if (n.getOWLObject().equals(node)) {
+            ObjectTreeNode<N> n = (ObjectTreeNode<N>) rootNode.getChildAt(i);
+            if (n.getObjectNode().equals(node)) {
                 ((DefaultTreeModel) getModel()).removeNodeFromParent(n);
                 return;
             }
@@ -368,10 +368,10 @@ public abstract class ObjectTree<N> extends JTree
 //        }
 //    }
 
-    protected List<OWLObjectTreeNode<N>> getChildNodes(OWLObjectTreeNode<N> parent) {
-        List<OWLObjectTreeNode<N>> result = new ArrayList<>();
+    protected List<ObjectTreeNode<N>> getChildNodes(ObjectTreeNode<N> parent) {
+        List<ObjectTreeNode<N>> result = new ArrayList<>();
         Set<N> parents = getParentObjectsForNode(parent);
-        Collection<N> children = provider.getChildren(parent.getOWLObject());
+        Collection<N> children = provider.getChildren(parent.getObjectNode());
         Comparator<? super N> comp = getChildNodeComparator();
         if (comp != null) {
             List<N> sorted = new ArrayList<>(children);
@@ -387,12 +387,12 @@ public abstract class ObjectTree<N> extends JTree
     }
 
     @SuppressWarnings("unchecked")
-    private Set<N> getParentObjectsForNode(OWLObjectTreeNode<N> node) {
+    private Set<N> getParentObjectsForNode(ObjectTreeNode<N> node) {
         Set<N> parents = new HashSet<>();
-        OWLObjectTreeNode<N> parentNode = node;
-        while ((parentNode = (OWLObjectTreeNode<N>) parentNode.getParent()) != null) {
-            if (parentNode.getOWLObject() != null) {
-                parents.add(parentNode.getOWLObject());
+        ObjectTreeNode<N> parentNode = node;
+        while ((parentNode = (ObjectTreeNode<N>) parentNode.getParent()) != null) {
+            if (parentNode.getObjectNode() != null) {
+                parents.add(parentNode.getObjectNode());
             }
         }
         return parents;
@@ -405,12 +405,12 @@ public abstract class ObjectTree<N> extends JTree
      * @param n The object whose nodes are to be retrieved.
      * @return The nodes that represent the specified object.
      */
-    protected Set<OWLObjectTreeNode<N>> getNodes(N n) {
+    protected Set<ObjectTreeNode<N>> getNodes(N n) {
         return nodeMap.computeIfAbsent(n, k -> new HashSet<>());
     }
 
-    protected OWLObjectTreeNode<N> createTreeNode(N x) {
-        OWLObjectTreeNode<N> res = new OWLObjectTreeNode<>(x, this);
+    protected ObjectTreeNode<N> createTreeNode(N x) {
+        ObjectTreeNode<N> res = new ObjectTreeNode<>(x, this);
         getNodes(x).add(res);
         return res;
     }
@@ -444,7 +444,7 @@ public abstract class ObjectTree<N> extends JTree
         if (!owlObjects.isEmpty()) {
             final List<TreePath> paths = new ArrayList<>();
             for (N obj : owlObjects) {
-                Set<OWLObjectTreeNode<N>> nodes = getNodes(obj);
+                Set<ObjectTreeNode<N>> nodes = getNodes(obj);
                 if (nodes.isEmpty()) {
                     expandAndSelectPaths(obj, selectAll);
                 }
@@ -461,8 +461,8 @@ public abstract class ObjectTree<N> extends JTree
 
     private List<TreePath> getPaths(N selObject, boolean selectAll) {
         List<TreePath> paths = new ArrayList<>();
-        Set<OWLObjectTreeNode<N>> nodes = getNodes(selObject);
-        for (OWLObjectTreeNode<N> node : nodes) {
+        Set<ObjectTreeNode<N>> nodes = getNodes(selObject);
+        for (ObjectTreeNode<N> node : nodes) {
             paths.add(new TreePath(node.getPath()));
             if (!selectAll) {
                 break;
@@ -493,16 +493,16 @@ public abstract class ObjectTree<N> extends JTree
                 break;
             }
         }
-        Set<OWLObjectTreeNode<N>> nodes = getNodes(objectPath.get(index));
+        Set<ObjectTreeNode<N>> nodes = getNodes(objectPath.get(index));
         if (nodes.isEmpty()) {
             return;
         }
-        OWLObjectTreeNode<N> curParNode = nodes.iterator().next();
+        ObjectTreeNode<N> curParNode = nodes.iterator().next();
         for (int i = index + 1; i < objectPath.size(); i++) {
             expandPath(new TreePath(curParNode.getPath()));
             for (int j = 0; j < curParNode.getChildCount(); j++) {
-                OWLObjectTreeNode<N> curChild = curParNode.getChildAt(j);
-                if (curChild.getOWLObject().equals(objectPath.get(i))) {
+                ObjectTreeNode<N> curChild = curParNode.getChildAt(j);
+                if (curChild.getObjectNode().equals(objectPath.get(i))) {
                     curParNode = curChild;
                     break;
                 }
@@ -516,7 +516,7 @@ public abstract class ObjectTree<N> extends JTree
         if (path == null) {
             return null;
         }
-        return ((OWLObjectTreeNode<N>) path.getLastPathComponent()).getOWLObject();
+        return ((ObjectTreeNode<N>) path.getLastPathComponent()).getObjectNode();
     }
 
     @SuppressWarnings("unchecked")
@@ -527,7 +527,7 @@ public abstract class ObjectTree<N> extends JTree
             return res;
         }
         for (TreePath path : selPaths) {
-            res.add((((OWLObjectTreeNode<N>) path.getLastPathComponent()).getOWLObject()));
+            res.add((((ObjectTreeNode<N>) path.getLastPathComponent()).getObjectNode()));
         }
         return res;
     }
@@ -559,7 +559,7 @@ public abstract class ObjectTree<N> extends JTree
         }
 
         @SuppressWarnings("unchecked")
-        N dropTargetObj = ((OWLObjectTreeNode<N>) dropPath.getLastPathComponent()).getOWLObject();
+        N dropTargetObj = ((ObjectTreeNode<N>) dropPath.getLastPathComponent()).getObjectNode();
 
         final Set<N> droppedObjects = new HashSet<>();
 
@@ -577,12 +577,12 @@ public abstract class ObjectTree<N> extends JTree
             N selObjParent = null;
             if (selPath != null) {
                 @SuppressWarnings("unchecked")
-                OWLObjectTreeNode<N> selNode = ((OWLObjectTreeNode<N>) selPath.getLastPathComponent());
-                selObj = selNode.getOWLObject();
+                ObjectTreeNode<N> selNode = ((ObjectTreeNode<N>) selPath.getLastPathComponent());
+                selObj = selNode.getObjectNode();
                 @SuppressWarnings("unchecked")
-                OWLObjectTreeNode<N> parentNode = (OWLObjectTreeNode<N>) selNode.getParent();
+                ObjectTreeNode<N> parentNode = (ObjectTreeNode<N>) selNode.getParent();
                 if (parentNode != null) {
-                    selObjParent = parentNode.getOWLObject();
+                    selObjParent = parentNode.getObjectNode();
                 }
             }
 
@@ -719,8 +719,8 @@ public abstract class ObjectTree<N> extends JTree
             return null;
         }
         @SuppressWarnings("unchecked")
-        OWLObjectTreeNode<N> node = (OWLObjectTreeNode<N>) path.getLastPathComponent();
-        return node.getOWLObject();
+        ObjectTreeNode<N> node = (ObjectTreeNode<N>) path.getLastPathComponent();
+        return node.getObjectNode();
     }
 
     @Override
@@ -769,9 +769,9 @@ public abstract class ObjectTree<N> extends JTree
     }
 
     /**
-     * The root {@link OWLObjectTreeNode}.
+     * The root {@link ObjectTreeNode}.
      */
-    public class RootNode extends OWLObjectTreeNode<N> {
+    public class RootNode extends ObjectTreeNode<N> {
         private Collection<N> roots;
 
         RootNode(Collection<N> roots) {
