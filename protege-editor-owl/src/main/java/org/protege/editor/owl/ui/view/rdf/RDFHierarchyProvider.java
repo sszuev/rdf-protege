@@ -6,7 +6,6 @@ import com.github.owlcs.ontapi.jena.utils.Graphs;
 import com.github.owlcs.ontapi.jena.utils.Iter;
 import com.github.owlcs.ontapi.jena.vocabulary.OWL;
 import com.github.owlcs.ontapi.jena.vocabulary.RDF;
-import org.apache.jena.graph.BlankNodeId;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -42,7 +41,6 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
             Comparator.comparing(Triple::getPredicate, NODE_URI_COMPARATOR).thenComparing(Triple::hashCode);
 
     private final List<HierarchyProviderListener<Triple>> listeners = new CopyOnWriteArrayList<>();
-    private final Map<BlankNodeId, String> ids = new HashMap<>();
     private Graph graph;
 
     /**
@@ -167,11 +165,6 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
 
     public Graph getGraph() {
         return graph;
-    }
-
-    public String getBlankNodeLable(BlankNodeId id) {
-        // todo: move mapper to model manager -> need share blank node labels between components
-        return ids.computeIfAbsent(id, i -> "_:b" + ids.size());
     }
 
     @Override
@@ -299,7 +292,6 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
     @Override
     public void dispose() {
         listeners.clear();
-        ids.clear();
     }
 
     public Stream<HierarchyProviderListener<Triple>> listeners() {

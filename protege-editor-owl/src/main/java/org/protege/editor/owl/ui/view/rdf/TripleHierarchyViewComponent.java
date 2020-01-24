@@ -186,17 +186,10 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         // TODO: not ready
         /*TreePath path = getTree().getSelectionModel().getSelectionPath();
         OWLObjectTreeNode<Triple> t = (OWLObjectTreeNode<Triple>) path.getLastPathComponent(); // todo: npe if unselected
-
-        JPanel panel = new JPanel();
-        JTextArea a = new JTextArea();
-        a.setText("SELECTED PATH = " + path + " || " + t + " || " + t.getOWLObject());
-        panel.add(a);
-        int res = new UIHelper(getOWLEditorKit()).showValidatingDialog("Create a new triple",
-                panel, null);
+        AddTriplePanel panel = new AddTriplePanel();
+        int res = new UIHelper(getOWLEditorKit()).showValidatingDialog("Create a new triple", panel, null);
         if (res == JOptionPane.OK_OPTION) {
-            // todo:
         }*/
-
         throw new UnsupportedOperationException();
     }
 

@@ -54,7 +54,9 @@ import java.io.File;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -81,20 +83,24 @@ public class OWLModelManagerImpl extends AbstractModelManager
     private final HistoryManager historyManager;
     private final OWLReasonerManager owlReasonerManager;
     /**
-     * Dirty ontologies are ontologies that have been edited
-     * and not saved.
+     * Dirty ontologies are ontologies that have been edited and not saved.
      */
     private final Set<OWLOntologyID> dirtyOntologies = new HashSet<>();
     /**
-     * The <code>OWLConnection</code> that we use to manage
-     * ontologies.
+     * The <code>OWLConnection</code> that we use to manage ontologies.
      */
     private final OWLOntologyManager manager;
     private final OntologyCatalogManager ontologyCatalogManager = new OntologyCatalogManager();
     /**
-     * A cache for the imports closure.  Originally, we just requested this
-     * each time from the OWLOntologyManager, but this proved to be expensive
-     * in terms of time.
+     * A blank Node cache.
+     * {@link org.apache.jena.graph.BlankNodeId} as keys.
+     */
+    private final Map<Object, String> blankNodeLabels = new ConcurrentHashMap<>();
+    private final Function<Object, String> blankNodeMapper;
+    /**
+     * A cache for the imports closure.
+     * Originally, we just requested this each time from the OWLOntologyManager,
+     * but this proved to be expensive in terms of time.
      */
     private final Set<OWLOntology> activeOntologies = new HashSet<>();
     private final Set<OntologySelectionStrategy> ontSelectionStrategies = new HashSet<>();
@@ -107,6 +113,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
     private OWLObjectRenderer<?> objectRenderer;
     private OWLOntology activeOntology;
     private OWLEntityRenderingCache owlEntityRenderingCache;
+
     /**
      * P4 repeatedly asks for the same rendering multiple times in a row
      * because of the components listening to mouse events etc so cache a
@@ -114,20 +121,16 @@ public class OWLModelManagerImpl extends AbstractModelManager
      */
     private OWLObjectRenderingCache owlObjectRenderingCache;
 
-
     // error handlers
-
     //    private SaveErrorHandler saveErrorHandler;
     private OWLEntityFinder entityFinder;
     private ExplanationManager explanationManager;
-
 
     // listeners
     private OWLEntityFactory entityFactory;
     private OntologySelectionStrategy activeOntologiesStrategy;
     private OWLExpressionCheckerFactory owlExpressionCheckerFactory;
     private OntologyLoadErrorHandler loadErrorHandler;
-
 
     public OWLModelManagerImpl() {
         // todo: is a concurrent manager instance justified in a single-session desktop application ?
@@ -165,6 +168,8 @@ public class OWLModelManagerImpl extends AbstractModelManager
         getOWLEntityRenderer();
 
         put(OntologySourcesManager.ID, new OntologySourcesManager(this));
+
+        this.blankNodeMapper = id -> blankNodeLabels.computeIfAbsent(id, i -> "_:b" + blankNodeLabels.size());
     }
 
     @Override
@@ -441,35 +446,11 @@ public class OWLModelManagerImpl extends AbstractModelManager
         return true;
     }
 
-    /**
-     * Save all of the ontologies that are editable and that have been modified.
-     * <p/>
-     * This method should not be used as the behaviour is not clear.  The save(OWLOntology) method should be used
-     * instead.
-     */
-    @Deprecated
-    public void save() throws OWLOntologyStorageException {
-        HashSet<OWLOntology> ontologiesToSave = new HashSet<>();
-        for (OWLOntologyID ontId : dirtyOntologies) {
-            if (manager.contains(ontId)) {
-                ontologiesToSave.add(manager.getOntology(ontId));
-            }
-            else {
-                dirtyOntologies.remove(ontId);
-            }
-        }
-        for (OWLOntology ontology : ontologiesToSave) {
-            save(ontology);
-        }
-
-    }
-
     @Override
     public void save(OWLOntology ont) throws OWLOntologyStorageException {
         final URI documentURI = manager.getOntologyDocumentIRI(ont).toURI();
 
         fireBeforeSaveEvent(ont.getOntologyID(), documentURI);
-
 
         final OWLDocumentFormat format;
         final OWLDocumentFormat previousFormat = manager.getOntologyFormat(ont);
@@ -480,12 +461,12 @@ public class OWLModelManagerImpl extends AbstractModelManager
         } else {
             format = previousFormat;
         }
-                /*
-                 * Using the addMissingTypes call here for RDF/XML files can result in OWL Full output
-                 * and can also result in data corruption.
-                 *
-                 * See http://protegewiki.stanford.edu/wiki/OWL2RDFParserDeclarationRequirement
-                 */
+        /*
+         * Using the addMissingTypes call here for RDF/XML files can result in OWL Full output
+         * and can also result in data corruption.
+         *
+         * See http://protegewiki.stanford.edu/wiki/OWL2RDFParserDeclarationRequirement
+         */
         IRI documentIRI = IRI.create(documentURI);
         OntologySaver saver = OntologySaver.builder()
                 .addOntology(ont, format, documentIRI)
@@ -691,6 +672,11 @@ public class OWLModelManagerImpl extends AbstractModelManager
     }
 
     @Override
+    public Function<Object, String> getBlankNodeMapper() {
+        return blankNodeMapper;
+    }
+
+    @Override
     public void ontologiesChanged(List<? extends OWLOntologyChange> changes) {
         if (changes.isEmpty()) {
             return;
@@ -805,11 +791,6 @@ public class OWLModelManagerImpl extends AbstractModelManager
             loadRenderer();
         }
         return entityRenderer;
-    }
-
-    @Override
-    public void setOWLEntityRenderer(OWLModelManagerEntityRenderer renderer) {
-        refreshRenderer();
     }
 
     @Override

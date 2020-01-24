@@ -1,6 +1,7 @@
 package org.protege.editor.owl.ui.view.sparql;
 
 import com.github.owlcs.ontapi.Ontology;
+import org.apache.jena.graph.Node;
 import org.protege.editor.core.ui.error.ErrorLogPanel;
 import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
@@ -101,7 +102,7 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
     /**
      * Created by @ssz on 07.01.2020.
      */
-    public static class ResultModel extends AbstractTableModel {
+    public class ResultModel extends AbstractTableModel {
         private static final long serialVersionUID = -1094080880127911408L;
         private SPARQLEngine.Res results = SPARQLFactory.EMPTY;
 
@@ -122,7 +123,15 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return results.getResult(rowIndex, columnIndex);
+            Object res = results.getResult(rowIndex, columnIndex);
+            return res instanceof Node ? toString((Node) res) : res;
+        }
+
+        private String toString(Node node) {
+            if (node.isBlank()) {
+                return getOWLModelManager().getBlankNodeMapper().apply(node.getBlankNodeId());
+            }
+            return String.valueOf(node);
         }
 
         public void setResults(SPARQLEngine.Res results) {

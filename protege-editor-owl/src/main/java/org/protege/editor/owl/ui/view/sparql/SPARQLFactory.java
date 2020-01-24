@@ -11,7 +11,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.util.graph.GraphListenerBase;
@@ -159,12 +158,12 @@ public class SPARQLFactory {
                 em.unregister(stats);
             }
             List<String> header = Arrays.asList("operation", "subject", "predicate", "object");
-            Map<String, List<String>> table = new HashMap<>();
+            Map<String, List<Object>> table = new HashMap<>();
             stats.triples.forEach((op, triples) -> triples.forEach(s -> {
                 table.computeIfAbsent(header.get(0), x -> new ArrayList<>()).add(op.getLabel());
-                table.computeIfAbsent(header.get(1), x -> new ArrayList<>()).add(s.getSubject().toString());
-                table.computeIfAbsent(header.get(2), x -> new ArrayList<>()).add(s.getPredicate().toString());
-                table.computeIfAbsent(header.get(3), x -> new ArrayList<>()).add(s.getObject().toString());
+                table.computeIfAbsent(header.get(1), x -> new ArrayList<>()).add(s.getSubject());
+                table.computeIfAbsent(header.get(2), x -> new ArrayList<>()).add(s.getPredicate());
+                table.computeIfAbsent(header.get(3), x -> new ArrayList<>()).add(s.getObject());
             }));
             return new ResImpl(header, table);
         }
@@ -201,9 +200,9 @@ public class SPARQLFactory {
      */
     protected static class ResImpl implements SPARQLEngine.Res {
         private final List<String> header;
-        private final Map<String, List<String>> table;
+        private final Map<String, List<Object>> table;
 
-        protected ResImpl(List<String> header, Map<String, List<String>> data) {
+        protected ResImpl(List<String> header, Map<String, List<Object>> data) {
             if (!data.isEmpty() && data.size() != header.size()) {
                 throw new IllegalStateException();
             }
@@ -213,12 +212,11 @@ public class SPARQLFactory {
 
         public static ResImpl collectSelect(ResultSet res) {
             List<String> header = res.getResultVars();
-            Map<String, List<String>> table = new HashMap<>();
+            Map<String, List<Object>> table = new HashMap<>();
             while (res.hasNext()) {
                 QuerySolution qs = res.next();
                 for (String h : header) {
-                    RDFNode n = qs.get(h);
-                    table.computeIfAbsent(h, k -> new ArrayList<>()).add(n == null ? null : n.toString());
+                    table.computeIfAbsent(h, k -> new ArrayList<>()).add(qs.get(h).asNode());
                 }
             }
             return new ResImpl(header, table);
@@ -226,30 +224,29 @@ public class SPARQLFactory {
 
         public static ResImpl collectAsk(boolean res) {
             List<String> header = Collections.singletonList("Result:");
-            Map<String, List<String>> table = new HashMap<>();
+            Map<String, List<Object>> table = new HashMap<>();
             table.put(header.get(0), Collections.singletonList(Boolean.toString(res)));
             return new ResImpl(header, table);
         }
 
         public static ResImpl collectJson(JsonArray res) {
             List<String> header = Collections.singletonList("Results:");
-            Map<String, List<String>> table = new HashMap<>();
-            List<String> values = res.stream().map(JsonValue::toString).collect(Collectors.toList());
+            Map<String, List<Object>> table = new HashMap<>();
+            List<Object> values = res.stream().map(JsonValue::toString).collect(Collectors.toList());
             table.put(header.get(0), values);
             return new ResImpl(header, table);
         }
 
         public static ResImpl collectModel(Model m) {
             List<String> header = Arrays.asList("subject", "predicate", "object");
-            Map<String, List<String>> table = new HashMap<>();
+            Map<String, List<Object>> table = new HashMap<>();
             m.listStatements().forEachRemaining(s -> {
-                table.computeIfAbsent(header.get(0), x -> new ArrayList<>()).add(s.getSubject().toString());
-                table.computeIfAbsent(header.get(1), x -> new ArrayList<>()).add(s.getPredicate().toString());
-                table.computeIfAbsent(header.get(2), x -> new ArrayList<>()).add(s.getObject().toString());
+                table.computeIfAbsent(header.get(0), x -> new ArrayList<>()).add(s.getSubject().asNode());
+                table.computeIfAbsent(header.get(1), x -> new ArrayList<>()).add(s.getPredicate().asNode());
+                table.computeIfAbsent(header.get(2), x -> new ArrayList<>()).add(s.getObject().asNode());
             });
             return new ResImpl(header, table);
         }
-
 
         @Override
         public int getColumnCount() {

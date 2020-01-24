@@ -281,7 +281,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         }
 
         private String toString(BlankNodeId id) {
-            return getProvider().getBlankNodeLable(id);
+            return RDFTripleTree.this.getOWLModelManager().getBlankNodeMapper().apply(id);
         }
 
         private String toString(LiteralLabel label, PrefixMapping pm) {
