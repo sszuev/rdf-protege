@@ -333,7 +333,8 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
                 throw new IllegalStateException();
             suffix = "@" + lang;
         }
-        return "\"" + in.replace("\n", "\\n") + "\"" + suffix;
+        String res = "\"" + in.replace("\n", "\\n") + "\"";
+        return suffix == null ? res : res + suffix;
     }
 
     protected String toIRI(String base, String in) {

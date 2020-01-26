@@ -799,22 +799,24 @@ public class OWLModelManagerImpl extends AbstractModelManager
     }
 
     @Override
-    public String getRendering(OWLObject object) {
+    public String getRendering(Object object) {
+        if (!(object instanceof OWLObject)) {
+            return String.valueOf(object);
+        }
         // Look for a cached version of the rendering first!
         if (!(object instanceof OWLEntity)) {
-            return owlObjectRenderingCache.getRendering(object, getOWLObjectRenderer());
+            return owlObjectRenderingCache.getRendering((OWLObject) object, getOWLObjectRenderer());
         }
         AnonymousDefinedClassManager adcManager = get(AnonymousDefinedClassManager.ID);
         if (adcManager != null && object instanceof OWLClass && adcManager.isAnonymous((OWLClass) object)) {
             return owlObjectRenderingCache.getRendering(adcManager.getExpression((OWLClass) object), getOWLObjectRenderer());
         }
         getOWLEntityRenderer();
-        String rendering = owlEntityRenderingCache.getRendering((OWLEntity) object);
-        if (rendering != null) {
-            return rendering;
-        } else {
-            return getOWLEntityRenderer().render((OWLEntity) object);
+        String res = owlEntityRenderingCache.getRendering((OWLEntity) object);
+        if (res != null) {
+            return res;
         }
+        return getOWLEntityRenderer().render((OWLEntity) object);
     }
 
     @Override

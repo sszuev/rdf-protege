@@ -257,7 +257,7 @@ public interface OWLModelManager extends ModelManager, HasActiveOntology {
      */
     OWLDataFactory getOWLDataFactory();
 
-    String getRendering(OWLObject object);
+    String getRendering(Object object);
 
     void setMissingImportHandler(MissingImportHandler handler);
 

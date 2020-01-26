@@ -14,16 +14,12 @@ import javax.swing.*;
  */
 public abstract class DisposableAction extends AbstractAction {
 
-
-
     protected DisposableAction(String name, Icon icon) {
         super(name, icon);
     }
 
-
     /**
-     * This method should be overriden and used to
-     * detatch listeners etc.
+     * This method should be overridden and used to detach listeners etc.
      */
     public abstract void dispose();
 }

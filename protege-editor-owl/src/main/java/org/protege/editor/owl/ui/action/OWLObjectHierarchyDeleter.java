@@ -1,23 +1,12 @@
 package org.protege.editor.owl.ui.action;
 
-import com.google.common.base.Stopwatch;
-import org.protege.editor.core.log.LogBanner;
-import org.protege.editor.core.prefs.Preferences;
-import org.protege.editor.core.prefs.PreferencesManager;
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
+import org.protege.editor.owl.model.hierarchy.HierarchyProvider;
 import org.protege.editor.owl.model.util.OWLEntityDeleter;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.util.OWLEntitySetProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 
 /**
@@ -25,128 +14,20 @@ import java.util.stream.Collectors;
  * The University Of Manchester<br>
  * Bio-Health Informatics Group<br>
  * Date: 02-May-2007<br><br>
+ *
+ * @param <E> - subtype of {@link OWLEntity}
  */
-public class OWLObjectHierarchyDeleter<E extends OWLEntity> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OWLObjectHierarchyDeleter.class);
-
-    private static final String DELETE_PREFS_KEY = "delete.preferences";
-    private static final String ALWAYS_DELETE_CONFIRM = "delete.confirm.always";
-    private static final String ALWAYS_CONFIRM_WHEN_DELETE_DESCENDANTS = "delete.confirm.descendants";
-    private static final String DELETE_DESCENDANTS = "delete.descendants";
-
-    private OWLEditorKit owlEditorKit;
-    private OWLEntitySetProvider<E> entitySetProvider;
-    private OWLHierarchyProvider<E> hierarchyProvider;
-    private String pluralName;
+public class OWLObjectHierarchyDeleter<E extends OWLEntity> extends ObjectHierarchyDeleter<E> {
 
     public OWLObjectHierarchyDeleter(OWLEditorKit owlEditorKit,
-                                     OWLHierarchyProvider<E> hierarchyProvider,
+                                     HierarchyProvider<E> hierarchyProvider,
                                      OWLEntitySetProvider<E> entitySetProvider,
                                      String pluralName) {
-        this.owlEditorKit = owlEditorKit;
-        this.hierarchyProvider = hierarchyProvider;
-        this.entitySetProvider = entitySetProvider;
-        this.pluralName = pluralName;
+        super(owlEditorKit, hierarchyProvider, entitySetProvider::entities, pluralName);
     }
 
-    public void dispose() {
-    }
-
-    public OWLEditorKit getOWLEditorKit() {
-        return owlEditorKit;
-    }
-
-    public void performDeletion() {
-        Preferences prefs = PreferencesManager.getInstance().getApplicationPreferences(DELETE_PREFS_KEY);
-        Set<E> entities = entitySetProvider.entities().collect(Collectors.toSet());
-        String name;
-        if (entities.size() == 1) {
-            name = owlEditorKit.getModelManager().getRendering(entities.iterator().next());
-        } else {
-            name = "selected " + pluralName;
-        }
-
-        boolean assertedSubsExist = hasAssertedSubs(entities);
-        boolean showDialog = prefs.getBoolean(ALWAYS_DELETE_CONFIRM, true);
-        if (assertedSubsExist) {
-            showDialog = prefs.getBoolean(ALWAYS_CONFIRM_WHEN_DELETE_DESCENDANTS, true);
-        }
-
-        boolean deleteDescendants = false;
-        if (showDialog) {
-            JComponent panel = new Box(BoxLayout.PAGE_AXIS);
-            JLabel label = new JLabel("<html><body>Delete " + name +
-                    "?<p>All references to " + name + " will be removed from the active ontologies.</p></body></html>");
-            panel.add(label);
-            String confirmLabel = "Always show this confirmation before deleting";
-
-            JRadioButton descendantsRadioButton = null;
-            if (assertedSubsExist) {
-                deleteDescendants = prefs.getBoolean(DELETE_DESCENDANTS, false);
-                JRadioButton onlySelectedEntityRadioButton = new JRadioButton("Delete " + name + " only", !deleteDescendants);
-                descendantsRadioButton = new JRadioButton("Delete " + name + " and asserted descendant " + pluralName, deleteDescendants);
-                ButtonGroup bg = new ButtonGroup();
-                bg.add(onlySelectedEntityRadioButton);
-                bg.add(descendantsRadioButton);
-
-                panel.add(Box.createRigidArea(new Dimension(0, 20)));
-                panel.add(onlySelectedEntityRadioButton);
-                panel.add(descendantsRadioButton);
-                confirmLabel += " " + pluralName + " with asserted descendants";
-            }
-
-            JCheckBox alwaysConfirmCheckbox = new JCheckBox(confirmLabel, true);
-
-            panel.add(Box.createRigidArea(new Dimension(0, 40)));
-            panel.add(alwaysConfirmCheckbox);
-
-            int ret = JOptionPane.showConfirmDialog(owlEditorKit.getWorkspace(), panel, "Delete " + name,
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            if (ret != JOptionPane.OK_OPTION) {
-                return;
-            }
-
-            if (assertedSubsExist) {
-                deleteDescendants = descendantsRadioButton.isSelected();
-                prefs.putBoolean(DELETE_DESCENDANTS, deleteDescendants);
-                prefs.putBoolean(ALWAYS_CONFIRM_WHEN_DELETE_DESCENDANTS, alwaysConfirmCheckbox.isSelected());
-            }
-            prefs.putBoolean(ALWAYS_DELETE_CONFIRM, alwaysConfirmCheckbox.isSelected());
-        }
-        if (deleteDescendants) {
-            deleteDescendants(entities);
-        } else {
-            delete(entities);
-        }
-    }
-
-    private void delete(Set<E> ents) {
-        OWLEntityDeleter.deleteEntities(ents, getOWLEditorKit().getOWLModelManager());
-    }
-
-    private void deleteDescendants(Set<E> selectedEntities) {
-        LOGGER.info(LogBanner.start("Deleting descendants"));
-        LOGGER.info("Deleting descendants of {}", selectedEntities);
-        Set<E> ents = new HashSet<>();
-        Stopwatch stopwatch = Stopwatch.createStarted();
-        for (E ent : selectedEntities) {
-            LOGGER.info("Retrieving descendants of {}", ent);
-            ents.add(ent);
-            hierarchyProvider.descendants(ent).forEach(ents::add);
-        }
-        stopwatch.stop();
-        LOGGER.info("Retrieved {} entities to delete in {} ms", ents.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        delete(ents);
-        LOGGER.info(LogBanner.end());
-    }
-
-    private boolean hasAssertedSubs(Set<E> entities) {
-        for (E entity : entities) {
-            if (hierarchyProvider.hasDescendants(entity)) {
-                return true;
-            }
-        }
-        return false;
+    @Override
+    protected void delete(Set<E> entities) {
+        OWLEntityDeleter.deleteEntities(entities, getOWLEditorKit().getOWLModelManager());
     }
 }

@@ -183,7 +183,7 @@ public abstract class AbstractOWLSelectionViewComponent extends AbstractOWLViewC
         }
     }
 
-    protected void updateHeader(OWLObject object) {
+    protected void updateHeader(Object object) {
         // Set the label in the header to reflect the entity that the view
         // is displaying
         if (object != null) {

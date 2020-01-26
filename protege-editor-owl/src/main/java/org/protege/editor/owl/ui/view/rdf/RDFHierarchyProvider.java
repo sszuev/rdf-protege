@@ -6,12 +6,15 @@ import com.github.owlcs.ontapi.jena.OntModelFactory;
 import com.github.owlcs.ontapi.jena.OntVocabulary;
 import com.github.owlcs.ontapi.jena.utils.Graphs;
 import com.github.owlcs.ontapi.jena.utils.Iter;
+import com.github.owlcs.ontapi.jena.utils.Models;
 import com.github.owlcs.ontapi.jena.vocabulary.OWL;
 import com.github.owlcs.ontapi.jena.vocabulary.RDF;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.mem.GraphMem;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
@@ -280,7 +283,31 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
 
     @Override
     public Set<Triple> getDescendants(Triple triple) {
-        throw new IllegalStateException("TODO"); // TODO
+        Set<Triple> res = new HashSet<>();
+        Set<Node> anons = new HashSet<>();
+        if (triple instanceof RootTriple) {
+            listChildren(triple.getSubject())
+                    .filterDrop(triple::equals)
+                    .forEachRemaining(t -> {
+                        if (t.getObject().isBlank())
+                            anons.add(t.getObject());
+                        res.add(t);
+                    });
+        }
+        if (triple.getObject().isBlank()) {
+            anons.add(triple.getObject());
+        }
+        if (!anons.isEmpty()) {
+            Model m = ModelFactory.createModelForGraph(graph);
+            anons.forEach(n -> Models.getAssociatedStatements(m.wrapAsResource(n)).forEach(x -> res.add(x.asTriple())));
+        }
+
+        return res;
+    }
+
+    @Override
+    public boolean hasDescendants(Triple triple) {
+        return findChildren(triple).map(x -> Iter.findFirst(x).isPresent()).orElse(false);
     }
 
     @Override
