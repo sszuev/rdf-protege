@@ -1,17 +1,24 @@
 package org.protege.editor.owl.ui.view.rdf;
 
+import com.github.owlcs.ontapi.OWLAdapter;
+import com.github.owlcs.ontapi.jena.model.OntModel;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.shared.PrefixMapping;
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.core.ui.view.DisposableAction;
 import org.protege.editor.core.ui.view.View;
 import org.protege.editor.core.ui.view.ViewMode;
+import org.protege.editor.owl.model.OWLModelManager;
+import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.OWLIcons;
+import org.protege.editor.owl.ui.UIHelper;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
+import org.protege.editor.owl.ui.renderer.AddEntityIcon;
 import org.protege.editor.owl.ui.renderer.DeleteEntityIcon;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
-import org.protege.editor.owl.ui.renderer.OWLClassIcon;
-import org.protege.editor.owl.ui.renderer.OWLEntityIcon;
 import org.protege.editor.owl.ui.tree.OWLTreeDragAndDropHandler;
 import org.protege.editor.owl.ui.tree.ObjectTree;
 import org.protege.editor.owl.ui.view.*;
@@ -29,6 +36,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * TODO: under developing
@@ -39,8 +47,10 @@ import java.util.*;
 public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewComponent
         implements Findable<Triple>, SelectionDriver, CreateNewTarget, Deleteable, HasDisplayDeprecatedEntities {
 
-    private static final Icon ADD_ICON = OWLIcons.getIcon("ontology.png");
-    private static final Icon DELETE_ICON = new DeleteEntityIcon(new OWLClassIcon(OWLClassIcon.Type.PRIMITIVE, OWLEntityIcon.FillType.HOLLOW));
+    private static final Color ICON_COLOR = new Color(0xB51415);
+    private static final Icon TRIPLE_ICON = OWLIcons.getIcon("Top.gif");
+    private static final Icon ADD_ICON = new AddEntityIcon(TRIPLE_ICON, ICON_COLOR);
+    private static final Icon DELETE_ICON = new DeleteEntityIcon(TRIPLE_ICON, ICON_COLOR);
 
     private static final String ADD_GROUP = "A";
     private static final String DELETE_GROUP = "B";
@@ -178,19 +188,52 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
 
     @Override
     public boolean canCreateNew() {
-        return false;
+        return true;
     }
 
     @Override
     public void createNewObject() {
-        // TODO: not ready
-        /*TreePath path = getTree().getSelectionModel().getSelectionPath();
-        OWLObjectTreeNode<Triple> t = (OWLObjectTreeNode<Triple>) path.getLastPathComponent(); // todo: npe if unselected
-        AddTriplePanel panel = new AddTriplePanel();
-        int res = new UIHelper(getOWLEditorKit()).showValidatingDialog("Create a new triple", panel, null);
-        if (res == JOptionPane.OK_OPTION) {
-        }*/
-        throw new UnsupportedOperationException();
+        OntModel ont = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
+        AddTriplePanel panel = new AddTriplePanel(createAddTripleModel(ont));
+        int res = new UIHelper(getOWLEditorKit()).showValidatingDialog("Create Root Triple", panel, null);
+        if (res != JOptionPane.OK_OPTION) {
+            return;
+        }
+        Triple t = panel.getTriple();
+        ont.getGraph().add(t);
+
+        OWLModelManager m = getOWLModelManager();
+        // todo: no need to reload this component
+        m.fireEvent(EventType.ONTOLOGY_RELOADED);
+    }
+
+    public AddTripleModel createAddTripleModel(OntModel ont) {
+        return new AddTripleModel() {
+            private final PrefixMapping pm = PrefixMapping.Factory.create()
+                    .setNsPrefixes(RDFHierarchyProvider.STANDARD_PREFIXES)
+                    .setNsPrefixes(ont)
+                    .lock();
+
+            @Override
+            public String getBaseURI() {
+                return ont.getID().getURI();
+            }
+
+            @Override
+            public PrefixMapping getPrefixMapping() {
+                return pm;
+            }
+
+            @Override
+            public Set<Property> getProperties() {
+                return RDFHierarchyProvider.STANDARD_PROPERTIES;
+            }
+
+            @Override
+            public Set<Resource> getDatatypes() {
+                return RDFHierarchyProvider.STANDARD_DATATYPES;
+            }
+        };
     }
 
     @Override
@@ -309,11 +352,13 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
 
     @Override
     public void setShowDeprecatedEntities(boolean showDeprecatedEntities) {
+        Predicate<Triple> filter;
         if (showDeprecatedEntities) {
-            getHierarchyProvider().setFilter(e -> true);
+            filter = e -> true;
         } else {
-            getHierarchyProvider().setFilter(this::isNotDeprecated);
+            filter = this::isNotDeprecated;
         }
+        getHierarchyProvider().setFilter(filter);
     }
 
     private boolean isNotDeprecated(Triple e) {

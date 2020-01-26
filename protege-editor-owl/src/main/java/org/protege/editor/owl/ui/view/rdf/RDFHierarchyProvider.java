@@ -1,7 +1,9 @@
 package org.protege.editor.owl.ui.view.rdf;
 
 import com.github.owlcs.ontapi.OWLAdapter;
+import com.github.owlcs.ontapi.Ontology;
 import com.github.owlcs.ontapi.jena.OntModelFactory;
+import com.github.owlcs.ontapi.jena.OntVocabulary;
 import com.github.owlcs.ontapi.jena.utils.Graphs;
 import com.github.owlcs.ontapi.jena.utils.Iter;
 import com.github.owlcs.ontapi.jena.vocabulary.OWL;
@@ -10,6 +12,8 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.mem.GraphMem;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDFS;
@@ -22,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -34,13 +39,35 @@ import java.util.stream.Stream;
 public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RDFHierarchyProvider.class);
 
+    public static final PrefixMapping STANDARD_PREFIXES = PrefixMapping.Factory.create()
+            .setNsPrefixes(OntModelFactory.STANDARD)
+            .setNsPrefix("dc", "http://purl.org/dc/elements/1.1/")
+            .setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#")
+            .setNsPrefix("swrl", "http://www.w3.org/2003/11/swrl#")
+            .setNsPrefix("swrlb", "http://www.w3.org/2003/11/swrlb#")
+            .lock();
+
+    public static final OntVocabulary VOCABULARY = OntVocabulary.Factory.get();
+
     public static final Comparator<String> STRING_URI_COMPARATOR = Comparator.comparingInt(RDFHierarchyProvider::nsToInt)
             .thenComparing(Function.identity());
     public static final Comparator<Node> NODE_URI_COMPARATOR = Comparator.comparing(Node::getURI, STRING_URI_COMPARATOR);
+    public static final Comparator<Resource> RESOURCE_URI_COMPARATOR = Comparator.comparing(Resource::getURI, STRING_URI_COMPARATOR);
+
     public static final Comparator<Triple> TRIPLE_PREDICATE_COMPARATOR =
             Comparator.comparing(Triple::getPredicate, NODE_URI_COMPARATOR).thenComparing(Triple::hashCode);
 
+    public static final Set<Property> STANDARD_PROPERTIES = VOCABULARY.getSystemProperties().stream()
+            .sorted(RESOURCE_URI_COMPARATOR)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    public static final Set<Resource> STANDARD_DATATYPES = VOCABULARY.getBuiltinDatatypes().stream()
+            .sorted(RESOURCE_URI_COMPARATOR)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
     private final List<HierarchyProviderListener<Triple>> listeners = new CopyOnWriteArrayList<>();
+
+    private Ontology ontology;
     private Graph graph;
 
     /**
@@ -148,10 +175,15 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
 
     @Override
     public void setOntology(OWLOntology o) {
+        this.ontology = OWLAdapter.get().asONT(o);
         // this.graph = ((Ontology) o).asGraphModel().getGraph(); // <-- concurrent union graph
         // todo: currently, only the base graph (i.e. GraphMeme) is used. for simplification. temporary ?
-        this.graph = OWLAdapter.get().asBaseModel(OWLAdapter.get().asONT(o)).getBase().getBaseGraph();
+        this.graph = OWLAdapter.get().asBaseModel(ontology).getBase().getBaseGraph();
         fireHierarchyChanged();
+    }
+
+    public Ontology getOntology() {
+        return ontology;
     }
 
     @Override
@@ -160,7 +192,7 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
     }
 
     public PrefixMapping getPrefixes() {
-        return graph == null ? OntModelFactory.STANDARD : graph.getPrefixMapping();
+        return graph == null ? STANDARD_PREFIXES : graph.getPrefixMapping();
     }
 
     public Graph getGraph() {
@@ -316,8 +348,12 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
      * A special triple to describe UI roots.
      */
     public static class RootTriple extends Triple {
-        private RootTriple(Triple t) {
-            super(t.getSubject(), t.getPredicate(), t.getObject());
+        protected RootTriple(Triple t) {
+            this(t.getSubject(), t.getPredicate(), t.getObject());
+        }
+
+        protected RootTriple(Node s, Node p, Node o) {
+            super(s, p, o);
         }
     }
 }

@@ -82,8 +82,8 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
                 String query = queryPane.getText();
                 SPARQLEngine.Res res = factory.create(type).execute(o.asGraphModel(), query);
                 resultModel.setResults(res);
-                if (type.canUpdate() && !res.isEmpty()) {
-                    getOWLModelManager().fireEvent(EventType.ENTITY_RENDERER_CHANGED);
+                if (type.canUpdate() && !res.isEmpty()) { // unpredictable change - reload whole ontology
+                    getOWLModelManager().fireEvent(EventType.ONTOLOGY_RELOADED);
                 }
             } catch (SPARQLEngine.Error ex) {
                 ErrorLogPanel.showErrorDialog(ex);

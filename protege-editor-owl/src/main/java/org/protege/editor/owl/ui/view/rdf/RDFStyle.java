@@ -1,6 +1,5 @@
 package org.protege.editor.owl.ui.view.rdf;
 
-import com.github.owlcs.ontapi.jena.OntVocabulary;
 import com.github.owlcs.ontapi.jena.vocabulary.OWL;
 import com.github.owlcs.ontapi.jena.vocabulary.RDF;
 import com.github.owlcs.ontapi.jena.vocabulary.XSD;
@@ -59,7 +58,7 @@ public enum RDFStyle {
     }
 
     private Set<String> collect() {
-        return OntVocabulary.Factory.get().getSystemALL().stream()
+        return RDFHierarchyProvider.VOCABULARY.getSystemALL().stream()
                 .map(Resource::getURI)
                 .filter(x -> x.startsWith(ns))
                 .collect(Collectors.toSet());

@@ -2,7 +2,7 @@ package org.protege.editor.owl.ui.renderer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
+import java.util.Objects;
 
 /**
  * Matthew Horridge
@@ -11,10 +11,18 @@ import java.awt.geom.AffineTransform;
  */
 public class AddChildIcon implements Icon {
 
-    private final OWLEntityIcon entityIcon;
+    private final Icon icon;
+    private final Color color;
+    private final int baseSize;
 
     public AddChildIcon(OWLEntityIcon entityIcon) {
-        this.entityIcon = entityIcon;
+        this(entityIcon, entityIcon.getEntityColor(), entityIcon.getBaseSize());
+    }
+
+    public AddChildIcon(Icon icon, Color color, int baseSize) {
+        this.icon = Objects.requireNonNull(icon);
+        this.color = Objects.requireNonNull(color);
+        this.baseSize = baseSize;
     }
 
     @Override
@@ -34,7 +42,7 @@ public class AddChildIcon implements Icon {
             int childCX = x +  (iconWidth * 3) / 4;
             int childCY = y + (iconHeight * 3) / 4;
 
-            g2.setColor(entityIcon.getEntityColor());
+            g2.setColor(color);
 
             g2.drawLine(parCX, parCY, parCX, childCY);
             g2.drawLine(parCX, childCY, childCX, childCY);
@@ -54,17 +62,17 @@ public class AddChildIcon implements Icon {
 
             double parentChildScaleFactor = 0.6;
             g2.scale(parentChildScaleFactor, parentChildScaleFactor);
-            int parX = -entityIcon.getBaseSize() / 2;
-            int parY = -entityIcon.getBaseSize() / 2;
-            entityIcon.paintIcon(c, g2, parX, parY);
+            int parX = -baseSize / 2;
+            int parY = -baseSize / 2;
+            icon.paintIcon(c, g2, parX, parY);
             g2.scale(1 / parentChildScaleFactor, 1 / parentChildScaleFactor);
             g2.translate(-parCX, -parCY);
 
             g2.translate(childCX, childCY);
-            int childX = -entityIcon.getBaseSize() / 2;
-            int childY = -entityIcon.getBaseSize() / 2;
+            int childX = -baseSize / 2;
+            int childY = -baseSize / 2;
             g2.scale(parentChildScaleFactor, parentChildScaleFactor);
-            entityIcon.paintIcon(c, g2, childX, childY);
+            icon.paintIcon(c, g2, childX, childY);
             g2.scale(1 / parentChildScaleFactor, 1 / parentChildScaleFactor);
             g2.translate(-childCX, -childCY);
         } finally {
@@ -75,11 +83,11 @@ public class AddChildIcon implements Icon {
 
     @Override
     public int getIconWidth() {
-        return entityIcon.getIconWidth() + 2;
+        return icon.getIconWidth() + 2;
     }
 
     @Override
     public int getIconHeight() {
-        return entityIcon.getIconHeight() + 2;
+        return icon.getIconHeight() + 2;
     }
 }
