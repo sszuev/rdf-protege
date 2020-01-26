@@ -25,7 +25,7 @@ public class ObjectTreeDragGestureListener<N> extends ObjectDragGestureListener<
 
     @Override
     protected List<N> getSelectedObjects() {
-        return new ArrayList<>(tree.getSelectedOWLObjects());
+        return new ArrayList<>(tree.getSelectedObjects());
     }
 
     @Override

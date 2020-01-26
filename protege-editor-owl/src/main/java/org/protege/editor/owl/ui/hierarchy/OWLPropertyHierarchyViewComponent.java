@@ -39,17 +39,15 @@ public class OWLPropertyHierarchyViewComponent extends AbstractOWLEntityHierarch
 
     @Override
     protected void performExtraInitialisation() throws Exception {
-        getTree().setOWLObjectComparator((o1, o2) -> {
-            if(o1 instanceof OWLObjectProperty) {
-                if(!(o2 instanceof OWLObjectProperty)) {
+        getTree().setObjectComparator((o1, o2) -> {
+            if (o1 instanceof OWLObjectProperty) {
+                if (!(o2 instanceof OWLObjectProperty)) {
                     return -1;
                 }
-            }
-            else if(o1 instanceof OWLDataProperty) {
-                if(o2 instanceof OWLObjectProperty) {
+            } else if (o1 instanceof OWLDataProperty) {
+                if (o2 instanceof OWLObjectProperty) {
                     return 1;
-                }
-                else {
+                } else {
                     return -1;
                 }
             }
@@ -76,7 +74,7 @@ public class OWLPropertyHierarchyViewComponent extends AbstractOWLEntityHierarch
      */
     @Override
     protected OWLObject updateView() {
-        return getTree().getSelectedOWLObject();
+        return getTree().getSelectedObject();
     }
 
     @Override

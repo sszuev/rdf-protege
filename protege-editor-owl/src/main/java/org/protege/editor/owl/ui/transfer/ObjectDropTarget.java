@@ -14,7 +14,7 @@ public interface ObjectDropTarget<N> {
 
     JComponent getComponent();
 
-    boolean dropOWLObjects(List<N> owlObjects, Point pt, int type);
+    boolean dropObjects(List<N> owlObjects, Point pt, int type);
 
     OWLModelManager getOWLModelManager();
 }

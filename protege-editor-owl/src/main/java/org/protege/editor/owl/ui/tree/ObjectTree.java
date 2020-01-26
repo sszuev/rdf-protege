@@ -13,7 +13,6 @@ import org.protege.editor.owl.ui.transfer.ObjectTreeDragGestureListener;
 import org.protege.editor.owl.ui.view.Copyable;
 import org.protege.editor.owl.ui.view.HasCopySubHierarchyToClipboard;
 import org.protege.editor.owl.ui.view.HasExpandAll;
-import org.semanticweb.owlapi.model.OWLEntity;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -50,7 +49,7 @@ public abstract class ObjectTree<N> extends JTree
     private final Map<N, Set<ObjectTreeNode<N>>> nodeMap;
     private final HierarchyProviderListener<N> listener;
     protected Comparator<? super N> comparator;
-    private OWLTreeDragAndDropHandler<N> dragAndDropHandler;
+    private TreeDragAndDropHandler<N> dragAndDropHandler;
 
     // todo: unused fields:
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
@@ -76,18 +75,18 @@ public abstract class ObjectTree<N> extends JTree
     });
     private Stroke s = new BasicStroke(2.0f);
 
-    public ObjectTree(OWLEditorKit eKit, OWLHierarchyProvider<N> provider) {
-        this(eKit, provider, provider.getRoots(), null);
+    public ObjectTree(OWLEditorKit kit, OWLHierarchyProvider<N> provider) {
+        this(kit, provider, provider.getRoots(), null);
     }
 
-    public ObjectTree(OWLEditorKit eKit,
+    public ObjectTree(OWLEditorKit kit,
                       OWLHierarchyProvider<N> provider,
                       Collection<N> roots,
-                      Comparator<? super N> owlObjectComparator) {
-        this.eKit = eKit;
+                      Comparator<? super N> comparator) {
+        this.eKit = kit;
         setupLineStyle();
         ToolTipManager.sharedInstance().registerComponent(this);
-        this.comparator = owlObjectComparator;
+        this.comparator = comparator;
         this.provider = provider;
         this.nodeMap = new HashMap<>();
         listener = new HierarchyProviderListener<N>() {
@@ -113,7 +112,7 @@ public abstract class ObjectTree<N> extends JTree
         DragSource dragSource = DragSource.getDefaultDragSource();
         dragSource.createDefaultDragGestureRecognizer(this,
                 DnDConstants.ACTION_COPY_OR_MOVE,
-                new ObjectTreeDragGestureListener<>(eKit, this));
+                new ObjectTreeDragGestureListener<>(kit, this));
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -203,15 +202,6 @@ public abstract class ObjectTree<N> extends JTree
         popupMenu.show(this, e.getX(), e.getY());
     }
 
-    @Override
-    public String getToolTipText(MouseEvent event) {
-        N obj = getOWLObjectAtMousePosition(event);
-        if (obj instanceof OWLEntity) {
-            return ((OWLEntity) obj).getIRI().toString();
-        }
-        return null;
-    }
-
     private void updateNode(N node) {
         // This method is called when the parents or children of
         // a node might have changed.  We handle the following possibilities
@@ -295,10 +285,11 @@ public abstract class ObjectTree<N> extends JTree
         for (int i = 0; i < rootNode.getChildCount(); i++) {
             @SuppressWarnings("unchecked")
             ObjectTreeNode<N> n = (ObjectTreeNode<N>) rootNode.getChildAt(i);
-            if (n.getObjectNode().equals(node)) {
-                ((DefaultTreeModel) getModel()).removeNodeFromParent(n);
-                return;
+            if (!n.getObjectNode().equals(node)) {
+                continue;
             }
+            ((DefaultTreeModel) getModel()).removeNodeFromParent(n);
+            return;
         }
     }
 
@@ -317,12 +308,12 @@ public abstract class ObjectTree<N> extends JTree
      * Note that this will collapse all expanded paths except for the current selection.
      */
     public void reload() {
-        N current = getSelectedOWLObject();
+        N current = getSelectedObject();
         // Reload the tree
         nodeMap.clear();
         // TODO: getRoots needs to be changed - the user might have specified specific roots
         ((DefaultTreeModel) getModel()).setRoot(new RootNode(provider.getRoots()));
-        setSelectedOWLObject(current);
+        setSelectedObject(current);
     }
 
     private void expandDescendantsOfRow(int row) {
@@ -347,7 +338,7 @@ public abstract class ObjectTree<N> extends JTree
         }
     }
 
-    public void setDragAndDropHandler(OWLTreeDragAndDropHandler<N> dragAndDropHandler) {
+    public void setDragAndDropHandler(TreeDragAndDropHandler<N> dragAndDropHandler) {
         this.dragAndDropHandler = dragAndDropHandler;
     }
 
@@ -379,10 +370,10 @@ public abstract class ObjectTree<N> extends JTree
     /**
      * Sets the tree ordering and reloads the tree contents.
      *
-     * @param owlObjectComparator the comparator that is used to order sibling tree nodes
+     * @param comparator the comparator that is used to order sibling tree nodes
      */
-    public void setOWLObjectComparator(Comparator<? super N> owlObjectComparator) {
-        this.comparator = owlObjectComparator;
+    public void setObjectComparator(Comparator<? super N> comparator) {
+        this.comparator = comparator;
         reload();
     }
 
@@ -432,35 +423,37 @@ public abstract class ObjectTree<N> extends JTree
         return res;
     }
 
-    public void setSelectedOWLObject(N selObject, boolean selectAll) {
+    public void setSelectedObject(N selObject, boolean selectAll) {
         if (selObject == null) {
             return;
         }
-        setSelectedOWLObjects(Collections.singleton(selObject), selectAll);
+        setSelectedObjects(Collections.singleton(selObject), selectAll);
     }
 
-    public void setSelectedOWLObjects(Set<N> owlObjects, boolean selectAll) {
-        List<N> currentSelection = getSelectedOWLObjects();
-        if (currentSelection.containsAll(owlObjects) && owlObjects.containsAll(currentSelection)) {
+    public void setSelectedObjects(Set<N> objects, boolean selectAll) {
+        List<N> currentSelection = getSelectedObjects();
+        if (currentSelection.containsAll(objects) && objects.containsAll(currentSelection)) {
             return;
         }
         clearSelection();
-        if (!owlObjects.isEmpty()) {
-            final List<TreePath> paths = new ArrayList<>();
-            for (N obj : owlObjects) {
-                Set<ObjectTreeNode<N>> nodes = getNodes(obj);
-                if (nodes.isEmpty()) {
-                    expandAndSelectPaths(obj, selectAll);
-                }
-                paths.addAll(getPaths(obj, selectAll));
-            }
-            if (!paths.isEmpty()) {
-                setSelectionPaths(paths.toArray(new TreePath[0]));
-                // without this the selection never quite makes it onto the screen
-                // probably because the component has not been sized yet
-                SwingUtilities.invokeLater(() -> scrollPathToVisible(paths.get(0)));
-            }
+        if (objects.isEmpty()) {
+            return;
         }
+        final List<TreePath> paths = new ArrayList<>();
+        for (N obj : objects) {
+            Set<ObjectTreeNode<N>> nodes = getNodes(obj);
+            if (nodes.isEmpty()) {
+                expandAndSelectPaths(obj, selectAll);
+            }
+            paths.addAll(getPaths(obj, selectAll));
+        }
+        if (paths.isEmpty()) {
+            return;
+        }
+        setSelectionPaths(paths.toArray(new TreePath[0]));
+        // without this the selection never quite makes it onto the screen
+        // probably because the component has not been sized yet
+        SwingUtilities.invokeLater(() -> scrollPathToVisible(paths.get(0)));
     }
 
     private List<TreePath> getPaths(N selObject, boolean selectAll) {
@@ -506,16 +499,17 @@ public abstract class ObjectTree<N> extends JTree
             expandPath(new TreePath(curParNode.getPath()));
             for (int j = 0; j < curParNode.getChildCount(); j++) {
                 ObjectTreeNode<N> curChild = curParNode.getChildAt(j);
-                if (curChild.getObjectNode().equals(objectPath.get(i))) {
-                    curParNode = curChild;
-                    break;
+                if (!curChild.getObjectNode().equals(objectPath.get(i))) {
+                    continue;
                 }
+                curParNode = curChild;
+                break;
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    public N getSelectedOWLObject() {
+    public N getSelectedObject() {
         TreePath path = getSelectionPath();
         if (path == null) {
             return null;
@@ -528,12 +522,12 @@ public abstract class ObjectTree<N> extends JTree
      *
      * @param selObject the object to select if it exists in the tree
      */
-    public void setSelectedOWLObject(N selObject) {
-        setSelectedOWLObject(selObject, false);
+    public void setSelectedObject(N selObject) {
+        setSelectedObject(selObject, false);
     }
 
     @SuppressWarnings("unchecked")
-    public List<N> getSelectedOWLObjects() {
+    public List<N> getSelectedObjects() {
         List<N> res = new ArrayList<>();
         TreePath[] selPaths = getSelectionPaths();
         if (selPaths == null) {
@@ -545,8 +539,8 @@ public abstract class ObjectTree<N> extends JTree
         return res;
     }
 
-    public void setSelectedOWLObjects(Set<N> owlObjects) {
-        setSelectedOWLObjects(owlObjects, false);
+    public void setSelectedObjects(Set<N> objects) {
+        setSelectedObjects(objects, false);
     }
 
     @Override
@@ -560,7 +554,7 @@ public abstract class ObjectTree<N> extends JTree
     }
 
     @Override
-    public boolean dropOWLObjects(final java.util.List<N> owlObjects, Point pt, int type) {
+    public boolean dropObjects(List<N> objects, Point pt, int type) {
         if (dragAndDropHandler == null) {
             return false;
         }
@@ -580,14 +574,14 @@ public abstract class ObjectTree<N> extends JTree
 
         final Set<N> droppedObjects = new HashSet<>();
 
-        for (N owlObject : owlObjects) {
-            if (dropTargetObj.equals(owlObject) || // don't drop on self
-                    !dragAndDropHandler.canDrop(owlObject, dropTargetObj)) {
+        for (N object : objects) {
+            if (dropTargetObj.equals(object) || // don't drop on self
+                    !dragAndDropHandler.canDrop(object, dropTargetObj)) {
                 continue;
             }
 
             // the object must be in the acceptable bounds for the handler by now
-            droppedObjects.add(owlObject);
+            droppedObjects.add(object);
 
             TreePath selPath = getSelectionPath();
             N selObj = null;
@@ -605,18 +599,18 @@ public abstract class ObjectTree<N> extends JTree
 
             if (selObj == null) {
                 // In ADD operation (We can only add here)
-                dragAndDropHandler.add(owlObject, dropTargetObj);
-            } else {
-                if (selObj.equals(owlObject)) {
-                    if (selObjParent != null) {
-                        dragAndDropHandler.move(owlObject, selObjParent, dropTargetObj);
-                    } else {
-                        dragAndDropHandler.add(owlObject, dropTargetObj);
-                    }
+                dragAndDropHandler.add(object, dropTargetObj);
+                continue;
+            }
+            if (selObj.equals(object)) {
+                if (selObjParent != null) {
+                    dragAndDropHandler.move(object, selObjParent, dropTargetObj);
                 } else {
-                    // ADD op
-                    dragAndDropHandler.add(owlObject, dropTargetObj);
+                    dragAndDropHandler.add(object, dropTargetObj);
                 }
+            } else {
+                // ADD op
+                dragAndDropHandler.add(object, dropTargetObj);
             }
         }
 
@@ -630,7 +624,7 @@ public abstract class ObjectTree<N> extends JTree
                     nodes.add(droppedObject);
                 }
             }
-            setSelectedOWLObjects(nodes);
+            setSelectedObjects(nodes);
         });
         return true;
     }
@@ -716,7 +710,7 @@ public abstract class ObjectTree<N> extends JTree
     public void removeChangeListener(ChangeListener listener) {
     }
 
-    protected N getOWLObjectAtMousePosition(MouseEvent event) {
+    protected N getObjectAtMousePosition(MouseEvent event) {
         Point pt = event.getPoint();
         TreePath path = getPathForLocation(pt.x, pt.y);
         if (path == null) {
@@ -729,7 +723,7 @@ public abstract class ObjectTree<N> extends JTree
 
     @Override
     public void copySubHierarchyToClipboard() {
-        N selObject = getSelectedOWLObject();
+        N selObject = getSelectedObject();
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         copySubHierarchyToClipboard(selObject, pw, 0);
@@ -759,17 +753,17 @@ public abstract class ObjectTree<N> extends JTree
 
     @Override
     public boolean canPerformCopySubHierarchyToClipboard() {
-        return getSelectedOWLObject() != null;
+        return getSelectedObject() != null;
     }
 
     @Override
     public boolean canCopy() {
-        return !getSelectedOWLObjects().isEmpty();
+        return !getSelectedObjects().isEmpty();
     }
 
     @Override
     public List<N> getObjectsToCopy() {
-        return new ArrayList<>(getSelectedOWLObjects());
+        return new ArrayList<>(getSelectedObjects());
     }
 
     /**

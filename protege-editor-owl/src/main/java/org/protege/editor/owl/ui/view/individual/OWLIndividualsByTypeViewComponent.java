@@ -55,7 +55,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         add(new JScrollPane(tree));
         changeListenerMediator = new ChangeListenerMediator();
         tree.addTreeSelectionListener(listener);
-        tree.setDragAndDropHandler(new OWLTreeDragAndDropHandler<OWLObject>() {
+        tree.setDragAndDropHandler(new TreeDragAndDropHandler<OWLObject>() {
             @Override
             public boolean canDrop(Object child, Object parent) {
                 return child instanceof OWLNamedIndividual && parent instanceof OWLClass;
@@ -175,7 +175,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
     }
 
     private Set<OWLNamedIndividual> getSelectedIndividuals() {
-        List<OWLObject> sel = tree.getSelectedOWLObjects();
+        List<OWLObject> sel = tree.getSelectedObjects();
         Set<OWLNamedIndividual> selIndivs = new HashSet<>();
         for (OWLObject obj : sel) {
             if (obj instanceof OWLNamedIndividual) {
@@ -186,19 +186,19 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
     }
 
     private OWLObject updateView(OWLObject selectedEntity) {
-        OWLObject selObj = tree.getSelectedOWLObject();
+        OWLObject selObj = tree.getSelectedObject();
         if (selectedEntity != null && selObj != null) {
             if (selectedEntity.equals(selObj)) {
                 return selectedEntity;
             }
         }
-        tree.setSelectedOWLObject(selectedEntity);
+        tree.setSelectedObject(selectedEntity);
         return selectedEntity;
     }
 
     private void transmitSelection() {
         if (isSynchronizing()) {
-            OWLObject obj = tree.getSelectedOWLObject();
+            OWLObject obj = tree.getSelectedObject();
             setGlobalSelection(obj instanceof OWLEntity ? (OWLEntity) obj : null);
         }
         changeListenerMediator.fireStateChanged(this);
@@ -211,7 +211,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
 
     @Override
     public void show(OWLNamedIndividual owlEntity) {
-        tree.setSelectedOWLObject(owlEntity);
+        tree.setSelectedObject(owlEntity);
     }
 
     //////// Deleteable
@@ -256,7 +256,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
         getOWLModelManager().applyChanges(changes);
         OWLNamedIndividual ind = set.getOWLEntity();
         if (ind != null) {
-            tree.setSelectedOWLObject(ind, false);
+            tree.setSelectedObject(ind, false);
         }
     }
 
@@ -277,7 +277,7 @@ public class OWLIndividualsByTypeViewComponent extends AbstractOWLSelectionViewC
 
     @Override
     public Optional<OWLObject> getSelection() {
-        return Optional.ofNullable(tree.getSelectedOWLObject());
+        return Optional.ofNullable(tree.getSelectedObject());
     }
 
     private class HierarchyProviderWrapper implements OWLHierarchyProvider<OWLObject> {

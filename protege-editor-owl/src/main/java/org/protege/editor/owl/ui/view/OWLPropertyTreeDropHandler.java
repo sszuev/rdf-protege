@@ -1,7 +1,7 @@
 package org.protege.editor.owl.ui.view;
 
 import org.protege.editor.owl.model.OWLModelManager;
-import org.protege.editor.owl.ui.tree.OWLTreeDragAndDropHandler;
+import org.protege.editor.owl.ui.tree.TreeDragAndDropHandler;
 import org.semanticweb.owlapi.model.*;
 
 import java.util.ArrayList;
@@ -13,11 +13,11 @@ import java.util.List;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 06-Jun-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
-public abstract class OWLPropertyTreeDropHandler<N extends OWLPropertyExpression> implements OWLTreeDragAndDropHandler<N> {
+public abstract class OWLPropertyTreeDropHandler<N extends OWLPropertyExpression> implements TreeDragAndDropHandler<N> {
 
     private OWLModelManager owlModelManager;
 

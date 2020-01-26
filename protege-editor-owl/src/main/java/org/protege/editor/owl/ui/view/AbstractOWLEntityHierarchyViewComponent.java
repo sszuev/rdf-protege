@@ -64,7 +64,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
         // ordering based on default, but putting Nothing at the top
         OWLObjectComparatorAdapter<OWLObject> treeNodeComp = createComparator(getOWLModelManager());
-        assertedTree.setOWLObjectComparator(treeNodeComp);
+        assertedTree.setObjectComparator(treeNodeComp);
 
 
         // render keywords should be on now for class expressions
@@ -115,7 +115,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
             if (inferredHierarchyProvider.isPresent()) {
                 inferredTree = Optional.of(new OWLModelManagerTree<>(getOWLEditorKit(), inferredHierarchyProvider.get()));
                 inferredTree.get().setBackground(OWLFrameList.INFERRED_BG_COLOR);
-                inferredTree.get().setOWLObjectComparator(treeNodeComp);
+                inferredTree.get().setObjectComparator(treeNodeComp);
                 inferredTree.get().getModel().addTreeModelListener(treeModelListener);
                 inferredTree.get().addMouseListener(new MouseAdapter() {
                     @Override
@@ -136,9 +136,9 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         }
 
         hierarchyDeleter = new OWLObjectHierarchyDeleter<>(getOWLEditorKit(),
-                                                                   getHierarchyProvider(),
-                                                                    () -> assertedTree.getSelectedOWLObjects().stream(),
-                                                                   getCollectiveTypeName());
+                getHierarchyProvider(),
+                () -> assertedTree.getSelectedObjects().stream(),
+                getCollectiveTypeName());
         listener = e -> transmitSelection();
         assertedTree.addTreeSelectionListener(listener);
         inferredTree.ifPresent(eObjectTree -> eObjectTree.addTreeSelectionListener(listener));
@@ -172,7 +172,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void switchViewMode(Optional<ViewMode> viewMode) {
-        E sel = viewModeComponent.getComponentForCurrentViewMode().getSelectedOWLObject();
+        E sel = viewModeComponent.getComponentForCurrentViewMode().getSelectedObject();
         viewModeComponent.setViewMode(viewMode);
         if(sel != null) {
             setSelectedEntity(sel);
@@ -207,7 +207,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
     }
 
     public void setSelectedEntity(E entity) {
-        getTree().setSelectedOWLObject(entity);
+        getTree().setSelectedObject(entity);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -216,24 +216,24 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
     }
 
     public void setSelectedEntities(Set<E> entities) {
-        getTree().setSelectedOWLObjects(entities);
+        getTree().setSelectedObjects(entities);
     }
 
     public E getSelectedEntity() {
-        return getTree().getSelectedOWLObject();
+        return getTree().getSelectedObject();
     }
 
     public Set<E> getSelectedEntities() {
-        return new HashSet<>(getTree().getSelectedOWLObjects());
+        return new HashSet<>(getTree().getSelectedObjects());
     }
 
     private void ensureSelection() {
         SwingUtilities.invokeLater(() -> {
             final E entity = getSelectedEntity();
             if (entity != null) {
-                E treeSel = getTree().getSelectedOWLObject();
+                E treeSel = getTree().getSelectedObject();
                 if (treeSel == null || !treeSel.equals(entity)) {
-                    getTree().setSelectedOWLObject(entity);
+                    getTree().setSelectedObject(entity);
                 }
             }
         });
@@ -272,14 +272,13 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
     }
 
     protected E updateView(E selEntity) {
-        if (getTree().getSelectedOWLObject() == null) {
+        if (getTree().getSelectedObject() == null) {
             if (selEntity != null) {
-                getTree().setSelectedOWLObject(selEntity);
+                getTree().setSelectedObject(selEntity);
             }
-        }
-        else {
-            if (!getTree().getSelectedOWLObject().equals(selEntity)) {
-                getTree().setSelectedOWLObject(selEntity);
+        } else {
+            if (!getTree().getSelectedObject().equals(selEntity)) {
+                getTree().setSelectedObject(selEntity);
             }
         }
         return selEntity;
@@ -300,7 +299,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     @Override
     protected OWLObject getObjectToCopy() {
-        return getTree().getSelectedOWLObject();
+        return getTree().getSelectedObject();
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -328,7 +327,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     @Override
     public boolean canDelete() {
-        return !getTree().getSelectedOWLObjects().isEmpty();
+        return !getTree().getSelectedObjects().isEmpty();
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -339,7 +338,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     @Override
     public void show(E owlEntity) {
-        getTree().setSelectedOWLObject(owlEntity);
+        getTree().setSelectedObject(owlEntity);
     }
 
     @Override

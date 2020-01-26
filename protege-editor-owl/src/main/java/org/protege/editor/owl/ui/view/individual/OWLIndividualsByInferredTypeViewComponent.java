@@ -45,7 +45,7 @@ public class OWLIndividualsByInferredTypeViewComponent extends AbstractOWLIndivi
 
     private void transmitSelection() {
         if (isSynchronizing()){
-            OWLObject obj = tree.getSelectedOWLObject();
+            OWLObject obj = tree.getSelectedObject();
             if (obj instanceof OWLEntity) {
                 getOWLWorkspace().getOWLSelectionModel().setSelectedEntity((OWLEntity) obj);
             }
@@ -74,13 +74,13 @@ public class OWLIndividualsByInferredTypeViewComponent extends AbstractOWLIndivi
 
 
     public OWLNamedIndividual updateView(OWLNamedIndividual selelectedIndividual) {
-        OWLObject selObj = tree.getSelectedOWLObject();
+        OWLObject selObj = tree.getSelectedObject();
         if (selelectedIndividual != null && selObj != null) {
             if (selelectedIndividual.equals(selObj)) {
                 return selelectedIndividual;
             }
         }
-        tree.setSelectedOWLObject(selelectedIndividual);
+        tree.setSelectedObject(selelectedIndividual);
         return selelectedIndividual;
     }
 

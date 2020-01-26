@@ -3,8 +3,10 @@ package org.protege.editor.owl.ui.tree;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
 import org.protege.editor.owl.ui.OWLObjectComparator;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLObject;
 
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Comparator;
 
@@ -49,5 +51,14 @@ public class OWLObjectTree<N extends OWLObject> extends ObjectTree<N> {
     @Override
     protected String getRendering(N obj) {
         return getOWLModelManager().getRendering(obj);
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        N obj = getObjectAtMousePosition(event);
+        if (obj instanceof OWLEntity) {
+            return ((OWLEntity) obj).getIRI().toString();
+        }
+        return null;
     }
 }

@@ -36,8 +36,8 @@ public class PickRootClassPanel extends AbstractOWLWizardPanel {
         parent.setLayout(new BorderLayout());
         setInstructions("Please select the root class");
         tree = new OWLModelManagerTree<>(getOWLEditorKit(),
-                                                 getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider());
-        tree.setSelectedOWLObject(getOWLEditorKit().getWorkspace().getOWLSelectionModel().getLastSelectedClass());
+                getOWLModelManager().getOWLHierarchyManager().getOWLClassHierarchyProvider());
+        tree.setSelectedObject(getOWLEditorKit().getWorkspace().getOWLSelectionModel().getLastSelectedClass());
         parent.add(ComponentFactory.createScrollPane(tree));
     }
 
@@ -48,12 +48,12 @@ public class PickRootClassPanel extends AbstractOWLWizardPanel {
 
 
     public OWLClass getRootClass() {
-        OWLClass cls = tree.getSelectedOWLObject();
+        OWLClass cls = tree.getSelectedObject();
         if (cls == null) {
             return getOWLModelManager().getOWLDataFactory().getOWLThing();
         }
         else {
-            return tree.getSelectedOWLObject();
+            return tree.getSelectedObject();
         }
     }
 

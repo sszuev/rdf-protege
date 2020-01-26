@@ -10,9 +10,9 @@ import org.protege.editor.owl.ui.action.DeleteClassAction;
 import org.protege.editor.owl.ui.renderer.AddChildIcon;
 import org.protege.editor.owl.ui.renderer.AddSiblingIcon;
 import org.protege.editor.owl.ui.renderer.OWLClassIcon;
-import org.protege.editor.owl.ui.tree.OWLTreeDragAndDropHandler;
 import org.protege.editor.owl.ui.tree.OWLTreePreferences;
 import org.protege.editor.owl.ui.tree.ObjectTreeNode;
+import org.protege.editor.owl.ui.tree.TreeDragAndDropHandler;
 import org.protege.editor.owl.ui.view.CreateNewChildTarget;
 import org.protege.editor.owl.ui.view.CreateNewSiblingTarget;
 import org.protege.editor.owl.ui.view.CreateNewTarget;
@@ -96,7 +96,7 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
 
         DeleteClassAction deleteClassAction =
                 new DeleteClassAction(getOWLEditorKit(),
-                                      () -> getTree().getSelectedOWLObjects().stream()) {
+                        () -> getTree().getSelectedObjects().stream()) {
                     @Override
                     public void updateState() {
                         super.updateState();
@@ -108,7 +108,7 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
 
         addAction(deleteClassAction, DELETE_GROUP, FIRST_SLOT);
 
-        getTree().setDragAndDropHandler(new OWLTreeDragAndDropHandler<OWLClass>() {
+        getTree().setDragAndDropHandler(new TreeDragAndDropHandler<OWLClass>() {
             public boolean canDrop(Object child, Object parent) {
                 return OWLTreePreferences.getInstance().isTreeDragAndDropEnabled() && child instanceof OWLClass;
             }
@@ -230,7 +230,7 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
                 changes.add(new AddAxiom(mngr.getActiveOntology(), ax));
             }
             mngr.applyChanges(changes);
-            getTree().setSelectedOWLObject(newClass);
+            getTree().setSelectedObject(newClass);
         }
     }
 
@@ -240,13 +240,13 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
         if (set != null) {
             OWLClass newClass = set.getOWLEntity();
             getOWLModelManager().applyChanges(set.getOntologyChanges());
-            getTree().setSelectedOWLObject(newClass);
+            getTree().setSelectedObject(newClass);
         }
     }
 
 
     public void createNewSibling() {
-        OWLClass cls = getTree().getSelectedOWLObject();
+        OWLClass cls = getTree().getSelectedObject();
         if (cls == null) {
             // Shouldn't really get here, because the
             // action should be disabled
@@ -274,7 +274,7 @@ public class ToldOWLClassHierarchyViewComponent extends AbstractOWLClassHierarch
             }
             mngr.applyChanges(changes);
             // Select the new class
-            getTree().setSelectedOWLObject(creationSet.getOWLEntity());
+            getTree().setSelectedObject(creationSet.getOWLEntity());
         }
     }
 

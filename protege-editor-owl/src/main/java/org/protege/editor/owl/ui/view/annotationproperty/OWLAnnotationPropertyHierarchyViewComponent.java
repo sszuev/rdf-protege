@@ -110,7 +110,7 @@ public class OWLAnnotationPropertyHierarchyViewComponent
 
     @Override
     public void createNewSibling() {
-        OWLAnnotationProperty property = getTree().getSelectedOWLObject();
+        OWLAnnotationProperty property = getTree().getSelectedObject();
         if (property == null) {
             // Shouldn't really get here, because the
             // action should be disabled
@@ -138,7 +138,7 @@ public class OWLAnnotationPropertyHierarchyViewComponent
     private class InternalOWLEntitySetProvider implements OWLEntitySetProvider<OWLAnnotationProperty> {
         @Override
         public Stream<OWLAnnotationProperty> entities() {
-            return new HashSet<>(getTree().getSelectedOWLObjects()).stream();
+            return new HashSet<>(getTree().getSelectedObjects()).stream();
         }
     }
 

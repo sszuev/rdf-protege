@@ -86,7 +86,7 @@ public class OWLObjectDropTargetListener implements DropTargetListener {
                 dupObj = duplicator.duplicateObject(obj);
                 dupObjs.add(dupObj);
             }
-            dtde.dropComplete(target.dropOWLObjects(dupObjs, dtde.getLocation(), dtde.getDropAction()));
+            dtde.dropComplete(target.dropObjects(dupObjs, dtde.getLocation(), dtde.getDropAction()));
         }
         component.setCursor(orginalCursor);
     }

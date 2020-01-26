@@ -170,7 +170,7 @@ public abstract class AbstractOWLPropertyHierarchyViewComponent<O extends OWLPro
             changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
         }
         getOWLModelManager().applyChanges(changes);
-        getTree().setSelectedOWLObject(set.getOWLEntity());
+        getTree().setSelectedObject(set.getOWLEntity());
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,7 +187,7 @@ public abstract class AbstractOWLPropertyHierarchyViewComponent<O extends OWLPro
 
     @Override
     public void createNewSibling() {
-        O property = getTree().getSelectedOWLObject();
+        O property = getTree().getSelectedObject();
         if (property == null) {
             // Shouldn't really get here, because the
             // action should be disabled
@@ -207,7 +207,7 @@ public abstract class AbstractOWLPropertyHierarchyViewComponent<O extends OWLPro
                 .map(x -> new AddAxiom(ont, getSubPropertyAxiom(creationSet.getOWLEntity(), x)))
                 .forEach(changes::add);
         getOWLModelManager().applyChanges(changes);
-        getTree().setSelectedOWLObject(creationSet.getOWLEntity());
+        getTree().setSelectedObject(creationSet.getOWLEntity());
     }
 
     /*
