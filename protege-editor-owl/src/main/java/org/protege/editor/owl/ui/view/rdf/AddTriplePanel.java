@@ -27,38 +27,38 @@ import java.util.stream.Stream;
  * Created by @ssz on 25.01.2020.
  */
 public class AddTriplePanel extends VerifiedInputEditorJPanel {
-    private static final int FIELD_WIDTH = 60;
-    private static final String SUBJECT = "Subject";
-    private static final String PREDICATE = "Predicate";
-    private static final String OBJECT = "Object";
-    private static final String DELIMITER = "=";
-    private static final String IRI_GHOST_TEXT = "Short name or full IRI or Prefix-Name";
-    private static final String BLANK_NODE_PLACEHOLDER = "<anonymous>";
-    private static final String IRI_CONTROL_OPTION = "IRI";
-    private static final String BLANK_NODE_CONTROL_OPTION = "Blank Node";
+    protected static final int FIELD_WIDTH = 60;
+    protected static final String SUBJECT = "Subject";
+    protected static final String PREDICATE = "Predicate";
+    protected static final String OBJECT = "Object";
+    protected static final String DELIMITER = "=";
+    protected static final String IRI_GHOST_TEXT = "Short name or full IRI or Prefix-Name";
+    protected static final String BLANK_NODE_PLACEHOLDER = "<anonymous>";
+    protected static final String IRI_CONTROL_OPTION = "IRI";
+    protected static final String BLANK_NODE_CONTROL_OPTION = "Blank Node";
 
-    private static final Insets CELL_INSETS = new Insets(0, 0, 2, 2);
-    private static final Insets LINE_INSETS = new Insets(10, 2, 10, 2);
-    private final JComboBox<String> objectController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, BLANK_NODE_CONTROL_OPTION,
+    protected static final Insets CELL_INSETS = new Insets(0, 0, 2, 2);
+    protected static final Insets LINE_INSETS = new Insets(10, 2, 10, 2);
+    protected final JComboBox<String> objectController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, BLANK_NODE_CONTROL_OPTION,
             "Plain Literal", "Typed Literal", "Lang Literal"});
-    private final JTextField subjectIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
-    private final JTextField predicateIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
-    private final JTextField objectIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
-    private final JTextField subjectField = new AugmentedJTextField(FIELD_WIDTH, "IRI or Blank Node");
-    private final JTextField predicateField = new AugmentedJTextField(FIELD_WIDTH, "IRI");
-    private final JTextField objectField = new AugmentedJTextField(FIELD_WIDTH, "IRI, Blank Node or Literal");
-    private final JComboBox<String> subjectController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, BLANK_NODE_CONTROL_OPTION});
-    private final JComboBox<String> predicateController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, "Built-in IRI"});
-    private final JPanel literalForm = new JPanel();
-    private final JTextComponent literalText = new JTextArea(1, FIELD_WIDTH - 18);
-    private final JComboBox<String> literalLangs;
-    private final JComboBox<String> literalDatatypes;
-    private final JComboBox<String> predicateSystemPropertySelector;
+    protected final JTextField subjectIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
+    protected final JTextField predicateIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
+    protected final JTextField objectIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
+    protected final JTextField subjectField = new AugmentedJTextField(FIELD_WIDTH, "IRI or Blank Node");
+    protected final JTextField predicateField = new AugmentedJTextField(FIELD_WIDTH, "IRI");
+    protected final JTextField objectField = new AugmentedJTextField(FIELD_WIDTH, "IRI, Blank Node or Literal");
+    protected final JComboBox<String> subjectController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, BLANK_NODE_CONTROL_OPTION});
+    protected final JComboBox<String> predicateController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, "Built-in IRI"});
+    protected final JPanel literalForm = new JPanel();
+    protected final JTextComponent literalText = new JTextArea(1, FIELD_WIDTH - 18);
+    protected final JComboBox<String> literalLangs;
+    protected final JComboBox<String> literalDatatypes;
+    protected final JComboBox<String> predicateSystemPropertySelector;
 
-    private final PrefixMapping pm;
-    private final TypeMapper types = TypeMapper.getInstance();
-    private final UnaryOperator<String> toIRI;
-    private final Supplier<String> toLiteral;
+    protected final PrefixMapping pm;
+    protected final TypeMapper types = TypeMapper.getInstance();
+    protected final UnaryOperator<String> toIRI;
+    protected final Supplier<String> toLiteral;
 
     public AddTriplePanel(AddTripleModel m) {
         super();
@@ -77,68 +77,67 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         add(createContentPanel());
     }
 
-    private static boolean isEmpty(String x) {
+    protected static boolean isEmpty(String x) {
         return x == null || x.isEmpty();
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     @SafeVarargs
-    private static <X> boolean test(X x, BiPredicate<X, X> test, X... parts) {
+    protected static <X> boolean test(X x, BiPredicate<X, X> test, X... parts) {
         for (X p : parts) {
             if (test.test(x, p)) return true;
         }
         return false;
     }
 
-    private static Optional<String> findSelectedItem(JComboBox<String> selector) {
+    protected static Optional<String> findSelectedItem(JComboBox<String> selector) {
         return selector.isVisible() ? Optional.ofNullable((String) selector.getSelectedItem()) : Optional.empty();
     }
 
-    private static void changeState(JComponent selector, boolean on) {
+    protected static void changeState(JComponent selector, boolean on) {
         selector.setVisible(on);
         selector.setEnabled(on);
     }
 
-    private static void addLine(JPanel panel, int row) {
+    protected static void addLine(JPanel panel, int row) {
         addGridComponent(panel, new JSeparator(), 0, row, 4, 100.0,
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, LINE_INSETS);
     }
 
-    private static void addLabelCell(JPanel panel, String label, int row) {
+    protected static void addLabelCell(JPanel panel, String label, int row) {
         addGridComponent(panel, new JLabel(label), 0, row, 0.0, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.NONE);
     }
 
-    private static void addControlCell(JPanel panel, JComponent component, int row) {
+    protected static void addControlCell(JPanel panel, JComponent component, int row) {
         addGridComponent(panel, component, 1, row, 0., GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL);
     }
 
-    private static void addIRICell(JPanel panel, JComponent area, int row) {
+    protected static void addIRICell(JPanel panel, JComponent area, int row) {
         addGridComponent(panel, area, 2, row, 100., GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL);
     }
 
-    private static void addDelimiterCell(JPanel panel, int row) {
+    protected static void addDelimiterCell(JPanel panel, int row) {
         addGridComponent(panel, new JLabel(DELIMITER), 1, row, 0., GridBagConstraints.CENTER, GridBagConstraints.NONE);
     }
 
-    private static void addGridComponent(JPanel panel,
-                                         JComponent component,
-                                         int gridx,
-                                         int gridy,
-                                         double weightx,
-                                         int anchor,
-                                         int fill) {
+    protected static void addGridComponent(JPanel panel,
+                                           JComponent component,
+                                           int gridx,
+                                           int gridy,
+                                           double weightx,
+                                           int anchor,
+                                           int fill) {
         addGridComponent(panel, component, gridx, gridy, 1, weightx, anchor, fill, CELL_INSETS);
     }
 
-    private static void addGridComponent(JPanel panel,
-                                         JComponent component,
-                                         int gridx,
-                                         int gridy,
-                                         int gridwidth,
-                                         double weightx,
-                                         int anchor,
-                                         int fill,
-                                         Insets insets) {
+    protected static void addGridComponent(JPanel panel,
+                                           JComponent component,
+                                           int gridx,
+                                           int gridy,
+                                           int gridwidth,
+                                           double weightx,
+                                           int anchor,
+                                           int fill,
+                                           Insets insets) {
         panel.add(component, new GridBagConstraints(gridx, gridy, gridwidth, 1, weightx, 0.0, anchor, fill, insets, 0, 0));
     }
 
@@ -164,15 +163,15 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         };
     }
 
-    private static boolean hasText(JTextField field) {
+    protected static boolean hasText(JTextField field) {
         return !isEmpty(field.getText());
     }
 
-    private static ActionListener createActionListener(Runnable operation) {
+    protected static ActionListener createActionListener(Runnable operation) {
         return createActionListener(e -> operation.run());
     }
 
-    private static ActionListener createActionListener(Consumer<ActionEvent> operation) {
+    protected static ActionListener createActionListener(Consumer<ActionEvent> operation) {
         return new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -181,22 +180,12 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         };
     }
 
-    private JPanel createContentPanel() {
+    protected JPanel createContentPanel() {
         JPanel res = new JPanel(new GridBagLayout());
         // input form:
-        addLabelCell(res, SUBJECT, 0);
-        addControlCell(res, subjectController, 0);
-        addIRICell(res, subjectIRI, 0);
-
-        addLabelCell(res, PREDICATE, 1);
-        addControlCell(res, predicateController, 1);
-        addIRICell(res, predicateIRI, 1);
-        addIRICell(res, predicateSystemPropertySelector, 1);
-
-        addLabelCell(res, OBJECT, 2);
-        addControlCell(res, objectController, 2);
-        addIRICell(res, objectIRI, 2);
-        addIRICell(res, literalForm, 2);
+        addSubjectInputRow(res);
+        addPredicateInputRow(res);
+        addObjectInputRow(res);
 
         addLine(res, 3);
 
@@ -219,7 +208,27 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         return res;
     }
 
-    private void initSubjectConfiguration() {
+    protected void addSubjectInputRow(JPanel res) {
+        addLabelCell(res, SUBJECT, 0);
+        addControlCell(res, subjectController, 0);
+        addIRICell(res, subjectIRI, 0);
+    }
+
+    protected void addPredicateInputRow(JPanel res) {
+        addLabelCell(res, PREDICATE, 1);
+        addControlCell(res, predicateController, 1);
+        addIRICell(res, predicateIRI, 1);
+        addIRICell(res, predicateSystemPropertySelector, 1);
+    }
+
+    protected void addObjectInputRow(JPanel res) {
+        addLabelCell(res, OBJECT, 2);
+        addControlCell(res, objectController, 2);
+        addIRICell(res, objectIRI, 2);
+        addIRICell(res, literalForm, 2);
+    }
+
+    protected void initSubjectConfiguration() {
         subjectController.setSelectedIndex(0);
         subjectController.addActionListener(new AbstractAction() {
             @Override
@@ -233,7 +242,7 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         subjectIRI.getDocument().addDocumentListener(createIRITextAreaListener(subjectIRI, subjectField));
     }
 
-    private void initPredicateConfiguration() {
+    protected void initPredicateConfiguration() {
         predicateSystemPropertySelector.setSelectedIndex(0);
         predicateSystemPropertySelector.addActionListener(new AbstractAction() {
             @Override
@@ -258,7 +267,7 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         predicateIRI.getDocument().addDocumentListener(createIRITextAreaListener(predicateIRI, predicateField));
     }
 
-    private void initObjectConfiguration() {
+    protected void initObjectConfiguration() {
         literalForm.setLayout(new BorderLayout());
         literalForm.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         literalForm.add(literalText, BorderLayout.WEST);
@@ -308,7 +317,7 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         });
     }
 
-    private String getLiteralString() {
+    protected String getLiteralString() {
         String in = literalText.getText();
         if (isEmpty(in)) {
             return null;
@@ -327,7 +336,7 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         return "\"" + in.replace("\n", "\\n") + "\"" + suffix;
     }
 
-    private String toIRI(String base, String in) {
+    protected String toIRI(String base, String in) {
         if (isEmpty(in)) {
             return null;
         }
@@ -344,11 +353,11 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         return res;
     }
 
-    private DocumentListener createIRITextAreaListener(JTextComponent input, JTextField output) {
+    protected DocumentListener createIRITextAreaListener(JTextComponent input, JTextField output) {
         return createTextFieldListener(x -> setText(output, toIRI.apply(input.getText())));
     }
 
-    private void setText(JTextField field, String txt) {
+    protected void setText(JTextField field, String txt) {
         field.setText(txt);
         testValid();
     }

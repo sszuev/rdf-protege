@@ -19,6 +19,10 @@ public class AddChildIcon implements Icon {
         this(entityIcon, entityIcon.getEntityColor(), entityIcon.getBaseSize());
     }
 
+    public AddChildIcon(Icon icon, Color color) {
+        this(icon, color, (icon.getIconHeight() + icon.getIconWidth()) / 2);
+    }
+
     public AddChildIcon(Icon icon, Color color, int baseSize) {
         this.icon = Objects.requireNonNull(icon);
         this.color = Objects.requireNonNull(color);

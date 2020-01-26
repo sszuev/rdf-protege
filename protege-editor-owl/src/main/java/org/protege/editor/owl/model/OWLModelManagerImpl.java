@@ -1,6 +1,7 @@
 package org.protege.editor.owl.model;
 
 import com.google.common.base.Stopwatch;
+import org.apache.jena.graph.BlankNodeId;
 import org.github.owlcs.ontapi.OWLManager;
 import org.protege.editor.core.AbstractModelManager;
 import org.protege.editor.core.log.LogBanner;
@@ -169,7 +170,11 @@ public class OWLModelManagerImpl extends AbstractModelManager
 
         put(OntologySourcesManager.ID, new OntologySourcesManager(this));
 
-        this.blankNodeMapper = id -> blankNodeLabels.computeIfAbsent(id, i -> "_:b" + blankNodeLabels.size());
+        this.blankNodeMapper = id -> {
+            if (id instanceof BlankNodeId)
+                return blankNodeLabels.computeIfAbsent(id, i -> "_:b" + blankNodeLabels.size());
+            throw new IllegalArgumentException("Wrong object: " + id);
+        };
     }
 
     @Override

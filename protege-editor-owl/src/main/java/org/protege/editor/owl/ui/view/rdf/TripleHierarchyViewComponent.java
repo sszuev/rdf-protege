@@ -2,6 +2,8 @@ package org.protege.editor.owl.ui.view.rdf;
 
 import com.github.owlcs.ontapi.OWLAdapter;
 import com.github.owlcs.ontapi.jena.model.OntModel;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -16,6 +18,7 @@ import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.UIHelper;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
+import org.protege.editor.owl.ui.renderer.AddChildIcon;
 import org.protege.editor.owl.ui.renderer.AddEntityIcon;
 import org.protege.editor.owl.ui.renderer.DeleteEntityIcon;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
@@ -30,6 +33,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -45,16 +49,19 @@ import java.util.function.Predicate;
  * @see RDFTripleTree
  */
 public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewComponent
-        implements Findable<Triple>, SelectionDriver, CreateNewTarget, Deleteable, HasDisplayDeprecatedEntities {
+        implements Findable<Triple>, SelectionDriver,
+        CreateNewTarget, CreateNewChildTarget, Deleteable, HasDisplayDeprecatedEntities {
 
     private static final Color ICON_COLOR = new Color(0xB51415);
     private static final Icon TRIPLE_ICON = OWLIcons.getIcon("Top.gif");
-    private static final Icon ADD_ICON = new AddEntityIcon(TRIPLE_ICON, ICON_COLOR);
+    private static final Icon ADD_ROOT_ICON = new AddEntityIcon(TRIPLE_ICON, ICON_COLOR);
+    private static final Icon ADD_CHILD_ICON = new AddChildIcon(TRIPLE_ICON, ICON_COLOR);
     private static final Icon DELETE_ICON = new DeleteEntityIcon(TRIPLE_ICON, ICON_COLOR);
 
     private static final String ADD_GROUP = "A";
     private static final String DELETE_GROUP = "B";
     private static final String FIRST_SLOT = "A";
+    private static final String SECOND_SLOT = "B";
 
     private final ViewModeComponent<ObjectTree<Triple>> viewModeComponent = new ViewModeComponent<>();
     private ObjectTree<Triple> tree;
@@ -130,7 +137,9 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
     }
 
     public void performExtraInitialisation() {
-        DisposableAction add = new AbstractOWLTreeAction<Triple>("Add root triple", ADD_ICON, getTree().getSelectionModel()) {
+        ObjectTree<Triple> tree = getTree();
+        TreeSelectionModel m = tree.getSelectionModel();
+        DisposableAction addRoot = new AbstractOWLTreeAction<Triple>("Add root triple", ADD_ROOT_ICON, m) {
             @Override
             public void actionPerformed(ActionEvent event) {
                 createNewObject();
@@ -141,8 +150,21 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
                 return canCreateNew();
             }
         };
+        addAction(addRoot, ADD_GROUP, FIRST_SLOT);
 
-        addAction(add, ADD_GROUP, FIRST_SLOT);
+        DisposableAction addChild = new AbstractOWLTreeAction<Triple>("Add triple", ADD_CHILD_ICON, m) {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                createNewChild();
+            }
+
+            @Override
+            protected boolean canPerform(Triple cls) {
+                return canCreateNewChild();
+            }
+        };
+
+        addAction(addChild, ADD_GROUP, SECOND_SLOT);
 
         // TODO:
         OWLSelectionViewAction delete = new OWLSelectionViewAction("Delete triple", DELETE_ICON) {
@@ -165,7 +187,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         addAction(delete, DELETE_GROUP, FIRST_SLOT);
 
         // TODO: right now D'N'D is not allowed
-        getTree().setDragAndDropHandler(new OWLTreeDragAndDropHandler<Triple>() {
+        tree.setDragAndDropHandler(new OWLTreeDragAndDropHandler<Triple>() {
             @Override
             public boolean canDrop(Object child, Object parent) {
                 return false;
@@ -179,7 +201,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
             public void add(Triple child, Triple parent) {
             }
         });
-        getTree().setPopupMenuId(new PopupMenuId("[TripleHierarchy]"));
+        tree.setPopupMenuId(new PopupMenuId("[TripleHierarchy]"));
     }
 
     protected RDFHierarchyProvider getHierarchyProvider() {
@@ -192,22 +214,80 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
     }
 
     @Override
+    public boolean canCreateNewChild() {
+        Triple t = getTree().getSelectedOWLObject();
+        return t != null && (t instanceof RDFHierarchyProvider.RootTriple || t.getObject().isBlank());
+    }
+
+    @Override
     public void createNewObject() {
         OntModel ont = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
         AddTriplePanel panel = new AddTriplePanel(createAddTripleModel(ont));
-        int res = new UIHelper(getOWLEditorKit()).showValidatingDialog("Create Root Triple", panel, null);
-        if (res != JOptionPane.OK_OPTION) {
+        addTriple("Create Root Triple", panel, ont.getGraph());
+    }
+
+    @Override
+    public void createNewChild() {
+        Triple parent = getTree().getSelectedOWLObject();
+        if (parent == null)
+            return;
+        OntModel ont = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
+        AddTripleModel model = createAddTripleModel(ont);
+        Node subject;
+        if (parent instanceof RDFHierarchyProvider.RootTriple) {
+            subject = parent.getSubject();
+        } else if (parent.getObject().isBlank()) {
+            subject = parent.getObject();
+        } else {
             return;
         }
+        AddTriplePanel panel = createPanelForSubject(subject, model);
+        Triple res = addTriple("Create Triple", panel, ont.getGraph());
+        if (res != null) {
+            getTree().setSelectedOWLObject(res);
+        }
+    }
+
+    protected AddTriplePanel createPanelForSubject(Node subject, AddTripleModel model) {
+        return new AddTriplePanel(model) {
+            @Override
+            protected void initSubjectConfiguration() {
+                String txt;
+                if (subject.isBlank()) {
+                    txt = getOWLModelManager().getBlankNodeMapper().apply(subject.getBlankNodeId());
+                } else {
+                    txt = subject.getURI();
+                }
+                subjectField.setText(txt);
+            }
+
+            @Override
+            public Node getSubjectNode() {
+                return subject;
+            }
+
+            @Override
+            protected void addSubjectInputRow(JPanel res) {
+                // nothing
+            }
+        };
+    }
+
+    protected Triple addTriple(String title, AddTriplePanel panel, Graph g) {
+        int res = new UIHelper(getOWLEditorKit()).showValidatingDialog(title, panel, null);
+        if (res != JOptionPane.OK_OPTION) {
+            return null;
+        }
         Triple t = panel.getTriple();
-        ont.getGraph().add(t);
+        g.add(t);
 
         OWLModelManager m = getOWLModelManager();
         // todo: no need to reload this component
         m.fireEvent(EventType.ONTOLOGY_RELOADED);
+        return t;
     }
 
-    public AddTripleModel createAddTripleModel(OntModel ont) {
+    protected AddTripleModel createAddTripleModel(OntModel ont) {
         return new AddTripleModel() {
             private final PrefixMapping pm = PrefixMapping.Factory.create()
                     .setNsPrefixes(RDFHierarchyProvider.STANDARD_PREFIXES)
