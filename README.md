@@ -10,15 +10,15 @@ This has the following two important consequences:
 - Since ONT-API is a RDF-centric OWL-API implementation (and the RDF-Graph is a main protagonist there), this opens up great opportunities to support all RDF-related things natively, including SPARQL, triple-stores, SHACL, etc. 
 The approximate roadmap is as follows:
 
-    * RDF view (a read-only triples-tree is added)
-    * RDF editor (not yet implemented)
+    * RDF view & editor
     * SPARQL tab (SELECT, ASK, DESCRIBE, CONSTRUCT, JSON + UPDATE)
     * Jena TDB support (not yet implemented)
     * RDB through [ONT-D2RQ](https://github.com/owlcs/ont-d2rq) (discussable) 
     * SPIN mapping through [ONT-MAP](https://github.com/owlcs/ont-map) (discussable)
     * etc  
         
-Since most of these interesting things have not been done yet, right now this project is just a kind of demonstration and test-stand for ONT-API. But any contributions in these directions are welcome.
+More about implemented features can be found on the [wiki](https://github.com/sszuev/rdf-protege/wiki) page.         
+Since many of these interesting things have not been done yet, right now this project is just a kind of demonstration and test-stand for ONT-API. Any contributions in these directions are welcome.
 
 In order to distinguish with the official Protege, the artifact version is changed.
      
