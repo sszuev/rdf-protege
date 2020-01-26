@@ -1,5 +1,6 @@
 package org.protege.editor.owl.model;
 
+import com.github.owlcs.ontapi.owlapi.objects.OWLAnonymousIndividualImpl;
 import com.google.common.base.Stopwatch;
 import org.apache.jena.graph.BlankNodeId;
 import org.github.owlcs.ontapi.OWLManager;
@@ -802,6 +803,10 @@ public class OWLModelManagerImpl extends AbstractModelManager
     public String getRendering(Object object) {
         if (!(object instanceof OWLObject)) {
             return String.valueOf(object);
+        }
+        if (object instanceof OWLAnonymousIndividual) {
+            OWLAnonymousIndividualImpl i = OWLAnonymousIndividualImpl.asONT((OWLAnonymousIndividual) object);
+            return getBlankNodeMapper().apply(i.getBlankNodeId());
         }
         // Look for a cached version of the rendering first!
         if (!(object instanceof OWLEntity)) {
