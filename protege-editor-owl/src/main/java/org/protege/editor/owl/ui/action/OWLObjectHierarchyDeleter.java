@@ -6,7 +6,8 @@ import org.protege.editor.owl.model.util.OWLEntityDeleter;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.util.OWLEntitySetProvider;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 
 /**
@@ -19,15 +20,15 @@ import java.util.Set;
  */
 public class OWLObjectHierarchyDeleter<E extends OWLEntity> extends ObjectHierarchyDeleter<E> {
 
-    public OWLObjectHierarchyDeleter(OWLEditorKit owlEditorKit,
+    public OWLObjectHierarchyDeleter(OWLEditorKit editorKit,
                                      HierarchyProvider<E> hierarchyProvider,
-                                     OWLEntitySetProvider<E> entitySetProvider,
+                                     OWLEntitySetProvider<E> entitiesProvider,
                                      String pluralName) {
-        super(owlEditorKit, hierarchyProvider, entitySetProvider::entities, pluralName);
+        super(editorKit, hierarchyProvider, () -> entitiesProvider.entities().collect(Collectors.toSet()), pluralName);
     }
 
     @Override
-    protected void delete(Set<E> entities) {
+    protected void delete(Collection<E> entities) {
         OWLEntityDeleter.deleteEntities(entities, getOWLEditorKit().getOWLModelManager());
     }
 }

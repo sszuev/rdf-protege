@@ -336,7 +336,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
                 .setNsPrefixes(model);
         Function<Object, String> map = getOWLModelManager().getBlankNodeMapper();
         return new ObjectHierarchyDeleter<Triple>(getOWLEditorKit(),
-                provider, () -> tree.getSelectedObjects().stream(), "Triples") {
+                provider, () -> tree.getSelectedObjects(), "Triples") {
             @Override
             protected String getRendering(Triple st) {
                 String res = String.format("[%s, %s, %s]",
@@ -351,7 +351,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
             }
 
             @Override
-            protected void delete(Set<Triple> nodes) {
+            protected void delete(Collection<Triple> nodes) {
                 Graph g = model.getGraph();
                 nodes.forEach(x -> {
                     LOGGER.debug("Delete triple '{}'", x);

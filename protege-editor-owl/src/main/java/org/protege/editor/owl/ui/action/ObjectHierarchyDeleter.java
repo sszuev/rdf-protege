@@ -11,13 +11,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by @ssz on 26.01.2020.
@@ -33,13 +32,13 @@ public abstract class ObjectHierarchyDeleter<E> {
     private static final String DELETE_DESCENDANTS = "delete.descendants";
 
     private final OWLEditorKit kit;
-    private final Supplier<Stream<E>> nodesProvider;
+    private final Supplier<Collection<E>> nodesProvider;
     private final HierarchyProvider<E> hierarchyProvider;
     private final String pluralName;
 
     public ObjectHierarchyDeleter(OWLEditorKit kit,
                                   HierarchyProvider<E> hierarchyProvider,
-                                  Supplier<Stream<E>> nodeProvider,
+                                  Supplier<Collection<E>> nodeProvider,
                                   String pluralName) {
         this.kit = Objects.requireNonNull(kit);
         this.hierarchyProvider = Objects.requireNonNull(hierarchyProvider);
@@ -64,7 +63,7 @@ public abstract class ObjectHierarchyDeleter<E> {
 
     public void performDeletion() {
         Preferences prefs = getPreferences();
-        Set<E> nodes = nodesProvider.get().collect(Collectors.toSet());
+        Collection<E> nodes = nodesProvider.get();
         String name;
         if (nodes.size() == 1) {
             name = getRendering(nodes.iterator().next());
@@ -129,25 +128,25 @@ public abstract class ObjectHierarchyDeleter<E> {
         }
     }
 
-    protected abstract void delete(Set<E> nodes);
+    protected abstract void delete(Collection<E> nodes);
 
-    private void deleteDescendants(Set<E> selected) {
+    private void deleteDescendants(Collection<E> selected) {
         LOGGER.info(LogBanner.start("Deleting descendants"));
         LOGGER.info("Deleting descendants of {}", selected);
-        Set<E> ents = new HashSet<>();
+        Set<E> toDelete = new HashSet<>();
         Stopwatch stopwatch = Stopwatch.createStarted();
         for (E ent : selected) {
             LOGGER.info("Retrieving descendants of {}", ent);
-            ents.add(ent);
-            hierarchyProvider.descendants(ent).forEach(ents::add);
+            toDelete.add(ent);
+            hierarchyProvider.descendants(ent).forEach(toDelete::add);
         }
         stopwatch.stop();
-        LOGGER.info("Retrieved {} entities to delete in {} ms", ents.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        delete(ents);
+        LOGGER.info("Retrieved {} objects to delete in {} ms", toDelete.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        delete(toDelete);
         LOGGER.info(LogBanner.end());
     }
 
-    private boolean hasAssertedSubs(Set<E> nodes) {
+    private boolean hasAssertedSubs(Collection<E> nodes) {
         for (E entity : nodes) {
             if (hierarchyProvider.hasDescendants(entity)) {
                 return true;
