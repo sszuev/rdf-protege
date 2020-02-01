@@ -13,20 +13,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class PrefixUtilities {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PrefixUtilities.class);
 
-	public static final Set<String> STANDARD_PREFIXES =
-			Collections.unmodifiableSet(createFreshPrefixManager().prefixNames().collect(Collectors.toSet()));
+	public static final Set<String> STANDARD_PREFIXES = Collections.emptySet();
 
 	public static PrefixManager createFreshPrefixManager() {
-		return new DefaultPrefixManager();
+		PrefixManager res = new DefaultPrefixManager();
+		// no need any builtin prefixes
+		res.clear();
+		return res;
 	}
 
 	public static PrefixManager getPrefixOWLOntologyFormat(OWLModelManager modelManager) {
-		OWLOntologyManager owlManager = modelManager.getOWLOntologyManager();
+		OWLOntologyManager manager = modelManager.getOWLOntologyManager();
 		PrefixManager res = createFreshPrefixManager();
 		List<OWLOntology> ontologies = new ArrayList<>(modelManager.getOntologies());
 		ontologies.sort(new ActiveOntologyComparator());
@@ -35,7 +36,7 @@ public class PrefixUtilities {
 		}
 		Set<String> prefixValues = new HashSet<>();
 		for (OWLOntology ontology : ontologies) {
-			OWLDocumentFormat format = owlManager.getOntologyFormat(ontology);
+			OWLDocumentFormat format = manager.getOntologyFormat(ontology);
 			if (!(format instanceof PrefixDocumentFormat)) {
 				continue;
 			}

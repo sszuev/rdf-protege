@@ -1,9 +1,10 @@
 package org.protege.editor.owl.ui.action;
 
+import com.github.owlcs.ontapi.OntFormat;
 import org.protege.editor.owl.model.io.OntologySaver;
 import org.protege.editor.owl.ui.GatherOntologiesPanel;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -20,30 +21,29 @@ import java.util.UUID;
  * Date: 22-May-2007<br><br>
  */
 public class GatherOntologiesAction extends ProtegeOWLAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GatherOntologiesAction.class);
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         // Need to pop a dialog asking where to save
         GatherOntologiesPanel panel = GatherOntologiesPanel.showDialog(getOWLEditorKit());
         if (panel == null) {
             return;
         }
-        boolean errors = false;
         OWLDocumentFormat saveAsFormat = panel.getOntologyFormat();
         File saveAsLocation = panel.getSaveLocation();
         OntologySaver.Builder ontologySaverBuilder = OntologySaver.builder();
         for (OWLOntology ont : panel.getOntologiesToSave()) {
             final OWLDocumentFormat format;
             OWLOntologyManager man = getOWLModelManager().getOWLOntologyManager();
-            if(saveAsFormat != null) {
+            if (saveAsFormat != null) {
                 format = saveAsFormat;
-            }
-            else {
+            } else {
                 OWLDocumentFormat documentFormat = man.getOntologyFormat(ont);
-                if(documentFormat != null) {
+                if (documentFormat != null) {
                     format = documentFormat;
-                }
-                else {
-                    format = new RDFXMLDocumentFormat();
+                } else {
+                    format = OntFormat.RDF_XML.createOwlFormat();
                 }
             }
 
@@ -60,26 +60,18 @@ public class GatherOntologiesAction extends ProtegeOWLAction {
         }
         try {
             ontologySaverBuilder.build().saveOntologies();
-        }
-        catch (OWLOntologyStorageException e1) {
-            LoggerFactory.getLogger(GatherOntologiesAction.class)
-                    .error("An error occurred whilst saving a gathered ontology: {}", e1);
-            errors = true;
-        }
-
-        if (errors) {
-            JOptionPane.showMessageDialog(getWorkspace(),
-                                          "There were errors when saving the ontologies.  Please check the log for details.",
-                                          "Error during save",
-                                          JOptionPane.ERROR_MESSAGE);
+        } catch (OWLOntologyStorageException ex) {
+            LOGGER.error("An error occurred whilst saving a gathered ontology: {}", ex.getMessage(), ex);
+            JOptionPane.showMessageDialog(getWorkspace(), "There were errors when saving the ontologies. " +
+                    "Please check the log for details.", "Error during save", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-
+    @Override
     public void initialise() throws Exception {
     }
 
-
+    @Override
     public void dispose() throws Exception {
     }
 }

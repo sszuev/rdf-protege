@@ -25,7 +25,6 @@ import org.protege.editor.owl.ui.explanation.ExplanationManager;
 import org.protege.editor.owl.ui.ontology.OntologyPreferences;
 import org.protege.editor.owl.ui.ontology.imports.missing.MissingImportHandlerUI;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.VersionInfo;
 import org.slf4j.Logger;
@@ -217,10 +216,8 @@ public class OWLEditorKit extends AbstractEditorKit<OWLEditorKitFactory> {
     @Override
     public boolean handleNewRequest() throws Exception {
         OWLOntologyID id = createDefaultOntologyId();
-        OWLOntology ont = getModelManager().createNewOntology(id, URI.create(id.getDefaultDocumentIRI()
-                .orElseThrow(IllegalStateException::new).toString()));
-        OWLOntologyManager owlOntologyManager = getModelManager().getOWLOntologyManager();
-        owlOntologyManager.setOntologyFormat(ont, new RDFXMLDocumentFormat());
+        getModelManager().createNewOntology(id, id.getDefaultDocumentIRI().map(IRI::toURI)
+                .orElseThrow(IllegalStateException::new));
         return true;
     }
 

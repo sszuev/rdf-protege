@@ -1,5 +1,6 @@
 package org.protege.editor.owl.model;
 
+import com.github.owlcs.ontapi.OntFormat;
 import com.github.owlcs.ontapi.owlapi.objects.OWLAnonymousIndividualImpl;
 import com.google.common.base.Stopwatch;
 import org.apache.jena.graph.BlankNodeId;
@@ -40,7 +41,6 @@ import org.protege.editor.owl.ui.explanation.ExplanationManager;
 import org.protege.editor.owl.ui.renderer.*;
 import org.protege.editor.owl.ui.renderer.plugin.RendererPlugin;
 import org.protege.xmlcatalog.XMLCatalog;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.io.FileDocumentSource;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
@@ -455,14 +455,14 @@ public class OWLModelManagerImpl extends AbstractModelManager
 
     @Override
     public void save(OWLOntology ont) throws OWLOntologyStorageException {
-        final URI documentURI = manager.getOntologyDocumentIRI(ont).toURI();
+        URI documentURI = manager.getOntologyDocumentIRI(ont).toURI();
 
         fireBeforeSaveEvent(ont.getOntologyID(), documentURI);
 
-        final OWLDocumentFormat format;
-        final OWLDocumentFormat previousFormat = manager.getOntologyFormat(ont);
+        OWLDocumentFormat format;
+        OWLDocumentFormat previousFormat = manager.getOntologyFormat(ont);
         if (previousFormat == null) {
-            format = new RDFXMLDocumentFormat();
+            format = OntFormat.RDF_XML.createOwlFormat();
             LOGGER.info("No document format for {} has been found.  Using the {} format.",
                     ont.getOntologyID(), format);
         } else {

@@ -1,13 +1,11 @@
 package org.protege.editor.owl.ui;
 
+import com.github.owlcs.ontapi.OntFormat;
 import org.protege.editor.core.ui.util.ComponentFactory;
 import org.protege.editor.core.ui.util.UIUtil;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.ui.renderer.OWLOntologyCellRenderer;
-import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 
@@ -15,8 +13,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -27,35 +27,25 @@ import java.util.List;
  */
 public class GatherOntologiesPanel extends JPanel {
 
-
-    private OWLEditorKit owlEditorKit;
-
-    private OWLModelManager owlModelManager;
-
-    private JComboBox formatComboBox;
-
+    private final OWLModelManager owlModelManager;
+    private JComboBox<Object> formatComboBox;
     private File saveLocation;
 
-    private Set<OWLOntology> ontologiesToSave;
+    private final Set<OWLOntology> ontologiesToSave;
 
-
-    public GatherOntologiesPanel(OWLEditorKit owlEditorKit) {
-        this.owlEditorKit = owlEditorKit;
-        this.owlModelManager = owlEditorKit.getModelManager();
+    public GatherOntologiesPanel(OWLEditorKit kit) {
+        this.owlModelManager = kit.getModelManager();
         ontologiesToSave = new HashSet<>();
         createUI();
     }
 
-
     private void createUI() {
-
         JPanel holderPanel = new JPanel(new BorderLayout());
         JPanel comboBoxLabelPanel = new JPanel(new BorderLayout(7, 7));
         List<Object> formats = new ArrayList<>();
         formats.add("Original");
-        formats.add(new RDFXMLDocumentFormat());
-        formats.add(new OWLXMLDocumentFormat());
-        formats.add(new FunctionalSyntaxDocumentFormat());
+        OntologyFormatPanel.outputFormats()
+                .map(OntFormat::createOwlFormat).forEach(formats::add);
         formatComboBox = new JComboBox<>(formats.toArray());
         comboBoxLabelPanel.add(new JLabel("Format"), BorderLayout.WEST);
         comboBoxLabelPanel.add(formatComboBox, BorderLayout.EAST);
@@ -66,18 +56,16 @@ public class GatherOntologiesPanel extends JPanel {
         Box box = new Box(BoxLayout.Y_AXIS);
 
         final List<OWLOntology> orderedOntologies = new ArrayList<>(owlModelManager.getOntologies());
-        Collections.sort(orderedOntologies, owlModelManager.getOWLObjectComparator());
-        for (final OWLOntology ont : orderedOntologies) {
+        orderedOntologies.sort(owlModelManager.getOWLObjectComparator());
+        for (OWLOntology ont : orderedOntologies) {
             ontologiesToSave.add(ont);
             String label = OWLOntologyCellRenderer.getOntologyLabelText(ont, owlModelManager);
-
-            final JCheckBox cb = new JCheckBox(new AbstractAction(label) {
-
+            JCheckBox cb = new JCheckBox(new AbstractAction(label) {
+                @Override
                 public void actionPerformed(ActionEvent e) {
-                    if (!ontologiesToSave.contains(ont)) {
+                    if (!ontologiesToSave.contains(ont)) { // wtf?
                         ontologiesToSave.remove(ont);
-                    }
-                    else {
+                    } else {
                         ontologiesToSave.add(ont);
                     }
                 }
@@ -101,43 +89,30 @@ public class GatherOntologiesPanel extends JPanel {
         add(holderPanel, BorderLayout.CENTER);
     }
 
-
     public Set<OWLOntology> getOntologiesToSave() {
         return ontologiesToSave;
     }
 
-
     public OWLDocumentFormat getOntologyFormat() {
-        Object selFormat = formatComboBox.getSelectedItem();
-        if (selFormat instanceof OWLDocumentFormat) {
-            return (OWLDocumentFormat) selFormat;
-        }
-        else {
-            return null;
-        }
+        Object f = formatComboBox.getSelectedItem();
+        return f instanceof OWLDocumentFormat ? (OWLDocumentFormat) f : null;
     }
-
 
     public File getSaveLocation() {
         return saveLocation;
     }
 
-
     public void setSaveLocation(File saveLocation) {
         this.saveLocation = saveLocation;
     }
-
 
     public static GatherOntologiesPanel showDialog(OWLEditorKit owlEditorKit) {
         GatherOntologiesPanel panel = new GatherOntologiesPanel(owlEditorKit);
         panel.setPreferredSize(new Dimension(600, 400));
 
-        int ret = JOptionPane.showConfirmDialog(null,
-                                                panel,
-                                                "Gather ontologies",
-                                                JOptionPane.OK_CANCEL_OPTION,
-                                                JOptionPane.PLAIN_MESSAGE);
-        if (ret != JOptionPane.OK_OPTION) {
+        int res = JOptionPane.showConfirmDialog(null, panel, "Gather ontologies",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (res != JOptionPane.OK_OPTION) {
             return null;
         }
         File file = UIUtil.chooseFolder(owlEditorKit.getWorkspace(), "Select folder to save the ontologies to");
