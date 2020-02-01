@@ -209,14 +209,15 @@ public class OWLModelManagerImpl extends AbstractModelManager
     }
 
     /**
-     * Forces the system to believe that an ontology
-     * has been modified.
+     * Forces the system to believe that an ontology has been modified.
+     * NOTE: currently it is used only while prefix changing.
      *
      * @param ontology The ontology to be made dirty.
      */
     @Override
     public void setDirty(OWLOntology ontology) {
         dirtyOntologies.add(ontology.getOntologyID());
+        fireRDFChanged();
     }
 
     @Override
@@ -669,12 +670,19 @@ public class OWLModelManagerImpl extends AbstractModelManager
                 return;
             }
             manager.applyChanges(minimizedChanges);
-            // graph is changed -> need to reload RDF view if it is present
-            // todo: any change will cause roots recalculation - this is not good
-            getOWLHierarchyManager().getRDFTripleHierarchyProvider().fireHierarchyChanged();
+            fireRDFChanged();
         } catch (OWLOntologyChangeException e) {
             throw new OWLRuntimeException(e);
         }
+    }
+
+    /**
+     * Fires RDF view to be redraw.
+     */
+    public void fireRDFChanged() {
+        // graph is changed -> need to reload RDF view if it is present
+        // todo: any change will cause roots recalculation - this is not good
+        getOWLHierarchyManager().getRDFTripleHierarchyProvider().fireHierarchyChanged();
     }
 
     @Override

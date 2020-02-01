@@ -84,23 +84,25 @@ public class PrefixMapperTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-	public boolean commitPrefixes() {
+    public Map<String, String> commitPrefixes() {
         if (!changed) {
-            return false;
+            return Collections.emptyMap();
         }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("committing prefix changes and clearing changed flag");
         }
         prefixManager.setPrefixManager(PrefixUtilities.createFreshPrefixManager());
-        prefixValueMap.forEach((name, prefix) -> {
-            if (prefix == null || prefix.length() == 0) {
+        Map<String, String> res = new HashMap<>();
+        prefixValueMap.forEach((uri, prefix) -> {
+            if (prefix == null || prefix.isEmpty()) {
                 return;
             }
             // tailing : automatically added in here
-            prefixManager.setPrefix(name, prefix);
+            prefixManager.setPrefix(uri, prefix);
+            res.put(uri, prefix);
         });
         changed = false;
-        return true;
+        return Collections.unmodifiableMap(res);
     }
 
     /*

@@ -1,5 +1,7 @@
 package org.protege.editor.owl.ui.prefix;
 
+import com.github.owlcs.ontapi.OWLAdapter;
+import com.github.owlcs.ontapi.jena.utils.Models;
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.ui.renderer.OWLModelManagerEntityRenderer;
 import org.protege.editor.owl.ui.renderer.prefix.PrefixBasedRenderer;
@@ -11,6 +13,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class PrefixMapperTables extends JPanel {
@@ -18,7 +22,7 @@ public class PrefixMapperTables extends JPanel {
 
 	private PrefixMapperTable table;
 	private OWLOntology ontology;
-	private final OWLModelManager modelManager;
+	private final OWLModelManager manager;
 
 	private final Set<SelectedOntologyListener> listeners = new HashSet<>();
 
@@ -26,28 +30,35 @@ public class PrefixMapperTables extends JPanel {
 
 		@Override
 		public void tableChanged(TableModelEvent e) {
-			if (table == null || !table.getModel().commitPrefixes()) {
+			if (table == null) {
 				return;
 			}
-			modelManager.setDirty(ontology);
-			OWLModelManagerEntityRenderer renderer = modelManager.getOWLEntityRenderer();
+			Map<String, String> res = table.getModel().commitPrefixes();
+			if (res.isEmpty()) {
+				return;
+			}
+			// copy prefixes inside model:
+			Models.setNsPrefixes(OWLAdapter.get().asONT(ontology).asGraphModel(), res);
+			// reset RDF views:
+			manager.setDirty(ontology);
+			OWLModelManagerEntityRenderer renderer = manager.getOWLEntityRenderer();
 			if (renderer instanceof PrefixBasedRenderer) {
-				modelManager.refreshRenderer();
+				manager.refreshRenderer();
 			}
 		}
 	};
 
-	public PrefixMapperTables(OWLModelManager modelManager) {
-		this.modelManager = modelManager;
+	public PrefixMapperTables(OWLModelManager manager) {
+		this.manager = Objects.requireNonNull(manager);
 		setLayout(new BorderLayout());
-		setOntology(modelManager.getActiveOntology());
+		setOntology(manager.getActiveOntology());
 	}
-	
+
 	public void refill() {
 		table.getModel().refill();
 	}
 
-	public void setOntology(OWLOntology ontology)  {
+	public void setOntology(OWLOntology ontology) {
 		if (table != null) {
 			table.getModel().removeTableModelListener(editListener);
 		}
