@@ -17,8 +17,7 @@ import java.awt.event.ActionEvent;
  */
 public class AddPrefixMappingAction extends AbstractAction {
 
-    private PrefixMapperTables tables;
-
+    private final PrefixMapperTables tables;
 
     public AddPrefixMappingAction(PrefixMapperTables tables) {
         super("Add prefix", OWLIcons.getIcon("prefix.add.png"));
@@ -26,7 +25,7 @@ public class AddPrefixMappingAction extends AbstractAction {
         this.tables = tables;
     }
 
-
+    @Override
     public void actionPerformed(ActionEvent e) {
         tables.getPrefixMapperTable().createAndEditRow();
     }

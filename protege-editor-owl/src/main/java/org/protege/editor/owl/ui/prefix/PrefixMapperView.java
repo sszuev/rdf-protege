@@ -10,23 +10,23 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PrefixMapperView extends AbstractActiveOntologyViewComponent {
-	private static final long serialVersionUID = 787248046135787437L;
-	private PrefixMapperTables tables;
-	private PrefixMapperTable currentTable;
+    private static final long serialVersionUID = 787248046135787437L;
 
-	
-	private OWLModelManagerListener entitiesChangedListener = new OWLModelManagerListener() {
-		
-		public void handleChange(OWLModelManagerChangeEvent event) {
-			// Hacky...
-			// I am really trying to detect the case where the user changed the prefixes from 
-			// within the preferences pane.  At that point we change the renderer to ensure
-			// that the new prefixes are seen.
-			//                                            I don't like this.
-			if (event.getType() == EventType.ENTITY_RENDERER_CHANGED) {
-				tables.refill();
-			}
-		}
+    private PrefixMapperTables tables;
+    private PrefixMapperTable currentTable;
+    private final OWLModelManagerListener entitiesChangedListener = new OWLModelManagerListener() {
+
+        @Override
+        public void handleChange(OWLModelManagerChangeEvent event) {
+            // Hacky...
+            // I am really trying to detect the case where the user changed the prefixes from
+            // within the preferences pane.  At that point we change the renderer to ensure
+            // that the new prefixes are seen.
+            //                                            I don't like this.
+            if (event.getType() == EventType.ENTITY_RENDERER_CHANGED) {
+                tables.refill();
+            }
+        }
 	};
 
 	@Override
@@ -54,12 +54,9 @@ public class PrefixMapperView extends AbstractActiveOntologyViewComponent {
 		}
 	}
 
-	@Override
-	protected void updateView(OWLOntology activeOntology) throws Exception {
-		tables.setOntology(activeOntology);
-		currentTable = tables.getPrefixMapperTable();
-	}
-	
-
-
+    @Override
+    protected void updateView(OWLOntology activeOntology) {
+        tables.setOntology(activeOntology);
+        currentTable = tables.getPrefixMapperTable();
+    }
 }

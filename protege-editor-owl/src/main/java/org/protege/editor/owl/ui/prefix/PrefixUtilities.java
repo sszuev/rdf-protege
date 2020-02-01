@@ -13,41 +13,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class PrefixUtilities {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(PrefixUtilities.class);
 
-	public static final Set<String> STANDARD_PREFIXES = Collections.unmodifiableSet(new DefaultPrefixManager().getPrefixNames());
+	public static final Set<String> STANDARD_PREFIXES =
+			Collections.unmodifiableSet(createFreshPrefixManager().prefixNames().collect(Collectors.toSet()));
+
+	public static PrefixManager createFreshPrefixManager() {
+		return new DefaultPrefixManager();
+	}
 
 	public static PrefixManager getPrefixOWLOntologyFormat(OWLModelManager modelManager) {
 		OWLOntologyManager owlManager = modelManager.getOWLOntologyManager();
-		DefaultPrefixManager prefixes = new DefaultPrefixManager();
+		PrefixManager res = createFreshPrefixManager();
 		List<OWLOntology> ontologies = new ArrayList<>(modelManager.getOntologies());
-		Collections.sort(ontologies, new ActiveOntologyComparator());
+		ontologies.sort(new ActiveOntologyComparator());
 		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("Sorted ontologies = " + ontologies);
+			LOGGER.debug("Sorted ontologies = {}", ontologies);
 		}
 		Set<String> prefixValues = new HashSet<>();
 		for (OWLOntology ontology : ontologies) {
 			OWLDocumentFormat format = owlManager.getOntologyFormat(ontology);
-			if (format instanceof PrefixDocumentFormat) {
-				PrefixDocumentFormat newPrefixes = (PrefixDocumentFormat) format;
-				for (Entry<String, String> entry : newPrefixes.getPrefixName2PrefixMap().entrySet()) {
-					String prefixName = entry.getKey();
-					String prefix     = entry.getValue();
-					if (!prefixes.containsPrefixMapping(prefixName) && !prefixValues.contains(prefix)) {
-						prefixes.setPrefix(prefixName, prefix);
-						prefixValues.add(prefix);
-					}
-				}
+			if (!(format instanceof PrefixDocumentFormat)) {
+				continue;
 			}
+			PrefixDocumentFormat newPrefixes = (PrefixDocumentFormat) format;
+			newPrefixes.getPrefixName2PrefixMap().forEach((name, prefix) -> {
+				if (!res.containsPrefixMapping(name) && !prefixValues.contains(prefix)) {
+					res.setPrefix(name, prefix);
+					prefixValues.add(prefix);
+				}
+			});
 		}
 		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("Merged prefix to prefix value map = " + prefixes.getPrefixName2PrefixMap());
+			LOGGER.debug("Merged prefix to prefix value map = {}", res.getPrefixName2PrefixMap());
 		}
-		return prefixes;
+		return res;
 	}
 
 	public static PrefixDocumentFormat getPrefixOWLOntologyFormat(OWLOntology ontology) {
@@ -65,6 +68,7 @@ public class PrefixUtilities {
 		return prefixManager;
 	}
 
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	public static boolean isStandardPrefix(String prefix) {
 		return STANDARD_PREFIXES.contains(prefix + ":");
 	}

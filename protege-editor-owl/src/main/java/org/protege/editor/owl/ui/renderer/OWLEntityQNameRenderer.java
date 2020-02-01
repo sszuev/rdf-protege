@@ -5,7 +5,6 @@ import org.protege.editor.owl.ui.prefix.PrefixUtilities;
 import org.protege.editor.owl.ui.renderer.prefix.PrefixBasedRenderer;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.PrefixManager;
-import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.vocab.Namespaces;
 
 
@@ -20,19 +19,21 @@ import org.semanticweb.owlapi.vocab.Namespaces;
  */
 public class OWLEntityQNameRenderer extends AbstractOWLEntityRenderer implements PrefixBasedRenderer {
 
-    private final DefaultPrefixManager prefixManager = new DefaultPrefixManager();
+    private final PrefixManager prefixManager = PrefixUtilities.createFreshPrefixManager();
 
-	public void initialise() {
-    	for(Namespaces ns : Namespaces.values()) {
+    @Override
+    public void initialise() {
+        for (Namespaces ns : Namespaces.values()) {
             String prefixName = ns.getPrefixName();
             String prefixIRI = ns.getPrefixIRI();
             prefixManager.setPrefix(prefixName + ":", prefixIRI);
         }
         PrefixManager localPrefixes = PrefixUtilities.getPrefixOWLOntologyFormat(getOWLModelManager());
-        for(String prefixName : localPrefixes.getPrefixNames()) {
-            String prefixIRI = localPrefixes.getPrefix(prefixName);
-            prefixManager.setPrefix(prefixName, prefixIRI);
-        }
+        localPrefixes.prefixNames().forEach(name -> {
+            String iri = localPrefixes.getPrefix(name);
+            if (iri == null) return;
+            prefixManager.setPrefix(name, iri);
+        });
     }
     
     @Override
@@ -40,31 +41,27 @@ public class OWLEntityQNameRenderer extends AbstractOWLEntityRenderer implements
     	initialise();
     }
 
-
+    @Override
     public String render(IRI iri) {
         try {
-        	String s = prefixManager.getPrefixIRI(iri);
-            if (s != null) {
-            	return s;
-            }
-            else {
-                // No mapping
-            	return iri.toQuotedString();
-            }
-        }
-        catch (Exception e) {
+            String s = prefixManager.getPrefixIRI(iri);
+            return s != null ? s : iri.toQuotedString();
+        } catch (Exception e) {
             return "<Error! " + e.getMessage() + ">";
         }
     }
 
+    @Override
     public boolean isConfigurable() {
-    	return false;
+        return false;
     }
 
+    @Override
     public boolean configure(OWLEditorKit eKit) {
-    	throw new IllegalStateException("This renderer is not configurable");
+        throw new IllegalStateException("This renderer is not configurable");
     }
-    
+
+    @Override
     protected void disposeRenderer() {
         // do nothing
     }

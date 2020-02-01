@@ -15,23 +15,24 @@ import java.util.Set;
 
 public class PrefixMapperTables extends JPanel {
 	private static final long serialVersionUID = -7430862544150495635L;
-	
+
 	private PrefixMapperTable table;
 	private OWLOntology ontology;
-	private OWLModelManager modelManager;
-	
-	private Set<SelectedOntologyListener> listeners = new HashSet<>();
-	
-	
+	private final OWLModelManager modelManager;
+
+	private final Set<SelectedOntologyListener> listeners = new HashSet<>();
+
 	private TableModelListener editListener = new TableModelListener() {
-		
+
+		@Override
 		public void tableChanged(TableModelEvent e) {
-			if (table != null && table.getModel().commitPrefixes()) {
-				modelManager.setDirty(ontology);
-				OWLModelManagerEntityRenderer renderer = modelManager.getOWLEntityRenderer();
-				if (renderer instanceof PrefixBasedRenderer) {
-					modelManager.refreshRenderer();
-				}
+			if (table == null || !table.getModel().commitPrefixes()) {
+				return;
+			}
+			modelManager.setDirty(ontology);
+			OWLModelManagerEntityRenderer renderer = modelManager.getOWLEntityRenderer();
+			if (renderer instanceof PrefixBasedRenderer) {
+				modelManager.refreshRenderer();
 			}
 		}
 	};
