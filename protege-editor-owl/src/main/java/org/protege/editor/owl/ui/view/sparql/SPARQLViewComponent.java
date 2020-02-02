@@ -4,6 +4,7 @@ import com.github.owlcs.ontapi.Ontology;
 import org.apache.jena.graph.Node;
 import org.protege.editor.core.ui.error.ErrorLogPanel;
 import org.protege.editor.owl.model.event.EventType;
+import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
 import org.protege.editor.owl.ui.table.BasicOWLTable;
 import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
@@ -25,15 +26,25 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
     private final SPARQLFactory factory = new SPARQLFactory();
     private final JTextPane queryPane = new JTextPane();
     private final ResultModel resultModel = new ResultModel();
+    private final OWLModelManagerListener listener = event -> {
+        if (event.isOneOf(EventType.ACTIVE_ONTOLOGY_CHANGED)) {
+            reset();
+        }
+    };
 
     private SPARQLEngine.Type type = SPARQLEngine.Type.SELECT;
 
     @Override
     protected void initialiseOWLView() {
+        getOWLModelManager().addListener(listener);
         setLayout(new BorderLayout());
         add(createNorthComponent(), BorderLayout.NORTH);
         add(createCenterComponent(), BorderLayout.CENTER);
         add(createBottomComponent(), BorderLayout.SOUTH);
+    }
+
+    protected void reset() {
+        resultModel.setResults(SPARQLFactory.EMPTY);
     }
 
     private JComponent createNorthComponent() {
@@ -44,6 +55,7 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
             public void actionPerformed(ActionEvent e) {
                 type = (SPARQLEngine.Type) Objects.requireNonNull(s.getSelectedItem());
                 queryPane.setText(type.getSampleQuery());
+                reset();
             }
         });
         JPanel panel = new JPanel();
@@ -97,6 +109,7 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
 
     @Override
     protected void disposeOWLView() {
+        getOWLModelManager().removeListener(listener);
     }
 
     /**
