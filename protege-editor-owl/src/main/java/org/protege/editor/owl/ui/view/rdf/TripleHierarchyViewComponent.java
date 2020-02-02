@@ -168,24 +168,25 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
             }
         };
 
-        OntModel model = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
-        ObjectHierarchyDeleter<Triple> deleter = createDeleter(model);
-        Triple header = model.getID().getMainStatement().asTriple();
         OWLSelectionViewAction delete = new OWLSelectionViewAction("Delete triple", DELETE_ICON) {
             @Override
             public void updateState() {
                 Triple t = getTree().getSelectedObject();
-                setEnabled(t != null && !header.equals(t));
+                setEnabled(t != null && !t.equals(getModel().getID().getMainStatement().asTriple()));
             }
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                deleter.performDeletion();
+                createDeleter(getModel()).performDeletion();
             }
 
             @Override
             public void dispose() {
-                deleter.dispose();
+                createDeleter(getModel()).dispose();
+            }
+
+            private OntModel getModel() {
+                return OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
             }
         };
 

@@ -63,7 +63,7 @@ public abstract class ObjectTree<N> extends JTree
      * A timer that is used to automatically expand nodes if the
      * mouse hovers over a node during a drag and drop operation.
      */
-    private Timer expandNodeTimer = new Timer(800, new ActionListener() {
+    private final Timer expandNodeTimer = new Timer(800, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (dropRow != -1) {

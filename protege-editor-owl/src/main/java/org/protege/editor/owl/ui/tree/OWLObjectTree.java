@@ -59,6 +59,6 @@ public class OWLObjectTree<N extends OWLObject> extends ObjectTree<N> {
         if (obj instanceof OWLEntity) {
             return ((OWLEntity) obj).getIRI().toString();
         }
-        return null;
+        return super.getToolTipText(event);
     }
 }
