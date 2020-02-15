@@ -1,7 +1,6 @@
 package org.protege.editor.owl.model.classexpression.anonymouscls;
 
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
-import org.protege.editor.owl.model.parser.OWLParseException;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,88 +9,61 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-/*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Jan 8, 2009<br><br>
  */
 public class ADCFactory implements OWLObjectVisitor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ADCFactory.class);
 
-    private final Logger logger = LoggerFactory.getLogger(ADCFactory.class);
-
-    private AnonymousDefinedClassManager adcManager;
-
-    private Set<OWLClassExpression> descrs = new HashSet<>();
-
+    private final AnonymousDefinedClassManager adcManager;
+    private final Set<OWLClassExpression> classes = new HashSet<>();
 
     public ADCFactory(AnonymousDefinedClassManager adcManager) {
         this.adcManager = adcManager;
     }
 
-
-    public List<OWLOntologyChange> getADCsForOntology(OWLOntology ont){
+    @SuppressWarnings("UnusedReturnValue")
+    public List<OWLOntologyChange> getADCsForOntology(OWLOntology ont) {
         List<OWLOntologyChange> changes = new ArrayList<>();
-        descrs.clear();
-        for (OWLClassAxiom ax : ont.getGeneralClassAxioms()){
-            ax.accept(this);
-        }
+        classes.clear();
+        ont.generalClassAxioms().forEach(x -> x.accept(ADCFactory.this));
+        ont.annotations().forEach(x -> x.accept(ADCFactory.this)); // get annotations on ontology
 
-        for (OWLAnnotation annotation : ont.getAnnotations()){ // get annotations on ontology
-            annotation.accept(this);
-        }
-
-        for (OWLClassExpression descr : descrs){
-            OWLEntityCreationSet<OWLClass> chSet = adcManager.createAnonymousClass(ont, descr);
+        for (OWLClassExpression d : classes) {
+            OWLEntityCreationSet<OWLClass> chSet = adcManager.createAnonymousClass(ont, d);
             changes.addAll(chSet.getOntologyChanges());
         }
-
         return changes;
     }
 
-
+    @Override
     public void visit(OWLSubClassOfAxiom ax) {
-        if (ax.getSubClass().isAnonymous()){
-            descrs.add(ax.getSubClass());
+        if (ax.getSubClass().isAnonymous()) {
+            classes.add(ax.getSubClass());
         }
     }
 
-
+    @Override
     public void visit(OWLEquivalentClassesAxiom ax) {
-        for (OWLClassExpression descr : ax.getClassExpressions()){
-            if (descr.isAnonymous()){
-                descrs.add(descr);
-            }
-        }
+        ax.classExpressions().filter(IsAnonymous::isAnonymous).forEach(classes::add);
     }
 
-
+    @Override
     public void visit(OWLAnnotation annotation) {
-        if (annotation.getProperty().getIRI().equals(adcManager.getURI())){
+        if (annotation.getProperty().getIRI().toURI().equals(adcManager.getURI())) {
             annotation.getValue().accept(this);
         }
     }
 
-    public void visit(OWLLiteral node) {
-        try{
-            OWLClassExpression descr = parseOWLClassExpression(node.getLiteral());
-            descrs.add(descr);
-        }
-        catch(OWLParseException e){
-            logger.error("An error occurred whilst parsing a literal in the ADCFactory", e);
-        }     
-    }
-
-
-    private OWLClassExpression parseOWLClassExpression(String s) throws OWLParseException {
-        throw new OWLParseException("Retrieving ADCs from annotations not currently implemented");
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public void visit(OWLLiteral node) { //TODO: wtf?
+        LOGGER.error("An error occurred whilst parsing a literal in the ADCFactory");
     }
 }

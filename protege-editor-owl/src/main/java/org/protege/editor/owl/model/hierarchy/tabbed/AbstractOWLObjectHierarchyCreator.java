@@ -1,6 +1,5 @@
 package org.protege.editor.owl.model.hierarchy.tabbed;
 
-import com.google.common.base.Optional;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -26,6 +25,7 @@ import java.util.List;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
+@Deprecated // todo: unused -> delete
 public abstract class AbstractOWLObjectHierarchyCreator {
 
     private OWLDataFactory dataFactory;

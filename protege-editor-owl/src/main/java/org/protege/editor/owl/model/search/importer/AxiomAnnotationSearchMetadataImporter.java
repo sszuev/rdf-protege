@@ -23,13 +23,20 @@ public class AxiomAnnotationSearchMetadataImporter extends AxiomBasedSearchMetad
     }
 
     @Override
-    public void generateSearchMetadataFor(OWLAxiom axiom, OWLEntity axiomSubject, String axiomSubjectRendering, SearchMetadataImportContext context, SearchMetadataDB db) {
-        for (OWLAnnotation annotation : axiom.getAnnotations()) {
-            generateSearchMetadataForAnnotation(annotation, axiomSubject, axiomSubjectRendering, context, db);
-        }
+    public void generateSearchMetadataFor(OWLAxiom axiom,
+                                          OWLEntity axiomSubject,
+                                          String axiomSubjectRendering,
+                                          SearchMetadataImportContext context,
+                                          SearchMetadataDB db) {
+        axiom.annotations()
+                .forEach(a -> generateSearchMetadataForAnnotation(a, axiomSubject, axiomSubjectRendering, context, db));
     }
 
-    private void generateSearchMetadataForAnnotation(final OWLAnnotation annotation, OWLEntity axiomSubject, String axiomSubjectRendering, final SearchMetadataImportContext context, SearchMetadataDB db) {
+    private void generateSearchMetadataForAnnotation(OWLAnnotation annotation,
+                                                     OWLEntity axiomSubject,
+                                                     String axiomSubjectRendering,
+                                                     SearchMetadataImportContext context,
+                                                     SearchMetadataDB db) {
         String group = context.getRendering(annotation.getProperty());
         StyledString ren = context.getStyledStringRendering(annotation);
         SearchMetadata md = new SearchMetadata(SearchCategory.ANNOTATION_VALUE, group, axiomSubject, axiomSubjectRendering, ren.getString()) {
@@ -39,8 +46,7 @@ public class AxiomAnnotationSearchMetadataImporter extends AxiomBasedSearchMetad
             }
         };
         db.addResult(md);
-        for (OWLAnnotation anno : annotation.getAnnotations()) {
-            generateSearchMetadataForAnnotation(anno, axiomSubject, axiomSubjectRendering, context, db);
-        }
+        annotation.annotations()
+                .forEach(a -> generateSearchMetadataForAnnotation(a, axiomSubject, axiomSubjectRendering, context, db));
     }
 }

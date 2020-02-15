@@ -4,6 +4,7 @@ import org.protege.editor.owl.model.OWLModelManager;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Author: drummond<br>
@@ -15,19 +16,18 @@ import java.util.Set;
  */
 public class AllLoadedOntologiesSelectionStrategy implements OntologySelectionStrategy {
 
-    private OWLModelManager mngr;
-
+    private final OWLModelManager mngr;
 
     public AllLoadedOntologiesSelectionStrategy(OWLModelManager mngr){
         this.mngr = mngr;
     }
 
-
+    @Override
     public Set<OWLOntology> getOntologies() {
-        return mngr.getOWLOntologyManager().getOntologies();
+        return mngr.getOWLOntologyManager().ontologies().collect(Collectors.toSet());
     }
 
-
+    @Override
     public String getName() {
         return "Show all loaded ontologies";
     }

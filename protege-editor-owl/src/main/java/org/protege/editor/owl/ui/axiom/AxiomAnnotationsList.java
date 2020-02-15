@@ -6,19 +6,14 @@ import org.protege.editor.owl.ui.list.AbstractAnnotationsList;
 import org.semanticweb.owlapi.model.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-/*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
+import java.util.stream.Collectors;
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Jun 8, 2009<br><br>
@@ -27,18 +22,17 @@ public class AxiomAnnotationsList extends AbstractAnnotationsList<OWLAxiomInstan
 
     private OWLAxiom newAxiom;
 
-
     public AxiomAnnotationsList(OWLEditorKit eKit) {
         super(eKit);
     }
 
-
-    protected java.util.List<OWLOntologyChange> getAddChanges(OWLAnnotation annot) {
+    @Override
+    protected List<OWLOntologyChange> getAddChanges(OWLAnnotation annotation) {
         List<OWLOntologyChange> changes = new ArrayList<>();
-        final OWLAxiom oldAxiom = getRoot().getAxiom();
+        OWLAxiom oldAxiom = getRoot().getAxiom();
 
-        Set<OWLAnnotation> annotations = new HashSet<>(oldAxiom.getAnnotations());
-        annotations.add(annot);
+        Set<OWLAnnotation> annotations = oldAxiom.annotations().collect(Collectors.toSet());
+        annotations.add(annotation);
 
         // because for some reason the merge does not work
         newAxiom = oldAxiom.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
@@ -49,12 +43,13 @@ public class AxiomAnnotationsList extends AbstractAnnotationsList<OWLAxiomInstan
         return changes;
     }
 
-
+    @Override
     protected List<OWLOntologyChange> getReplaceChanges(OWLAnnotation oldAnnotation, OWLAnnotation newAnnotation) {
         List<OWLOntologyChange> changes = new ArrayList<>();
-        final OWLAxiom ax = getRoot().getAxiom();
-        final OWLOntology ont = getRoot().getOntology();
-        Set<OWLAnnotation> annotations = new HashSet<>(ax.getAnnotations());
+        OWLAxiom ax = getRoot().getAxiom();
+        OWLOntology ont = getRoot().getOntology();
+
+        Set<OWLAnnotation> annotations = ax.annotations().collect(Collectors.toSet());
         annotations.remove(oldAnnotation);
         annotations.add(newAnnotation);
 
@@ -65,13 +60,13 @@ public class AxiomAnnotationsList extends AbstractAnnotationsList<OWLAxiomInstan
         return changes;
     }
 
-
+    @Override
     protected List<OWLOntologyChange> getDeleteChanges(OWLAnnotation oldAnnotation) {
         List<OWLOntologyChange> changes = new ArrayList<>();
-        final OWLAxiom ax = getRoot().getAxiom();
-        final OWLOntology ont = getRoot().getOntology();
+        OWLAxiom ax = getRoot().getAxiom();
+        OWLOntology ont = getRoot().getOntology();
 
-        Set<OWLAnnotation> annotations = new HashSet<>(ax.getAnnotations());
+        Set<OWLAnnotation> annotations = ax.annotations().collect(Collectors.toSet());
         annotations.remove(oldAnnotation);
 
         newAxiom = ax.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
@@ -81,21 +76,23 @@ public class AxiomAnnotationsList extends AbstractAnnotationsList<OWLAxiomInstan
         return changes;
     }
 
-
+    @Override
     protected void handleOntologyChanges(List<? extends OWLOntologyChange> changes) {
-
+        if (newAxiom == null) {
+            return;
+        }
         // this is complicated by the fact that annotating an axiom produces a new axiom
-        if (newAxiom != null){
-            for (OWLOntologyChange change : changes){
-                if (change instanceof OWLAxiomChange){
-                    if (change.getAxiom().equalsIgnoreAnnotations(getRoot().getAxiom())){
-                        // @@TODO should check that ontology contains the new axiom
-                        setRootObject(new OWLAxiomInstance(newAxiom, getRoot().getOntology()));
-                        newAxiom = null;
-                        return;
-                    }
-                }
+        for (OWLOntologyChange change : changes) {
+            if (!(change instanceof OWLAxiomChange)) {
+                continue;
             }
+            if (!change.getAxiom().equalsIgnoreAnnotations(getRoot().getAxiom())) {
+                continue;
+            }
+            // @@TODO should check that ontology contains the new axiom
+            setRootObject(new OWLAxiomInstance(newAxiom, getRoot().getOntology()));
+            newAxiom = null;
+            return;
         }
     }
 }

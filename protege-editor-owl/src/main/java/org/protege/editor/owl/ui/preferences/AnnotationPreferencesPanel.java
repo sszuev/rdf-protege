@@ -1,19 +1,16 @@
 package org.protege.editor.owl.ui.preferences;
 
 import org.protege.editor.core.ui.util.ComponentFactory;
+import org.protege.editor.owl.model.OWLModelManager;
+import org.protege.editor.owl.model.OWLWorkspace;
+import org.semanticweb.owlapi.model.HasAnnotationPropertiesInSignature;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
 import java.util.*;
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
-
+import java.util.stream.Collectors;
 
 /**
  * Author: Matthew Horridge<br>
@@ -25,18 +22,19 @@ public class AnnotationPreferencesPanel extends OWLPreferencesPanel {
 
     private Map<JCheckBox, URI> checkBoxURIMap;
 
-
+    @Override
     public void initialise() throws Exception {
         setLayout(new BorderLayout());
         Box box = new Box(BoxLayout.Y_AXIS);
-        Set<OWLAnnotationProperty> annotationProperties = new TreeSet<>();
-        for (OWLOntology ont : getOWLModelManager().getOntologies()) {
-            annotationProperties.addAll(ont.getAnnotationPropertiesInSignature());
-        }
+        OWLModelManager manager = getOWLModelManager();
+        Set<OWLAnnotationProperty> annotationProperties = manager.getOntologies().stream()
+                .flatMap(HasAnnotationPropertiesInSignature::annotationPropertiesInSignature)
+                .collect(Collectors.toCollection(TreeSet::new));
         checkBoxURIMap = new HashMap<>();
+        OWLWorkspace workspace = getOWLEditorKit().getWorkspace();
         for (OWLAnnotationProperty property : annotationProperties) {
-            JCheckBox cb = new JCheckBox(getOWLModelManager().getRendering(property),
-                                         getOWLEditorKit().getWorkspace().isHiddenAnnotationURI(property.getIRI().toURI()));
+            JCheckBox cb = new JCheckBox(manager.getRendering(property),
+                    workspace.isHiddenAnnotationURI(property.getIRI().toURI()));
             checkBoxURIMap.put(cb, property.getIRI().toURI());
             box.add(cb);
             box.add(Box.createVerticalStrut(4));
@@ -48,7 +46,7 @@ public class AnnotationPreferencesPanel extends OWLPreferencesPanel {
         add(holder);
     }
 
-
+    @Override
     public void applyChanges() {
         Set<URI> hiddenURIs = new HashSet<>();
         for (JCheckBox cb : checkBoxURIMap.keySet()) {
@@ -59,7 +57,7 @@ public class AnnotationPreferencesPanel extends OWLPreferencesPanel {
         getOWLEditorKit().getWorkspace().setHiddenAnnotationURIs(hiddenURIs);
     }
 
-
+    @Override
     public void dispose() throws Exception {
     }
 }

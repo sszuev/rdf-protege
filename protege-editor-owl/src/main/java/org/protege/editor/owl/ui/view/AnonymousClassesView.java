@@ -28,6 +28,7 @@ import java.util.*;
  * Bio Health Informatics Group<br>
  * Date: Nov 24, 2008<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class AnonymousClassesView extends AbstractActiveOntologyViewComponent
         implements Deleteable, Copyable<OWLClass> {
 
