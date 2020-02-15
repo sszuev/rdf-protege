@@ -18,39 +18,41 @@ import java.util.concurrent.TimeUnit;
  * 08/03/15
  */
 public class OWLEntityDeleter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OWLEntityDeleter.class);
 
-    private static Logger logger = LoggerFactory.getLogger(OWLEntityDeleter.class);
-
-    public static void deleteEntities(Collection<? extends OWLEntity> entities, OWLModelManager modelManager) {
-        logger.info(LogBanner.start("Deleting entities"));
-        logger.info("Generating changes to remove {} entities", entities.size());
+    public static void deleteEntities(Collection<? extends OWLEntity> entities, OWLModelManager manager) {
+        LOGGER.info(LogBanner.start("Deleting entities"));
+        LOGGER.info("Generating changes to remove {} entities", entities.size());
         Stopwatch stopwatch = Stopwatch.createStarted();
-        List<OWLOntologyChange> allChanges = getChangesToDeleteEntities(entities, modelManager);
-        logger.info("Generated {} changes to remove {} entities in {} ms", allChanges.size(), entities.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        modelManager.applyChanges(allChanges);
-        logger.info("Applied {} changes in {}", allChanges.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        logger.info(LogBanner.end());
+        List<OWLOntologyChange> allChanges = getChangesToDeleteEntities(entities, manager);
+        LOGGER.info("Generated {} changes to remove {} entities in {} ms",
+                allChanges.size(), entities.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        manager.applyChanges(allChanges);
+        LOGGER.info("Applied {} changes in {}", allChanges.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        LOGGER.info(LogBanner.end());
     }
 
-    private static List<OWLOntologyChange> getChangesToDeleteEntities(Collection<? extends OWLEntity> entities, OWLModelManager modelManager) {
+    private static List<OWLOntologyChange> getChangesToDeleteEntities(Collection<? extends OWLEntity> entities,
+                                                                      OWLModelManager manager) {
         List<OWLOntologyChange> allChanges = new ArrayList<>();
-        for(OWLOntology ontology : modelManager.getOntologies()) {
+        for (OWLOntology ontology : manager.getOntologies()) {
             List<OWLOntologyChange> changeList = getChangesForOntology(entities, ontology);
             allChanges.addAll(changeList);
         }
         return allChanges;
     }
 
-    private static List<OWLOntologyChange> getChangesForOntology(Collection<? extends OWLEntity> entities, OWLOntology ontology) {
+    private static List<OWLOntologyChange> getChangesForOntology(Collection<? extends OWLEntity> entities,
+                                                                 OWLOntology ontology) {
         ReferenceFinder referenceFinder = new ReferenceFinder();
         ReferenceFinder.ReferenceSet referenceSet = referenceFinder.getReferenceSet(entities, ontology);
         List<OWLOntologyChange> changeList = new ArrayList<>(
                 referenceSet.getReferencingAxioms().size() + referenceSet.getReferencingOntologyAnnotations().size()
         );
-        for(OWLAxiom ax : referenceSet.getReferencingAxioms()) {
+        for (OWLAxiom ax : referenceSet.getReferencingAxioms()) {
             changeList.add(new RemoveAxiom(referenceSet.getOntology(), ax));
         }
-        for(OWLAnnotation annotation : referenceSet.getReferencingOntologyAnnotations()) {
+        for (OWLAnnotation annotation : referenceSet.getReferencingOntologyAnnotations()) {
             changeList.add(new RemoveOntologyAnnotation(referenceSet.getOntology(), annotation));
         }
         return changeList;

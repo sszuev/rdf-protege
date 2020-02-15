@@ -11,6 +11,7 @@ import java.util.Set;
  * User: nickdrummond
  * Date: May 20, 2008
  */
+@Deprecated // todo: unused -> delete
 public class ObjectPropertyReferencingAxiomStrategy extends EntityReferencingAxiomsStrategy<OWLObjectProperty> {
 
     public String getName() {

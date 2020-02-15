@@ -2,16 +2,15 @@ package org.protege.editor.owl.ui.action;
 
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.util.OWLEntityDeleter;
-import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.renderer.DeleteEntityIcon;
 import org.protege.editor.owl.ui.renderer.OWLEntityIcon;
 import org.protege.editor.owl.ui.renderer.OWLIndividualIcon;
-import org.protege.editor.owl.ui.renderer.OWLSystemColors;
 import org.protege.editor.owl.ui.view.OWLSelectionViewAction;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.util.OWLEntitySetProvider;
 
 import java.awt.event.ActionEvent;
+import java.util.stream.Collectors;
 
 
 /**
@@ -22,10 +21,8 @@ import java.awt.event.ActionEvent;
  */
 public class DeleteIndividualAction extends OWLSelectionViewAction {
 
-    private OWLEditorKit owlEditorKit;
-
-    private OWLEntitySetProvider<OWLNamedIndividual> indSetProvider;
-
+    private final OWLEditorKit owlEditorKit;
+    private final OWLEntitySetProvider<OWLNamedIndividual> indSetProvider;
 
     public DeleteIndividualAction(OWLEditorKit owlEditorKit, OWLEntitySetProvider<OWLNamedIndividual> indSetProvider) {
         super("Delete individual(s)", new DeleteEntityIcon(new OWLIndividualIcon(OWLEntityIcon.FillType.HOLLOW)));
@@ -33,17 +30,18 @@ public class DeleteIndividualAction extends OWLSelectionViewAction {
         this.indSetProvider = indSetProvider;
     }
 
-
+    @Override
     public void updateState() {
-        setEnabled(!indSetProvider.getEntities().isEmpty());
+        setEnabled(indSetProvider.entities().findFirst().isPresent());
     }
 
-
+    @Override
     public void dispose() {
     }
 
-
+    @Override
     public void actionPerformed(ActionEvent e) {
-        OWLEntityDeleter.deleteEntities(indSetProvider.getEntities(), owlEditorKit.getOWLModelManager());
+        OWLEntityDeleter.deleteEntities(indSetProvider.entities().collect(Collectors.toSet()),
+                owlEditorKit.getOWLModelManager());
     }
 }

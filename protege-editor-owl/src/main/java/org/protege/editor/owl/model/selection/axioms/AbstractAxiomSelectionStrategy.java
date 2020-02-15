@@ -13,6 +13,7 @@ import java.util.List;
  * Bio Health Informatics Group<br>
  * Date: May 30, 2008<br><br>
  */
+@Deprecated // todo: unused -> delete
 public abstract class AbstractAxiomSelectionStrategy implements AxiomSelectionStrategy {
 
 

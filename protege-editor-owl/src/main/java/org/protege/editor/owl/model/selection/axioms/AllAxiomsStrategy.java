@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
  * User: nickdrummond
  * Date: May 21, 2008
  */
+@Deprecated // todo: unused -> delete
 public class AllAxiomsStrategy extends AbstractAxiomSelectionStrategy {
 
     @Override

@@ -10,6 +10,7 @@ import java.util.Set;
  * User: nickdrummond
  * Date: May 21, 2008
  */
+@Deprecated // todo: unused -> delete
 public abstract class EntityReferencingAxiomsStrategy<O extends OWLEntity> extends AbstractAxiomSelectionStrategy {
 
     private Set<O> entities = new HashSet<>();

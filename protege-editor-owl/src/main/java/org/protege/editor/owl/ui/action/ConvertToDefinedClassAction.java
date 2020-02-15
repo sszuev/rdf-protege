@@ -18,35 +18,33 @@ import java.util.Set;
  */
 public class ConvertToDefinedClassAction extends SelectedOWLClassAction {
 
-    protected void initialiseAction() throws Exception {
+    @Override
+    protected void initialiseAction() {
     }
 
-
+    @Override
     public void actionPerformed(ActionEvent e) {
-        OWLClass selClass = getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass();
-        if(selClass == null) {
+        OWLClass clazz = getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass();
+        if (clazz == null) {
             return;
         }
         List<OWLOntologyChange> changes = new ArrayList<>();
         Set<OWLClassExpression> operands = new HashSet<>();
-        for (OWLOntology ont : getOWLModelManager().getActiveOntologies()) {
-            for (OWLSubClassOfAxiom ax : ont.getSubClassAxiomsForSubClass(selClass)) {
-                changes.add(new RemoveAxiom(ont, ax));
-                operands.add(ax.getSuperClass());
-            }
-        }
+        getOWLModelManager().getActiveOntologies().forEach(ont -> ont.subClassAxiomsForSubClass(clazz).forEach(ax -> {
+            changes.add(new RemoveAxiom(ont, ax));
+            operands.add(ax.getSuperClass());
+        }));
         if (operands.isEmpty()) {
             return;
         }
         OWLDataFactory df = getOWLModelManager().getOWLDataFactory();
-        OWLClassExpression equCls;
+        OWLClassExpression equivalent;
         if (operands.size() == 1) {
-            equCls = operands.iterator().next();
+            equivalent = operands.iterator().next();
+        } else {
+            equivalent = df.getOWLObjectIntersectionOf(operands);
         }
-        else {
-            equCls = df.getOWLObjectIntersectionOf(operands);
-        }
-        OWLAxiom ax = df.getOWLEquivalentClassesAxiom(CollectionFactory.createSet(selClass, equCls));
+        OWLAxiom ax = df.getOWLEquivalentClassesAxiom(CollectionFactory.createSet(clazz, equivalent));
         changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
         getOWLModelManager().applyChanges(changes);
     }

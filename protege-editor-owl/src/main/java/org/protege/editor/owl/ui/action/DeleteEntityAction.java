@@ -16,6 +16,7 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 22-Feb-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class DeleteEntityAction extends SelectedOWLEntityAction {
 
 

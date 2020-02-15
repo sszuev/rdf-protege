@@ -11,6 +11,7 @@ import java.util.Set;
  * User: nickdrummond
  * Date: May 21, 2008
  */
+@Deprecated // todo: unused -> delete
 public class AnnotationAxiomsStrategy extends AbstractAxiomSelectionStrategy {
 
     private Set<URI> uris = new HashSet<>();

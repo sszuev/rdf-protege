@@ -29,6 +29,7 @@ import java.util.List;
  * Bio-Medical Informatics Research Group<br>
  * Date: 15/10/2012
  */
+@Deprecated // todo: unused -> delete
 public class CopyToHMTLAction extends FocusedComponentAction<Copyable> {
 
 

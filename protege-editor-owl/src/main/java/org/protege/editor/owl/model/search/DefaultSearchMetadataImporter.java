@@ -23,7 +23,7 @@ import java.util.Set;
  */
 public class DefaultSearchMetadataImporter implements SearchMetadataImporter {
 
-
+    @Override
     public SearchMetadataDB getSearchMetadata(final OWLEditorKit editorKit, Set<SearchCategory> categories) {
         SearchMetadataImportContext context = new SearchMetadataImportContext(editorKit);
         SearchMetadataDB db = new SearchMetadataDB();
@@ -35,21 +35,19 @@ public class DefaultSearchMetadataImporter implements SearchMetadataImporter {
         return db;
     }
 
-    private void getEntityBasedSearchMetadata(Set<SearchCategory> categories, SearchMetadataImportContext context, SearchMetadataDB db) {
-
+    private void getEntityBasedSearchMetadata(Set<SearchCategory> categories,
+                                              SearchMetadataImportContext context,
+                                              SearchMetadataDB db) {
         List<EntityBasedSearchMDImporter> importers = getEntityBasedSearchMetadataImporters(categories);
-
         Set<OWLEntity> processed = new HashSet<>();
-        for (OWLOntology ontology : context.getOntologies()) {
-            for (OWLEntity entity : ontology.getSignature()) {
-                if (processed.add(entity)) {
-                    getSearchMetadataForEntity(entity, context, db, importers);
-                }
-            }
-        }
+        context.getOntologies().stream().flatMap(HasSignature::signature).filter(processed::add)
+                .forEach(e -> getSearchMetadataForEntity(e, context, db, importers));
     }
 
-    private void getSearchMetadataForEntity(OWLEntity entity, SearchMetadataImportContext context, SearchMetadataDB db, List<EntityBasedSearchMDImporter> importers) {
+    private void getSearchMetadataForEntity(OWLEntity entity,
+                                            SearchMetadataImportContext context,
+                                            SearchMetadataDB db,
+                                            List<EntityBasedSearchMDImporter> importers) {
         String entityRendering = context.getRendering(entity);
         for (EntityBasedSearchMDImporter importer : importers) {
             importer.generateSearchMetadataFor(entity, entityRendering, context, db);
@@ -57,29 +55,32 @@ public class DefaultSearchMetadataImporter implements SearchMetadataImporter {
     }
 
 
-    private void getAxiomBasedSearchMetadata(Set<SearchCategory> categories, SearchMetadataImportContext context, SearchMetadataDB db) {
+    private void getAxiomBasedSearchMetadata(Set<SearchCategory> categories,
+                                             SearchMetadataImportContext context,
+                                             SearchMetadataDB db) {
         for (AxiomType<?> axiomType : AxiomType.AXIOM_TYPES) {
             getSearchMetadataForAxiomsOfType(axiomType, categories, context, db);
         }
     }
 
-    private void getSearchMetadataForAxiomsOfType(AxiomType<?> axiomType, Set<SearchCategory> categories, SearchMetadataImportContext context, SearchMetadataDB db) {
-        for (AxiomBasedSearchMetadataImporter importer : getAxiomBasedSearchMetadataImporters(categories, axiomType)) {
-            for (OWLOntology ontology : context.getOntologies()) {
-                for (OWLAxiom ax : ontology.getAxioms(axiomType)) {
-                    OWLObject subject = new AxiomSubjectProviderEx().getSubject(ax);
+    private void getSearchMetadataForAxiomsOfType(AxiomType<?> axiomType,
+                                                  Set<SearchCategory> categories,
+                                                  SearchMetadataImportContext context,
+                                                  SearchMetadataDB db) {
+        getAxiomBasedSearchMetadataImporters(categories, axiomType)
+                .forEach(importer -> context.getOntologies().stream().flatMap(x -> x.axioms(axiomType)).forEach(ax -> {
+                    OWLObject subject = AxiomSubjectProviderEx.getSubject(ax);
                     if (subject instanceof OWLEntity) {
                         OWLEntity entSubject = (OWLEntity) subject;
                         String rendering = context.getRendering(entSubject);
                         importer.generateSearchMetadataFor(ax, entSubject, rendering, context, db);
                     }
-                }
-            }
-        }
+                }));
     }
 
-
-    private void getOntologyBasedSearchMetadata(Set<SearchCategory> categories, SearchMetadataImportContext context, SearchMetadataDB db) {
+    private void getOntologyBasedSearchMetadata(Set<SearchCategory> categories,
+                                                SearchMetadataImportContext context,
+                                                SearchMetadataDB db) {
         List<OntologyBasedSearchMDImporter> ontologyBasedSearchMDImporters = getOntologyBasedSearchMetadataImporters(categories);
         for (OWLOntology ontology : context.getOntologies()) {
             for (OntologyBasedSearchMDImporter importer : ontologyBasedSearchMDImporters) {
@@ -91,11 +92,14 @@ public class DefaultSearchMetadataImporter implements SearchMetadataImporter {
 
     /**
      * A convenience method which gets the styled string rendering for an {@link OWLObject}
+     *
      * @param editorKit The editor kit which should be used to compute rendering for entities embedded within the
-     * object.
-     * @param object The object to be rendered
+     *                  object.
+     * @param object    The object to be rendered
      * @return The {@link StyledString} rendering of the object.
      */
+    @SuppressWarnings("unused")
+    @Deprecated // todo: unused -> delete
     private StyledString getStyledStringRendering(final OWLEditorKit editorKit, OWLObject object) {
         OWLEditorKitShortFormProvider sfp = new OWLEditorKitShortFormProvider(editorKit);
         OWLEditorKitOntologyShortFormProvider ontologySfp = new OWLEditorKitOntologyShortFormProvider(editorKit);
@@ -122,7 +126,8 @@ public class DefaultSearchMetadataImporter implements SearchMetadataImporter {
         return result;
     }
 
-    private List<AxiomBasedSearchMetadataImporter> getAxiomBasedSearchMetadataImporters(Set<SearchCategory> categories, AxiomType<?> axiomType) {
+    private List<AxiomBasedSearchMetadataImporter> getAxiomBasedSearchMetadataImporters(Set<SearchCategory> categories,
+                                                                                        AxiomType<?> axiomType) {
         List<AxiomBasedSearchMetadataImporter> axiomBasedSearchMetadataImporters = new ArrayList<>();
         axiomBasedSearchMetadataImporters.add(new AxiomAnnotationSearchMetadataImporter());
         axiomBasedSearchMetadataImporters.add(new LogicalAxiomRenderingSearchMetadataImporter());

@@ -1,15 +1,13 @@
 package org.protege.editor.owl.model.util;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.search.EntitySearcher;
 
 import javax.annotation.Nonnull;
 import java.util.Set;
 import java.util.function.Predicate;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Matthew Horridge
@@ -24,20 +22,21 @@ public class DefinedClassPredicate implements Predicate<OWLClass> {
      * Constructs a DefinedClassPredicate that will test whether a class is defined in the specified set of ontologies.
      * A class is considered to be defined if it is an operand in an equivalent classes axiom in one of the listed
      * ontologies or if it is the subject of a DisjointUnion axiom in one of the listed ontologies.
+     *
      * @param ontologies The ontologies to be checked for class definition axioms.
      */
     public DefinedClassPredicate(@Nonnull Set<OWLOntology> ontologies) {
-        this.ontologies = ImmutableSet.copyOf(checkNotNull(ontologies));
+        this.ontologies = ImmutableSet.copyOf(Preconditions.checkNotNull(ontologies));
     }
 
     @Override
     public boolean test(@Nonnull OWLClass c) {
-        checkNotNull(c);
-        for(OWLOntology ontology : ontologies) {
-            if(!ontology.getEquivalentClassesAxioms(c).isEmpty()) {
+        Preconditions.checkNotNull(c);
+        for (OWLOntology ontology : ontologies) {
+            if (ontology.equivalentClassesAxioms(c).findFirst().isPresent()) {
                 return true;
             }
-            if(!ontology.getDisjointUnionAxioms(c).isEmpty()) {
+            if (ontology.disjointUnionAxioms(c).findFirst().isPresent()) {
                 return true;
             }
         }
@@ -46,6 +45,7 @@ public class DefinedClassPredicate implements Predicate<OWLClass> {
 
     /**
      * A convenience factory method that creates a new DefinedClassPredicate for the specified set of ontologies.
+     *
      * @param ontologies The ontologies.
      * @return The DefinedClassPredicate.
      */
@@ -56,6 +56,7 @@ public class DefinedClassPredicate implements Predicate<OWLClass> {
 
     /**
      * A convenience factory method that creates the negation of a new DefinedClassPredicate for the specified set of ontologies.
+     *
      * @param ontologies The ontologies.
      * @return The negation of a DefinedClassPredicate.
      */

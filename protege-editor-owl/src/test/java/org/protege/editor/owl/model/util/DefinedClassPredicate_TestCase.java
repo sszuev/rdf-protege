@@ -5,13 +5,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Collections;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import static java.util.Collections.singleton;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.theInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -39,7 +42,7 @@ public class DefinedClassPredicate_TestCase {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         predicate = new DefinedClassPredicate(singleton(ontology));
     }
 
@@ -55,19 +58,25 @@ public class DefinedClassPredicate_TestCase {
 
     @Test
     public void shouldNotBeDefinedClass() {
+        mock(null, null);
         assertThat(predicate.test(cls), is(false));
     }
 
     @Test
     public void shouldBeDefinedByEquivalentClassesAxiom() {
-        when(ontology.getEquivalentClassesAxioms(cls)).thenReturn(singleton(equivalentClassesAxiom));
+        mock(null, equivalentClassesAxiom);
         assertThat(predicate.test(cls), is(true));
     }
 
     @Test
     public void shouldBeDefinedByDisjointUnionAxiom() {
-        when(ontology.getDisjointUnionAxioms(cls)).thenReturn(singleton(disjointUnionAxiom));
+        mock(disjointUnionAxiom, null);
         assertThat(predicate.test(cls), is(true));
+    }
+
+    private void mock(OWLDisjointUnionAxiom d, OWLEquivalentClassesAxiom a) {
+        when(ontology.disjointUnionAxioms(cls)).thenReturn(Stream.of(d).filter(Objects::nonNull));
+        when(ontology.equivalentClassesAxioms(cls)).thenReturn(Stream.of(a).filter(Objects::nonNull));
     }
 
 }
