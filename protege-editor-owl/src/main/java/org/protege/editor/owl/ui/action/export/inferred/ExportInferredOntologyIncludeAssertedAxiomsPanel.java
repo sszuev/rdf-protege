@@ -19,22 +19,23 @@ import java.awt.*;
  * Date: 15-Aug-2007<br><br>
  */
 public class ExportInferredOntologyIncludeAssertedAxiomsPanel extends AbstractOWLWizardPanel {
-
-    private JCheckBox includeAnnotationsCheckBox;
-
-    private JCheckBox includeAssertedLogicalAxiomsCheckBox;
-
     public static final String ID = "ID";
 
+    private JCheckBox includeAnnotationsCheckBox;
+    private JCheckBox includeAssertedLogicalAxiomsCheckBox;
 
     public ExportInferredOntologyIncludeAssertedAxiomsPanel(OWLEditorKit owlEditorKit) {
         super(ID, "Include asserted axioms", owlEditorKit);
     }
 
-
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         parent.setLayout(new BorderLayout());
-        setInstructions("Please decide which asserted information you wish to include in the export.  If you choose " + "to include asserted logical axioms then all logical axioms in the ontology will be exported as well " + "as the inferred logical axioms that were selected on the previous page.");
+        setInstructions("Please decide which asserted information you wish to include in the export. " +
+                "If you choose to include asserted logical axioms " +
+                "then all logical axioms in the ontology will be exported " +
+                "as well as the inferred logical axioms that were selected on the previous page.");
         includeAnnotationsCheckBox = new JCheckBox("Include annotations");
         includeAssertedLogicalAxiomsCheckBox = new JCheckBox("Include asserted logical axioms");
         Box box = new Box(BoxLayout.Y_AXIS);
@@ -44,22 +45,20 @@ public class ExportInferredOntologyIncludeAssertedAxiomsPanel extends AbstractOW
         parent.add(box, BorderLayout.NORTH);
     }
 
-
     public boolean isIncludeAnnotationAxioms() {
         return includeAnnotationsCheckBox.isSelected();
     }
-
 
     public boolean isIncludeAssertedLogicalAxioms() {
         return includeAssertedLogicalAxiomsCheckBox.isSelected();
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
         return ExportInferredOntologyIDPanel.ID;
     }
 
-
+    @Override
     public Object getBackPanelDescriptor() {
         return ExportInferredOntologyWizardSelectAxiomsPanel.ID;
     }

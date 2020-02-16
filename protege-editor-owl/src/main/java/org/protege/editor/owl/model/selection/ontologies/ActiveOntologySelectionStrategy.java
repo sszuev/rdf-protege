@@ -4,7 +4,9 @@ import org.protege.editor.owl.model.OWLModelManager;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Author: drummond<br>
@@ -16,19 +18,23 @@ import java.util.Set;
  */
 public class ActiveOntologySelectionStrategy implements OntologySelectionStrategy {
 
-    private OWLModelManager mngr;
+    private final OWLModelManager mngr;
 
-
-    public ActiveOntologySelectionStrategy(OWLModelManager mngr){
-        this.mngr = mngr;
+    public ActiveOntologySelectionStrategy(OWLModelManager mngr) {
+        this.mngr = Objects.requireNonNull(mngr);
     }
 
-
+    @Override
     public Set<OWLOntology> getOntologies() {
         return Collections.singleton(mngr.getActiveOntology());
     }
 
+    @Override
+    public Stream<OWLOntology> ontologies() {
+        return Stream.of(mngr.getActiveOntology());
+    }
 
+    @Override
     public String getName() {
         return "Show only the active ontology";
     }

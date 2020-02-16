@@ -3,7 +3,8 @@ package org.protege.editor.owl.model.selection.ontologies;
 import org.protege.editor.owl.model.OWLModelManager;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Set;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Author: drummond<br>
@@ -15,19 +16,18 @@ import java.util.Set;
  */
 public class ImportsClosureOntologySelectionStrategy implements OntologySelectionStrategy {
 
-    private OWLModelManager mngr;
+    private final OWLModelManager mngr;
 
-
-    public ImportsClosureOntologySelectionStrategy(OWLModelManager mngr){
-        this.mngr = mngr;
+    public ImportsClosureOntologySelectionStrategy(OWLModelManager mngr) {
+        this.mngr = Objects.requireNonNull(mngr);
     }
 
-
-    public Set<OWLOntology> getOntologies() {
-        return mngr.getOWLOntologyManager().getImportsClosure(mngr.getActiveOntology());
+    @Override
+    public Stream<OWLOntology> ontologies() {
+        return mngr.getOWLOntologyManager().importsClosure(mngr.getActiveOntology());
     }
 
-
+    @Override
     public String getName() {
         return "Show the imports closure of the active ontology";
     }

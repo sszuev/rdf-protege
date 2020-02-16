@@ -632,7 +632,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
 
     private void rebuildActiveOntologiesCache() {
         activeOntologies.clear();
-        activeOntologies.addAll(activeOntologiesStrategy.getOntologies());
+        activeOntologiesStrategy.ontologies().forEach(activeOntologies::add);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

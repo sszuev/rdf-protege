@@ -4,6 +4,7 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.OWLEntityRenamer;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Author: Matthew Horridge<br>
@@ -14,56 +15,55 @@ import java.util.*;
 public class EntityIRIUpdaterOntologyChangeStrategy implements OntologyIDChangeStrategy {
 
     public List<OWLOntologyChange> getChangesForRename(OWLOntology ontology, OWLOntologyID from, OWLOntologyID to) {
-        if(!isEntityRenamingChange(from, to)) {
+        if (isNotEntityRenamingChange(from, to)) {
             return Collections.emptyList();
         }
         Map<OWLEntity, IRI> renameMap = new HashMap<>();
         getRenameMap(ontology, from, to, renameMap, Long.MAX_VALUE);
-        OWLEntityRenamer entityRenamer = new OWLEntityRenamer(ontology.getOWLOntologyManager(), Collections.singleton(ontology));
-        return entityRenamer.changeIRI(renameMap);
+        OWLEntityRenamer renamer = new OWLEntityRenamer(ontology.getOWLOntologyManager(), Collections.singleton(ontology));
+        return renamer.changeIRI(renameMap);
     }
 
-    private boolean isEntityRenamingChange(OWLOntologyID from, OWLOntologyID to) {
-        return !from.isAnonymous() && !to.isAnonymous() && !from.equals(to);
+    private boolean isNotEntityRenamingChange(OWLOntologyID from, OWLOntologyID to) {
+        return from.isAnonymous() || to.isAnonymous() || from.equals(to);
     }
 
-    private void getRenameMap(OWLOntology ontology, OWLOntologyID fromId, OWLOntologyID toId, Map<OWLEntity, IRI> renameMap, long limit) {
-        if(!isEntityRenamingChange(fromId, toId)) {
+    @SuppressWarnings("SameParameterValue")
+    private void getRenameMap(OWLOntology ontology,
+                              OWLOntologyID fromId,
+                              OWLOntologyID toId,
+                              Map<OWLEntity, IRI> renameMap,
+                              long limit) {
+        if (isNotEntityRenamingChange(fromId, toId)) {
             return;
         }
-        String fromBase = fromId.getOntologyIRI().get().toString();
-        String toBase = toId.getOntologyIRI().get().toString();
-        getEntitiesRenamings(ontology.getObjectPropertiesInSignature(false), fromBase, toBase, renameMap, limit);
-        if(renameMap.size() >= limit) {
+        String fromBase = fromId.getOntologyIRI().map(IRI::getIRIString).orElseThrow(IllegalArgumentException::new);
+        String toBase = toId.getOntologyIRI().map(IRI::getIRIString).orElseThrow(IllegalArgumentException::new);
+        getEntitiesRenamings(ontology.objectPropertiesInSignature(), fromBase, toBase, renameMap, limit);
+        if (renameMap.size() >= limit) {
             return;
         }
-        getEntitiesRenamings(ontology.getDataPropertiesInSignature(false), fromBase, toBase, renameMap, limit);
-        if(renameMap.size() >= limit) {
+        getEntitiesRenamings(ontology.dataPropertiesInSignature(), fromBase, toBase, renameMap, limit);
+        if (renameMap.size() >= limit) {
             return;
         }
-        getEntitiesRenamings(ontology.getAnnotationPropertiesInSignature(), fromBase, toBase, renameMap, limit);
-        if(renameMap.size() >= limit) {
+        getEntitiesRenamings(ontology.annotationPropertiesInSignature(), fromBase, toBase, renameMap, limit);
+        if (renameMap.size() >= limit) {
             return;
         }
-        getEntitiesRenamings(ontology.getClassesInSignature(false), fromBase, toBase, renameMap, limit);
-        if(renameMap.size() >= limit) {
+        getEntitiesRenamings(ontology.classesInSignature(), fromBase, toBase, renameMap, limit);
+        if (renameMap.size() >= limit) {
             return;
         }
-        getEntitiesRenamings(ontology.getIndividualsInSignature(false), fromBase, toBase, renameMap, limit);
-        if(renameMap.size() >= limit) {
+        getEntitiesRenamings(ontology.individualsInSignature(), fromBase, toBase, renameMap, limit);
+        if (renameMap.size() >= limit) {
             return;
         }
-        getEntitiesRenamings(ontology.getDatatypesInSignature(false), fromBase, toBase, renameMap, limit);
-    }
-    
-    public boolean hasEntitiesToRename(OWLOntology ontology, OWLOntologyID from, OWLOntologyID to) {
-        HashMap<OWLEntity, IRI> renameMap = new HashMap<>();
-        getRenameMap(ontology, from, to, renameMap, 1);
-        return !renameMap.isEmpty();
+        getEntitiesRenamings(ontology.datatypesInSignature(), fromBase, toBase, renameMap, limit);
     }
 
     public Set<OWLEntity> getEntitiesToRename(OWLOntology ontology, OWLOntologyID from, OWLOntologyID to) {
-        if(!isEntityRenamingChange(from, to)) {
+        if (isNotEntityRenamingChange(from, to)) {
             return Collections.emptySet();
         }
         Map<OWLEntity, IRI> renameMap = new HashMap<>();
@@ -71,19 +71,18 @@ public class EntityIRIUpdaterOntologyChangeStrategy implements OntologyIDChangeS
         return renameMap.keySet();
     }
 
-    private void getEntitiesRenamings(Set<? extends OWLEntity> entities, String base, String toBase, Map<OWLEntity, IRI> renameMap, long limit) {
-        int counter = 0;
-        for(OWLEntity entity : entities) {
-            IRI entityIRI = entity.getIRI();
-            if(entityIRI.length() > base.length()) {
-                if(entityIRI.subSequence(0, base.length()).equals(base)) {
-                    renameMap.put(entity, IRI.create(toBase + entityIRI.subSequence(base.length(), entityIRI.length())));
-                    counter++;
-                    if(counter >= limit) {
-                        return;
-                    }
-                }
-            }
-        }
+    private void getEntitiesRenamings(Stream<? extends OWLEntity> entities,
+                                      String base,
+                                      String toBase,
+                                      Map<OWLEntity, IRI> renameMap,
+                                      long limit) {
+        entities.filter(e -> e.getIRI().length() > base.length())
+                .filter(e -> e.getIRI().subSequence(0, base.length()).equals(base))
+                .limit(limit)
+                .forEach(entity -> {
+                    IRI iri = entity.getIRI();
+                    renameMap.put(entity, IRI.create(toBase + iri.subSequence(base.length(), iri.length())));
+                });
     }
+
 }

@@ -13,6 +13,7 @@ package org.protege.editor.owl.ui.metrics;
  * Bio-Health Informatics Group<br>
  * Date: 20-Feb-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class IndividualCountMetric extends AbstractIntegerMetric {
 
     public IndividualCountMetric() {

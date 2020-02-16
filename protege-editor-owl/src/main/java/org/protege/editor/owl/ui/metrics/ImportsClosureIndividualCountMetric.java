@@ -13,6 +13,7 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 20-Feb-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class ImportsClosureIndividualCountMetric extends AbstractIntegerMetric {
 
     public ImportsClosureIndividualCountMetric() {

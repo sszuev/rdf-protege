@@ -8,17 +8,21 @@ import org.semanticweb.owlapi.util.InferredClassAxiomGenerator;
 
 import java.util.Set;
 
+@SuppressWarnings("NullableProblems")
 public class InferredDisjointClassesAxiomGenerator extends InferredClassAxiomGenerator<OWLDisjointClassesAxiom> {
 
-	@Override
-	protected void addAxioms(OWLClass entity, OWLReasoner reasoner, OWLDataFactory dataFactory, Set<OWLDisjointClassesAxiom> result) {
-		for (OWLClass disjoint : reasoner.getDisjointClasses(entity).getFlattened()) {
-			result.add(dataFactory.getOWLDisjointClassesAxiom(entity, disjoint));
-		}
-	}
+    @Override
+    protected void addAxioms(OWLClass entity,
+                             OWLReasoner reasoner,
+                             OWLDataFactory dataFactory,
+                             Set<OWLDisjointClassesAxiom> result) {
+        reasoner.getDisjointClasses(entity).entities()
+                .map(e -> dataFactory.getOWLDisjointClassesAxiom(entity, e))
+                .forEach(result::add);
+    }
 
+    @Override
     public String getLabel() {
         return "Disjoint classes";
     }
-
 }
