@@ -7,12 +7,6 @@ import org.semanticweb.owlapi.model.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
-
 
 /**
  * Author: Matthew Horridge<br>
@@ -22,59 +16,49 @@ import java.util.List;
  */
 public class MoveAxiomsToOntologyAction<R> extends OWLFrameListPopupMenuAction<R> {
 
+    @Override
     protected String getName() {
         return "Move axiom(s) to ontology...";
     }
 
-
+    @Override
     protected void initialise() throws Exception {
-
     }
 
-
+    @Override
     protected void dispose() throws Exception {
-
     }
 
-
+    @Override
     protected void updateState() {
         setEnabled(getState());
     }
 
-
     private boolean getState() {
-        final Object[] sel = getFrameList().getSelectedValues();
-        boolean isEnabled = sel.length > 0;
-        for (Object val : sel) {
+        List<?> list = getFrameList().getSelectedValuesList();
+        if (list.isEmpty()) return false;
+        for (Object val : list) {
             if (!(val instanceof OWLFrameSectionRow)) {
                 return false;
             }
-            else {
-                if (((OWLFrameSectionRow) val).getOntology() == null) {
-                    return false;
-                }
+            if (((OWLFrameSectionRow<?, ?, ?>) val).getOntology() == null) {
+                return false;
             }
         }
-        return isEnabled;
+        return true;
     }
 
-
+    @Override
     public void actionPerformed(ActionEvent e) {
         OWLOntology ont = new UIHelper(getOWLEditorKit()).pickOWLOntology();
-        if (ont != null){
+        if (ont != null) {
             moveAxiomsToOntology(ont);
         }
     }
 
-
-    public void ontologySelected(OWLOntology ontology) {
-        moveAxiomsToOntology(ontology);
-    }
-
-
     private void moveAxiomsToOntology(OWLOntology ontology) {
         List<OWLOntologyChange> changes = new ArrayList<>();
-        for (OWLFrameSectionRow row : getSelectedRows()) {
+        for (OWLFrameSectionRow<?, ?, ?> row : getSelectedRows()) {
             OWLAxiom ax = row.getAxiom();
             OWLOntology currentOnt = row.getOntology();
             changes.add(new RemoveAxiom(currentOnt, ax));

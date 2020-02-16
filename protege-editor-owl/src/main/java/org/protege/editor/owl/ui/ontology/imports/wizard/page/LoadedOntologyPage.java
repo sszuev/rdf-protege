@@ -12,11 +12,12 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -24,75 +25,81 @@ import java.util.List;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 01-Sep-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class LoadedOntologyPage extends OntologyImportPage {
-	private static final long serialVersionUID = 7719702648603699776L;
+    private static final long serialVersionUID = 7719702648603699776L;
+    public static final String ID = LoadedOntologyPage.class.getName();
 
-	public static final String ID = LoadedOntologyPage.class.getName();
-
-    private JList ontologyList;
-
+    private JList<OWLOntology> ontologyList;
 
     public LoadedOntologyPage(OWLEditorKit owlEditorKit) {
         super(ID, "Import pre-loaded ontology", owlEditorKit);
     }
 
-
     private List<OWLOntology> getOntologies() {
         final OWLModelManager mngr = getOWLModelManager();
 
-        List<OWLOntology> ontologies = new ArrayList<>(mngr.getOntologies());
-
-        ontologies.removeAll(mngr.getOWLOntologyManager().getImportsClosure(mngr.getActiveOntology()));
+        Set<OWLOntology> set = mngr.getOWLOntologyManager()
+                .importsClosure(mngr.getActiveOntology()).collect(Collectors.toSet());
+        List<OWLOntology> res = mngr.getOntologies().stream()
+                .filter(x -> !set.contains(x)).collect(Collectors.toList());
 
         // you cannot import an ontology from the same series
-        ontologies.removeAll(getOntologiesInSeries(mngr.getActiveOntology(), ontologies));
+        res.removeAll(getOntologiesInSeries(mngr.getActiveOntology(), res));
 
-        Collections.sort(ontologies, mngr.getOWLObjectComparator());
-        return ontologies;
+        res.sort(mngr.getOWLObjectComparator());
+        return res;
     }
-
 
     private Set<OWLOntology> getOntologiesInSeries(OWLOntology ontology, Collection<OWLOntology> ontologies) {
-        Set<OWLOntology> ontologiesInSeries = new HashSet<>();
-        if (!ontology.getOntologyID().isAnonymous()){
-            for (OWLOntology ont : ontologies){
-                if (!ont.getOntologyID().isAnonymous() &&
-                    ont.getOntologyID().getOntologyIRI().equals(ontology.getOntologyID().getOntologyIRI())){
-                    ontologiesInSeries.add(ont);
-                }
-            }
-        }
-        return ontologiesInSeries;
+        return getOntologiesInSeries(ontology.getOntologyID(), ontologies);
     }
-    
+
+    private Set<OWLOntology> getOntologiesInSeries(OWLOntologyID other, Collection<OWLOntology> ontologies) {
+        Set<OWLOntology> res = new HashSet<>();
+        if (other.isAnonymous()) {
+            return res;
+        }
+        for (OWLOntology ont : ontologies) {
+            OWLOntologyID id = ont.getOntologyID();
+            if (id.isAnonymous() || !id.getOntologyIRI().equals(other.getOntologyIRI())) {
+                continue;
+            }
+            res.add(ont);
+        }
+        return res;
+    }
+
     @Override
     public void aboutToHidePanel() {
-    	OntologyImportWizard wizard = getWizard();
+        OntologyImportWizard wizard = getWizard();
         wizard.setImportsAreFinal(false);
-    	wizard.clearImports();
-        for (Object o : ontologyList.getSelectedValues()){
-        	OWLOntology ontology = (OWLOntology) o;
-        	OWLOntologyID id = ontology.getOntologyID();
-        	IRI physicalLocation = getOWLModelManager().getOWLOntologyManager().getOntologyDocumentIRI(ontology);
-        	ImportInfo parameter = new ImportInfo();
-        	parameter.setOntologyID(ontology.getOntologyID());
-        	parameter.setPhysicalLocation(physicalLocation.toURI());
-        	parameter.setImportLocation(!id.isAnonymous() ? id.getDefaultDocumentIRI().get() : physicalLocation);
-        	wizard.addImport(parameter);
+        wizard.clearImports();
+        for (OWLOntology ontology : ontologyList.getSelectedValuesList()) {
+            OWLOntologyID id = ontology.getOntologyID();
+            IRI physicalLocation = getOWLModelManager().getOWLOntologyManager().getOntologyDocumentIRI(ontology);
+            IRI iri = id.isAnonymous() ? physicalLocation :
+                    id.getDefaultDocumentIRI().orElseThrow(IllegalStateException::new);
+
+            ImportInfo parameter = new ImportInfo();
+            parameter.setOntologyID(ontology.getOntologyID());
+            parameter.setPhysicalLocation(physicalLocation.toURI());
+            parameter.setImportLocation(iri);
+            wizard.addImport(parameter);
         }
-    	((SelectImportLocationPage) getWizardModel().getPanel(SelectImportLocationPage.ID)).setBackPanelDescriptor(ID);
+        ((SelectImportLocationPage) getWizardModel().getPanel(SelectImportLocationPage.ID)).setBackPanelDescriptor(ID);
         ((ImportConfirmationPage) getWizardModel().getPanel(ImportConfirmationPage.ID)).setBackPanelDescriptor(ID);
-    	super.aboutToHidePanel();
+        super.aboutToHidePanel();
     }
 
-
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         setInstructions("Please select an existing (pre-loaded) ontology that you want to import.");
-        ontologyList = new OWLObjectList(getOWLEditorKit());
+        ontologyList = new OWLObjectList<>(getOWLEditorKit());
         ontologyList.setCellRenderer(new OWLOntologyCellRenderer(getOWLEditorKit()));
         ontologyList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -104,28 +111,26 @@ public class LoadedOntologyPage extends OntologyImportPage {
         parent.add(createCustomizedImportsComponent(), BorderLayout.SOUTH);
     }
 
-
     private void fillList() {
-        ontologyList.setListData(getOntologies().toArray());
+        ontologyList.setListData(getOntologies().toArray(new OWLOntology[0]));
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
         return getWizard().isCustomizeImports() ? SelectImportLocationPage.ID : ImportConfirmationPage.ID;
     }
 
-
+    @Override
     public Object getBackPanelDescriptor() {
         return ImportTypePage.ID;
     }
 
-
+    @Override
     public void displayingPanel() {
         fillList();
         updateState();
         ontologyList.requestFocus();
     }
-
 
     private void updateState() {
         getWizard().setNextFinishButtonEnabled(ontologyList.getSelectedValue() != null);

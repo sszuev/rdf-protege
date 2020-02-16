@@ -1,15 +1,20 @@
 package org.protege.owlapi.inference.orphan;
 
 import org.semanticweb.owlapi.model.*;
-import java.util.*;
 
-public class ProtegeOrphanFinder  {
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+@Deprecated // todo: unused -> delete
+public class ProtegeOrphanFinder {
     private OWLOntologyManager manager;
     private Set<OWLOntology> ontologies;
     private OWLClass root;
     private TerminalElementFinder<OWLClass> rootFinder;
     private ParentClassExtractor parentClassExtractor;
-    
+
     public ProtegeOrphanFinder(OWLOntologyManager manager, Set<OWLOntology> ontologies) {
         this.manager = manager;
         this.ontologies = ontologies;
@@ -21,11 +26,11 @@ public class ProtegeOrphanFinder  {
             return parents;
         });
     }
-    
+
     public void setOntologies(Set<OWLOntology> ontologies) {
         this.ontologies = ontologies;
     }
-    
+
     public void initializeListener() {
         manager.addOntologyChangeListener(changes -> {
             for (OWLOntologyChange change : changes) {
@@ -33,7 +38,7 @@ public class ProtegeOrphanFinder  {
                     updateImplicitRoots(change);
                 }
             }
-         });
+        });
     }
 
     public Set<OWLClass> getParents(OWLClass object) {
@@ -58,11 +63,11 @@ public class ProtegeOrphanFinder  {
         result.addAll(parentClassExtractor.getResult());
         return result;
     }
-    
+
     public Set<OWLClass> getOrphanedClasses() {
         return rootFinder.getTerminalElements();
     }
-    
+
     public void rebuildImplicitRoots() {
         rootFinder.clear();
         for (OWLOntology ont : ontologies) {
@@ -71,7 +76,7 @@ public class ProtegeOrphanFinder  {
         }
         rootFinder.finish();
     }
-    
+
     public void updateImplicitRoots(OWLOntologyChange change) {
         boolean remove = change instanceof RemoveAxiom;
         OWLAxiom axiom = change.getAxiom();
@@ -92,7 +97,7 @@ public class ProtegeOrphanFinder  {
         possibleTerminalElements.removeAll(notInOntologies);
         rootFinder.findTerminalElements(possibleTerminalElements);
     }
-    
+
     public boolean containsReference(OWLClass object) {
         for (OWLOntology ont : ontologies) {
             if (ont.containsClassInSignature(object.getIRI())) {
@@ -101,7 +106,7 @@ public class ProtegeOrphanFinder  {
         }
         return false;
     }
-    
+
     private class ParentClassExtractor implements OWLAxiomVisitor {
 
         private NamedClassExtractor extractor = new NamedClassExtractor();

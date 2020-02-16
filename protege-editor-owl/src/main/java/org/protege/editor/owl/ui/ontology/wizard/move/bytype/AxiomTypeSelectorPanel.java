@@ -86,8 +86,7 @@ public class AxiomTypeSelectorPanel extends MoveAxiomsKitConfigurationPanel {
         typeSelection.addObject(selectedTypes);
     }
 
-    @SuppressWarnings("rawtypes")
-    private Set<AxiomType> getSelection() {
+    private Set<AxiomType<?>> getSelection() {
         return new HashSet<>(typeSelection.getListItems());
     }
 

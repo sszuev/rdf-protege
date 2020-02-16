@@ -12,12 +12,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-/*
- * Copyright (C) 2008, University of Manchester
- *
- *
- */
-
+import java.util.stream.Stream;
 
 /**
  * Author: Matthew Horridge<br> The University Of Manchester<br> Information Management Group<br> Date:
@@ -26,12 +21,10 @@ import java.util.Set;
 public class MoveAxiomsByReferenceKit extends MoveAxiomsKit implements SignatureSelection {
 
     private Set<OWLEntity> selectedEntities;
-
     private SelectSignaturePanel selectSignaturePanel;
-
     private SignatureDependentSelectionPreviewPanel selectPreviewPanel;
 
-
+    @Override
     public List<MoveAxiomsKitConfigurationPanel> getConfigurationPanels() {
         List<MoveAxiomsKitConfigurationPanel> panels = new ArrayList<>();
         panels.add(selectSignaturePanel);
@@ -39,24 +32,27 @@ public class MoveAxiomsByReferenceKit extends MoveAxiomsKit implements Signature
         return panels;
     }
 
-
+    @Override
     public Set<OWLAxiom> getAxioms(Set<OWLOntology> sourceOntologies) {
         return getAxioms(sourceOntologies, selectedEntities);
     }
 
-
+    @Override
     public Set<OWLAxiom> getAxioms(Set<OWLOntology> ontologies, Set<OWLEntity> entities) {
         Set<OWLAxiom> result = new HashSet<>();
         for (OWLEntity e : entities) {
-            for(OWLOntology ont : ontologies) {
-                result.addAll(ont.getReferencingAxioms(e));
-                result.addAll(ont.getAnnotationAssertionAxioms(e.getIRI()));
+            for (OWLOntology ont : ontologies) {
+                forEntity(ont, e).forEach(result::add);
             }
         }
         return result;
     }
 
+    private static Stream<OWLAxiom> forEntity(OWLOntology ont, OWLEntity e) {
+        return Stream.concat(ont.referencingAxioms(e), ont.annotationAssertionAxioms(e.getIRI()));
+    }
 
+    @Override
     public void initialise() throws Exception {
         selectedEntities = new HashSet<>();
         selectSignaturePanel = new SelectSignaturePanel(this);
@@ -64,16 +60,16 @@ public class MoveAxiomsByReferenceKit extends MoveAxiomsKit implements Signature
         selectPreviewPanel = new SignatureDependentSelectionPreviewPanel(this);
     }
 
-
+    @Override
     public void dispose() throws Exception {
     }
 
-
+    @Override
     public Set<OWLEntity> getSignature() {
         return selectedEntities;
     }
 
-
+    @Override
     public void setSignature(Set<OWLEntity> entities) {
         selectedEntities.clear();
         selectedEntities.addAll(entities);

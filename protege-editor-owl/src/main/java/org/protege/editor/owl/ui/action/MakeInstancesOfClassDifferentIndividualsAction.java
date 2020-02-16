@@ -4,9 +4,10 @@ import org.semanticweb.owlapi.model.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
@@ -18,42 +19,38 @@ import static java.util.stream.Collectors.toSet;
 public class MakeInstancesOfClassDifferentIndividualsAction extends SelectedOWLClassAction {
 
     @Override
-    protected void initialiseAction() throws Exception {
-
+    protected void initialiseAction() {
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         OWLClass selectedClass = getOWLClass();
-        if(selectedClass == null) {
+        if (selectedClass == null) {
             return;
         }
 
-        Set<OWLNamedIndividual> individuals = getOWLModelManager().getActiveOntologies().stream()
-                .flatMap(o -> o.getClassAssertionAxioms(selectedClass).stream())
+        Set<OWLIndividual> individuals = getOWLModelManager().getActiveOntologies().stream()
+                .flatMap(o -> o.classAssertionAxioms(selectedClass))
                 .map(OWLClassAssertionAxiom::getIndividual)
                 .filter(i -> !i.isAnonymous())
                 .map(OWLIndividual::asOWLNamedIndividual)
                 .collect(toSet());
 
-
         OWLOntology activeOntology = getOWLModelManager().getActiveOntology();
 
         List<OWLOntologyChange> removeExistingAxiomsChanges = activeOntology
-                .getAxioms(AxiomType.DIFFERENT_INDIVIDUALS)
-                .stream()
-                .filter(ax -> individuals.containsAll(ax.getIndividuals()))
-                .map(ax -> new RemoveAxiom(activeOntology, ax))
+                .axioms(AxiomType.DIFFERENT_INDIVIDUALS)
+                .filter(x -> x.individuals().allMatch(individuals::contains))
+                .map(x -> new RemoveAxiom(activeOntology, x))
                 .collect(toList());
 
         List<OWLOntologyChange> allChanges = new ArrayList<>();
-        if(!removeExistingAxiomsChanges.isEmpty()) {
-            int ret = JOptionPane.showConfirmDialog(
-                    getWorkspace(),
+        if (!removeExistingAxiomsChanges.isEmpty()) {
+            int res = JOptionPane.showConfirmDialog(getWorkspace(),
                     "Do you want to remove existing Different Individuals axioms which assert that\n" +
                             "some instances of the selected class are different?",
                     "Remove existing axioms", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-            if(ret == JOptionPane.YES_OPTION) {
+            if (res == JOptionPane.YES_OPTION) {
                 allChanges.addAll(removeExistingAxiomsChanges);
             }
         }

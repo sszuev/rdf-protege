@@ -4,12 +4,6 @@ import org.protege.editor.owl.OWLEditorKit;
 
 import javax.swing.*;
 import java.awt.*;
-/*
- * Copyright (C) 2008, University of Manchester
- *
- *
- */
-
 
 /**
  * Author: Matthew Horridge<br> The University Of Manchester<br> Information Management Group<br> Date:
@@ -17,16 +11,16 @@ import java.awt.*;
  */
 public class MoveAxiomsWizardKitConfigurationPanel extends AbstractMoveAxiomsWizardPanel {
 
-    private MoveAxiomsKitConfigurationPanel content;
-
-    private Object prevId;
-
-    private Object nextId;
+    private final MoveAxiomsKitConfigurationPanel content;
+    private final Object prevId;
+    private final Object nextId;
 
     private JPanel holder;
 
-    
-    public MoveAxiomsWizardKitConfigurationPanel(Object prevId, Object nextId, MoveAxiomsKitConfigurationPanel content, OWLEditorKit owlEditorKit) {
+    public MoveAxiomsWizardKitConfigurationPanel(Object prevId,
+                                                 Object nextId,
+                                                 MoveAxiomsKitConfigurationPanel content,
+                                                 OWLEditorKit owlEditorKit) {
         super(content.getID(), content.getTitle(), owlEditorKit);
         this.content = content;
         this.prevId = prevId;
@@ -35,31 +29,32 @@ public class MoveAxiomsWizardKitConfigurationPanel extends AbstractMoveAxiomsWiz
         setInstructions(content.getInstructions());
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         parent.setLayout(new BorderLayout());
         parent.add(holder = new JPanel(new BorderLayout()));
     }
 
-
+    @Override
     public void aboutToDisplayPanel() {
         super.aboutToDisplayPanel();
         content.update();
         setComponentTransparency(content);
-
     }
 
-
+    @Override
     public void aboutToHidePanel() {
         super.aboutToHidePanel();
         content.commit();
     }
 
-
+    @Override
     public Object getBackPanelDescriptor() {
         return prevId;
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
         return nextId;
     }

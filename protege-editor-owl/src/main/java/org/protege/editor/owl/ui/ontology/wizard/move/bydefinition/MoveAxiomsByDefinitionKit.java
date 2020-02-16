@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Author: Matthew Horridge<br>
@@ -21,12 +23,10 @@ import java.util.Set;
 public class MoveAxiomsByDefinitionKit extends MoveAxiomsKit implements SignatureSelection {
 
     private Set<OWLEntity> selectedEntities;
-
     private SelectSignaturePanel selectSignaturePanel;
-
     private SignatureDependentSelectionPreviewPanel selectPreviewPanel;
 
-
+    @Override
     public List<MoveAxiomsKitConfigurationPanel> getConfigurationPanels() {
         List<MoveAxiomsKitConfigurationPanel> panels = new ArrayList<>();
         panels.add(selectSignaturePanel);
@@ -34,50 +34,62 @@ public class MoveAxiomsByDefinitionKit extends MoveAxiomsKit implements Signatur
         return panels;
     }
 
-
+    @Override
     public Set<OWLAxiom> getAxioms(Set<OWLOntology> sourceOntologies) {
         return getAxioms(sourceOntologies, selectedEntities);
     }
 
-
+    @Override
     public Set<OWLAxiom> getAxioms(Set<OWLOntology> ontologies, Set<OWLEntity> entities) {
-        Set<OWLAxiom> result = new HashSet<>();
+        Set<OWLAxiom> res = new HashSet<>();
         for (OWLEntity e : entities) {
-            for(final OWLOntology ont : ontologies) {
-                Set<? extends OWLAxiom> axioms = e.accept(new OWLEntityVisitorEx<Set<? extends OWLAxiom>>() {
-                    public Set<? extends OWLAxiom> visit(OWLClass owlClass) {
-                        return ont.getAxioms(owlClass);
-                    }
-
-                    public Set<? extends OWLAxiom> visit(OWLObjectProperty property) {
-                        return ont.getAxioms(property);
-                    }
-
-                    public Set<? extends OWLAxiom> visit(OWLDataProperty dataProperty) {
-                        return ont.getAxioms(dataProperty);
-                    }
-
-                    public Set<? extends OWLAxiom> visit(OWLNamedIndividual individual) {
-                        return ont.getAxioms(individual);
-                    }
-
-                    public Set<? extends OWLAxiom> visit(OWLDatatype owlDatatype) {
-                        return ont.getAxioms(owlDatatype);
-                    }
-
-                    public Set<? extends OWLAxiom> visit(OWLAnnotationProperty property) {
-                        return ont.getAxioms(property);
-                    }
-                });
-                result.addAll(ont.getDeclarationAxioms(e));
-                result.addAll(axioms);
-                result.addAll(ont.getAnnotationAssertionAxioms(e.getIRI()));
+            for (OWLOntology ont : ontologies) {
+                Set<? extends OWLAxiom> axioms = e.accept(streamEntityAxiomVisitor(ont)).collect(Collectors.toSet());
+                ont.declarationAxioms(e).forEach(res::add);
+                res.addAll(axioms);
+                ont.annotationAssertionAxioms(e.getIRI()).forEach(res::add);
             }
         }
-        return result;
+        return res;
     }
 
+    @SuppressWarnings("NullableProblems")
+    private OWLEntityVisitorEx<Stream<? extends OWLAxiom>> streamEntityAxiomVisitor(OWLOntology ont) {
+        return new OWLEntityVisitorEx<Stream<? extends OWLAxiom>>() {
 
+            @Override
+            public Stream<? extends OWLAxiom> visit(OWLClass owlClass) {
+                return ont.axioms(owlClass);
+            }
+
+            @Override
+            public Stream<? extends OWLAxiom> visit(OWLObjectProperty property) {
+                return ont.axioms(property);
+            }
+
+            @Override
+            public Stream<? extends OWLAxiom> visit(OWLDataProperty dataProperty) {
+                return ont.axioms(dataProperty);
+            }
+
+            @Override
+            public Stream<? extends OWLAxiom> visit(OWLNamedIndividual individual) {
+                return ont.axioms(individual);
+            }
+
+            @Override
+            public Stream<? extends OWLAxiom> visit(OWLDatatype owlDatatype) {
+                return ont.axioms(owlDatatype);
+            }
+
+            @Override
+            public Stream<? extends OWLAxiom> visit(OWLAnnotationProperty property) {
+                return ont.axioms(property);
+            }
+        };
+    }
+
+    @Override
     public void initialise() throws Exception {
         selectedEntities = new HashSet<>();
         selectSignaturePanel = new SelectSignaturePanel(this) {
@@ -95,19 +107,19 @@ public class MoveAxiomsByDefinitionKit extends MoveAxiomsKit implements Signatur
         };
     }
 
-
+    @Override
     public void dispose() throws Exception {
     }
 
-
+    @Override
     public Set<OWLEntity> getSignature() {
         return selectedEntities;
     }
 
-
+    @Override
     public void setSignature(Set<OWLEntity> entities) {
         selectedEntities.clear();
         selectedEntities.addAll(entities);
     }
-    
+
 }

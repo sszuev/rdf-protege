@@ -6,8 +6,13 @@ import org.protege.editor.core.editorkit.EditorKit;
 import org.protege.editor.owl.OWLEditorKit;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.OntologyIRIShortFormProvider;
+import org.semanticweb.owlapi.util.PriorityCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -24,15 +29,12 @@ import java.util.List;
  * 18-Oct-2008<br><br>
  */
 public class ManchesterRepository implements OntologyRepository {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ManchesterRepository.class);
 
-    private String repositoryName;
-
-    private URI repositoryLocation;
-
-    private List<RepositoryEntry> entries;
-
-    private OWLOntologyIRIMapper iriMapper;
-
+    private final String repositoryName;
+    private final URI repositoryLocation;
+    private final List<OntologyRepositoryEntry> entries;
+    private final OWLOntologyIRIMapper iriMapper;
 
     public ManchesterRepository(String repositoryName, URI repositoryLocation) {
         this.repositoryName = repositoryName;
@@ -41,73 +43,57 @@ public class ManchesterRepository implements OntologyRepository {
         iriMapper = new RepositoryIRIMapper();
     }
 
-
-    public void initialise() throws Exception {
-    }
-
-
+    @Override
     public String getName() {
         return repositoryName;
     }
 
-
+    @Override
     public String getLocation() {
         return repositoryLocation.toString();
     }
 
-
+    @Override
     public void refresh() {
         fillRepository();
     }
 
-
+    @Override
     public Collection<OntologyRepositoryEntry> getEntries() {
-        List<OntologyRepositoryEntry> ret = new ArrayList<>();
-        ret.addAll(entries);
-        return ret;
+        return Collections.unmodifiableList(entries);
     }
 
-
+    @Override
     public List<Object> getMetaDataKeys() {
         return Collections.emptyList();
     }
 
-
+    @Override
     public void dispose() throws Exception {
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Implementation details
-
-
     private void fillRepository() {
-        try {
-            entries.clear();
-            URI listURI = URI.create(repositoryLocation + "/list");
-            BufferedReader br = new BufferedReader(new InputStreamReader(listURI.toURL().openStream()));
+        entries.clear();
+        URI listURI = URI.create(repositoryLocation + "/list");
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(listURI.toURL().openStream()))) {
             String line;
-            while((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null) {
                 try {
                     entries.add(new RepositoryEntry(new URI(line)));
-                }
-                catch (URISyntaxException e) {
-                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    if (LOGGER.isDebugEnabled())
+                        LOGGER.debug("Can't process line '{}'", line, e);
                 }
             }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            LOGGER.warn("Error while fill repository", e);
         }
     }
 
     private class RepositoryEntry implements OntologyRepositoryEntry {
-
-        private String shortName;
-
-        private URI ontologyURI;
-
-        private URI physicalURI;
+        private final String shortName;
+        private final URI ontologyURI;
+        private final URI physicalURI;
 
         public RepositoryEntry(URI ontologyIRI) {
             this.ontologyURI = ontologyIRI;
@@ -116,49 +102,57 @@ public class ManchesterRepository implements OntologyRepository {
             physicalURI = URI.create(repositoryLocation + "/download?ontology=" + ontologyIRI);
         }
 
-
+        @Override
         public String getOntologyShortName() {
             return shortName;
         }
 
-
+        @Override
         public URI getOntologyURI() {
             return ontologyURI;
         }
 
-
+        @Override
         public URI getPhysicalURI() {
             return physicalURI;
         }
 
-
+        @Override
         public String getEditorKitId() {
             return "org.protege.editor.owl.OWLEditorKitFactory";
         }
 
-
+        @Override
         public String getMetaData(Object key) {
             return null;
         }
 
-
+        @Override
         public void configureEditorKit(EditorKit editorKit) {
-            ((OWLEditorKit) editorKit).getOWLModelManager().getOWLOntologyManager().addIRIMapper(iriMapper);
+            getIRIMapper(editorKit).add(iriMapper);
         }
 
-
+        @Override
         public void restoreEditorKit(EditorKit editorKit) {
-            ((OWLEditorKit) editorKit).getOWLModelManager().getOWLOntologyManager().removeIRIMapper(iriMapper);
+            getIRIMapper(editorKit).remove(iriMapper);
+        }
 
+        private PriorityCollection<OWLOntologyIRIMapper> getIRIMapper(EditorKit kit) {
+            return getManager(kit).getIRIMappers();
+        }
+
+        private OWLOntologyManager getManager(EditorKit kit) {
+            return ((OWLEditorKit) kit).getOWLModelManager().getOWLOntologyManager();
         }
     }
 
 
     private class RepositoryIRIMapper implements OWLOntologyIRIMapper {
 
-        public IRI getDocumentIRI(IRI iri) {
-            for(RepositoryEntry entry : entries) {
-                if(entry.getOntologyURI().equals(iri.toURI())) {
+        @Override
+        public IRI getDocumentIRI(@Nonnull IRI iri) {
+            for (OntologyRepositoryEntry entry : entries) {
+                if (entry.getOntologyURI().equals(iri.toURI())) {
                     return IRI.create(entry.getPhysicalURI());
                 }
             }
