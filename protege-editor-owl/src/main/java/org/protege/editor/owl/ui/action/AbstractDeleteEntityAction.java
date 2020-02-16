@@ -22,8 +22,11 @@ public abstract class AbstractDeleteEntityAction<E extends OWLEntity> extends OW
     private final OWLObjectHierarchyDeleter<E> deleter;
     protected final OWLEntitySetProvider<E> entitySetProvider;
 
-    protected AbstractDeleteEntityAction(String name, Icon icon, OWLEditorKit kit,
-                                         OWLHierarchyProvider<E> hierarchyProvider, OWLEntitySetProvider<E> entitiesProvider) {
+    protected AbstractDeleteEntityAction(String name,
+                                         Icon icon,
+                                         OWLEditorKit kit,
+                                         OWLHierarchyProvider<E> hierarchyProvider,
+                                         OWLEntitySetProvider<E> entitiesProvider) {
         super(name, icon);
         this.entitySetProvider = Objects.requireNonNull(entitiesProvider);
         this.deleter = new OWLObjectHierarchyDeleter<>(kit, hierarchyProvider, entitiesProvider, getPluralDescription());
@@ -47,6 +50,8 @@ public abstract class AbstractDeleteEntityAction<E extends OWLEntity> extends OW
     /**
      * Returns the plural name of a set of entities e.g. classes, properties, individuals.
      * This is used in the UI e.g. "Delete selected classes"
+     *
+     * @return {@code String}
      */
     protected abstract String getPluralDescription();
 }

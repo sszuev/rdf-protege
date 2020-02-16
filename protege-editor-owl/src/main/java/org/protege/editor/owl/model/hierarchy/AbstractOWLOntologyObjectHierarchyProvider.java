@@ -1,71 +1,79 @@
 package org.protege.editor.owl.model.hierarchy;
 
-import org.semanticweb.owlapi.model.OWLObject;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyChangeListener;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-
-/*
- * This is abstract but has no subclasses.  Looks like dead code?  I am not modifying this for thread safety yet.
- */
-
+import java.util.stream.Stream;
 
 /**
- * Author: Matthew Horridge<br>
- * The University Of Manchester<br>
- * Medical Informatics Group<br>
- * Date: 01-Jun-2006<br><br>
-
- * matthew.horridge@cs.man.ac.uk<br>
- * www.cs.man.ac.uk/~horridgm<br><br>
+ * An abstraction for hierarchy provider that has ontologies.
+ *
+ * @param <N> - {@link OWLObject}
  */
-@Deprecated // todo: unused -> delete
-public abstract class AbstractOWLOntologyObjectHierarchyProvider<N extends OWLObject> extends AbstractOWLObjectHierarchyProvider<N> implements OWLOntologyObjectHierarchyProvider<N> {
+public abstract class AbstractOWLOntologyObjectHierarchyProvider<N extends OWLObject>
+        extends AbstractOWLObjectHierarchyProvider<N> implements OWLOntologyObjectHierarchyProvider<N> {
 
-    private Set<OWLOntology> ontologies;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOWLOntologyObjectHierarchyProvider.class);
 
-    private OWLOntologyChangeListener listener;
-
+    private final Collection<OWLOntology> ontologies;
+    private final OWLOntologyChangeListener listener;
 
     protected AbstractOWLOntologyObjectHierarchyProvider(OWLOntologyManager manager) {
         super(manager);
-        ontologies = new HashSet<>();
-        listener = changes -> handleOntologyChanges(changes);
-        attachListeners();
-    }
-
-
-    public Collection<OWLOntology> getOntologies() {
-        return Collections.unmodifiableSet(ontologies);
-    }
-
-
-    private void attachListeners() {
+        ontologies = createOntologyCollection();
+        listener = createOntologyChangeListener();
         getManager().addOntologyChangeListener(listener);
     }
 
-
-    private void detachListeners() {
-        getManager().removeOntologyChangeListener(listener);
+    protected Collection<OWLOntology> createOntologyCollection() {
+        return new HashSet<>();
     }
 
-//    public void setOntologies(Set<OWLOntology> onts) {
-//        detachListeners();
-//        ontologies.clear();
-//        this.ontologies.addAll(onts);
-//
-//        attachListeners();
-//        fireHierarchyChanged();
-//    }
+    @SuppressWarnings("NullableProblems")
+    protected OWLOntologyChangeListener createOntologyChangeListener() {
+        return new OWLOntologyChangeListener() {
+            @Override
+            public String toString() {
+                return "OntologyChangeListenerFor{" + AbstractOWLOntologyObjectHierarchyProvider.this + "}";
+            }
 
+            @Override
+            public void ontologiesChanged(List<? extends OWLOntologyChange> changes) {
+                try {
+                    AbstractOWLOntologyObjectHierarchyProvider.this.handleChanges(changes);
+                } catch (Exception e) {
+                    LOGGER.error("Can't handle changes {}: '{}'", changes, e.getMessage(), e);
+                }
+            }
+        };
+    }
+
+    @Override
+    public void setOntologies(Set<OWLOntology> ontologies) {
+        this.ontologies.clear();
+        this.ontologies.addAll(ontologies);
+        rebuild();
+    }
+
+    protected void rebuild() {
+        fireHierarchyChanged();
+    }
+
+    public Stream<OWLOntology> ontologies() {
+        return ontologies.stream();
+    }
+
+    protected boolean contains(OWLOntology ont) {
+        return ontologies.contains(ont);
+    }
 
     public void dispose() {
         super.dispose();
-        detachListeners();
+        getManager().removeOntologyChangeListener(listener);
     }
 }

@@ -30,7 +30,7 @@ public abstract class AbstractOWLObjectHierarchyProvider<N> implements OWLHierar
      */
     private final List<HierarchyProviderListener<N>> listeners;
     private volatile boolean fireEvents;
-    private OWLOntologyManager manager;
+    private final OWLOntologyManager manager;
 
     private Predicate<N> filter = n -> true;
 

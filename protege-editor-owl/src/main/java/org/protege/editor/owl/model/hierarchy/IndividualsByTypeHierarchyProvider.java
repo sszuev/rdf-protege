@@ -2,9 +2,9 @@ package org.protege.editor.owl.model.hierarchy;
 
 import org.semanticweb.owlapi.model.*;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,41 +16,30 @@ import java.util.stream.Stream;
  * Bio-Health Informatics Group<br>
  * Date: 24-May-2007<br><br>
  */
-public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarchyProvider<OWLObject> {
+public class IndividualsByTypeHierarchyProvider extends AbstractOWLOntologyObjectHierarchyProvider<OWLObject> {
 
     private final Set<OWLNamedIndividual> untypedIndividuals = new HashSet<>();
     private final Set<OWLClass> classes = new HashSet<>();
-    private final Set<OWLOntology> ontologies = new HashSet<>();
-    private final OWLOntologyChangeListener ontChangeListener = this::handleOntologyChanges;
 
     public IndividualsByTypeHierarchyProvider(OWLOntologyManager owlOntologyManager) {
         super(owlOntologyManager);
-        owlOntologyManager.addOntologyChangeListener(ontChangeListener);
     }
 
     @Override
-    public void setOntologies(Set<OWLOntology> ontologies) {
-        this.ontologies.clear();
-        this.ontologies.addAll(ontologies);
-        rebuild();
-    }
-
-    private void rebuild() {
+    public void rebuild() {
         classes.clear();
         untypedIndividuals.clear();
-        for (OWLOntology ont : ontologies) {
-            ont.individualsInSignature().forEach(ind -> {
-                if (ont.classAssertionAxioms(ind)
-                        .map(OWLClassAssertionAxiom::getClassExpression)
-                        .filter(x -> !x.isAnonymous())
-                        .map(AsOWLClass::asOWLClass)
-                        .peek(classes::add)
-                        .count() == 0) {
-                    untypedIndividuals.add(ind);
-                }
-            });
-        }
-        fireHierarchyChanged();
+        ontologies().forEach(ont -> ont.individualsInSignature().forEach(ind -> {
+            if (ont.classAssertionAxioms(ind)
+                    .map(OWLClassAssertionAxiom::getClassExpression)
+                    .filter(x -> !x.isAnonymous())
+                    .map(AsOWLClass::asOWLClass)
+                    .peek(classes::add)
+                    .count() == 0) {
+                untypedIndividuals.add(ind);
+            }
+        }));
+        super.rebuild();
     }
 
     @Override
@@ -71,7 +60,7 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
             return Stream.empty();
         }
         OWLClass cls = (OWLClass) object;
-        return ontologies.stream()
+        return ontologies()
                 .flatMap(ont -> ont.classAssertionAxioms(cls))
                 .filter(x -> !x.getIndividual().isAnonymous())
                 .map(x -> x);
@@ -83,7 +72,7 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
             return Collections.emptySet();
         }
         OWLIndividual ind = (OWLNamedIndividual) object;
-        return ontologies.stream()
+        return ontologies()
                 .flatMap(ont -> ont.classAssertionAxioms(ind))
                 .map(OWLClassAssertionAxiom::getClassExpression)
                 .filter(x -> !x.isAnonymous())
@@ -101,17 +90,12 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
     }
 
     @Override
-    public void dispose() {
-        getManager().removeOntologyChangeListener(ontChangeListener);
-        super.dispose();
-    }
-
-    private void handleOntologyChanges(List<? extends OWLOntologyChange> changes) {
+    public void handleChanges(Collection<? extends OWLOntologyChange> changes) {
         TypesChangeVisitor changeVisitor = new TypesChangeVisitor();
-        for (OWLOntologyChange chg : changes){
+        for (OWLOntologyChange chg : changes) {
             chg.accept(changeVisitor);
         }
-        for (OWLObject node : changeVisitor.getNodes()){
+        for (OWLObject node : changeVisitor.getNodes()) {
             fireNodeChanged(node);
         }
     }
@@ -122,10 +106,8 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
     @SuppressWarnings("NullableProblems")
     class TypesChangeVisitor implements OWLOntologyChangeVisitor {
 
-        private Set<OWLObject> changedNodes = new HashSet<>();
-
-        Set<OWLNamedIndividual> checkIndividuals = new HashSet<>();
-
+        private final Set<OWLObject> changedNodes = new HashSet<>();
+        private final Set<OWLNamedIndividual> checkIndividuals = new HashSet<>();
         private final OWLAxiomVisitor addAxiomVisitor = new OWLAxiomVisitor() {
             @Override
             public void visit(OWLClassAssertionAxiom ax) {
@@ -157,7 +139,7 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
 
         @Override
         public void visit(AddAxiom addAxiom) {
-            if (!ontologies.contains(addAxiom.getOntology())) {
+            if (!contains(addAxiom.getOntology())) {
                 return;
             }
             handleAxiomChange(addAxiom);
@@ -166,7 +148,7 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
 
         @Override
         public void visit(RemoveAxiom removeAxiom) {
-            if (!ontologies.contains(removeAxiom.getOntology())) {
+            if (!contains(removeAxiom.getOntology())) {
                 return;
             }
             handleAxiomChange(removeAxiom);
@@ -203,21 +185,11 @@ public class IndividualsByTypeHierarchyProvider extends AbstractOWLObjectHierarc
         }
 
         private boolean isTyped(OWLNamedIndividual ind) {
-            for (OWLOntology ont : ontologies) {
-                if (ont.classAssertionAxioms(ind).findFirst().isPresent()) {
-                    return true;
-                }
-            }
-            return false;
+            return ontologies().anyMatch(ont -> ont.classAssertionAxioms(ind).findFirst().isPresent());
         }
 
         private boolean isReferenced(OWLNamedIndividual ind) {
-            for (OWLOntology ont : ontologies){
-                if (ont.containsIndividualInSignature(ind.getIRI())){
-                    return true;
-                }
-            }
-            return false;
+            return ontologies().anyMatch(ont -> ont.containsIndividualInSignature(ind.getIRI()));
         }
     }
 }

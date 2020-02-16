@@ -1,7 +1,6 @@
 package org.protege.editor.owl.ui.action;
 
 import org.protege.editor.owl.OWLEditorKit;
-import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.renderer.DeleteEntityIcon;
 import org.protege.editor.owl.ui.renderer.OWLDataPropertyIcon;
 import org.protege.editor.owl.ui.renderer.OWLEntityIcon;
@@ -15,6 +14,7 @@ import org.semanticweb.owlapi.util.OWLEntitySetProvider;
  * Bio-Health Informatics Group<br>
  * Date: 20-Apr-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class DeleteDataPropertyAction extends AbstractDeleteEntityAction<OWLDataProperty> {
 
 

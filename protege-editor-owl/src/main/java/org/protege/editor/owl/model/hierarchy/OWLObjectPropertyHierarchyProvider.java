@@ -3,8 +3,7 @@ package org.protege.editor.owl.model.hierarchy;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.search.EntitySearcher;
 
-import java.util.List;
-import java.util.Set;
+import java.util.Collection;
 import java.util.stream.Stream;
 
 
@@ -22,7 +21,7 @@ public class OWLObjectPropertyHierarchyProvider
     }
 
     @Override
-    protected Stream<OWLObjectProperty> propertiesReferencedInChange(List<? extends OWLOntologyChange> changes) {
+    protected Stream<OWLObjectProperty> propertiesReferencedInChange(Collection<? extends OWLOntologyChange> changes) {
         return changes.stream()
                 .filter(OWLOntologyChange::isAxiomChange)
                 .flatMap(HasSignature::signature)
@@ -46,14 +45,14 @@ public class OWLObjectPropertyHierarchyProvider
     }
 
     @Override
-    protected Stream<OWLObjectProperty> superProperties(OWLObjectProperty subProperty, Set<OWLOntology> ontologies) {
-        return EntitySearcher.getSuperProperties(subProperty, ontologies.stream())
+    protected Stream<OWLObjectProperty> superProperties(OWLObjectProperty subProperty) {
+        return EntitySearcher.getSuperProperties(subProperty, ontologies())
                 .filter(p -> !p.isAnonymous());
     }
 
     @Override
-    protected Stream<OWLObjectProperty> subProperties(OWLObjectProperty superProp, Set<OWLOntology> ontologies) {
-        return ontologies.stream()
+    protected Stream<OWLObjectProperty> subProperties(OWLObjectProperty superProp) {
+        return ontologies()
                 .flatMap(x -> x.objectSubPropertyAxiomsForSuperProperty(superProp))
                 .map(OWLSubPropertyAxiom::getSubProperty)
                 .filter(p -> !p.isAnonymous())

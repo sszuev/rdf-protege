@@ -3,6 +3,7 @@ package org.protege.editor.owl.ui.view.annotationproperty;
 import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
+import org.protege.editor.owl.model.selection.OWLSelectionModel;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.action.AbstractDeleteEntityAction;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
@@ -11,15 +12,13 @@ import org.protege.editor.owl.ui.view.AbstractOWLEntityHierarchyViewComponent;
 import org.protege.editor.owl.ui.view.CreateNewChildTarget;
 import org.protege.editor.owl.ui.view.CreateNewSiblingTarget;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.util.OWLEntitySetProvider;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Author: drummond<br>
@@ -61,7 +60,21 @@ public class OWLAnnotationPropertyHierarchyViewComponent
             }
         }, "A", "B");
 
-        addAction(new DeleteAnnotationPropertyAction(), "B", "A");
+        addAction(new AbstractDeleteEntityAction<OWLAnnotationProperty>("Delete selected properties",
+                getDeleteIcon(),
+                getOWLEditorKit(),
+                getHierarchyProvider(),
+                () -> getSelectedEntities().stream()) {
+
+            @Override
+            protected String getPluralDescription() {
+                return "properties";
+            }
+        }, "B", "A");
+    }
+
+    private Icon getDeleteIcon() {
+        return new DeleteEntityIcon(new OWLAnnotationPropertyIcon(OWLEntityIcon.FillType.HOLLOW));
     }
 
     @Override
@@ -76,7 +89,10 @@ public class OWLAnnotationPropertyHierarchyViewComponent
 
     @Override
     protected OWLObject updateView() {
-        return updateView(getOWLWorkspace().getOWLSelectionModel().getLastSelectedAnnotationProperty());
+        OWLSelectionModel sm = getOWLWorkspace().getOWLSelectionModel();
+        OWLAnnotationProperty res = sm.getLastSelectedAnnotationProperty();
+        updateView(res);
+        return res;
     }
 
     @Override
@@ -135,13 +151,6 @@ public class OWLAnnotationPropertyHierarchyViewComponent
         setGlobalSelection(creationSet.getOWLEntity());
     }
 
-    private class InternalOWLEntitySetProvider implements OWLEntitySetProvider<OWLAnnotationProperty> {
-        @Override
-        public Stream<OWLAnnotationProperty> entities() {
-            return new HashSet<>(getTree().getSelectedObjects()).stream();
-        }
-    }
-
     @Override
     public Component asComponent() {
         return this;
@@ -150,28 +159,5 @@ public class OWLAnnotationPropertyHierarchyViewComponent
     @Override
     public Optional<OWLObject> getSelection() {
         return Optional.ofNullable(getSelectedEntity());
-    }
-
-    public class DeleteAnnotationPropertyAction extends AbstractDeleteEntityAction<OWLAnnotationProperty> {
-
-        /*
-         * WARNING... Using an anonymous class instead of the InternalOWLEntitySetProvider class
-         * below activates the java compiler bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6348760.
-         * This bug has been fixed in Java 6 and in several Java 5 IDE compilers but it has not - as far
-         * as I can tell - been fixed by apple's Java 5 compiler or the Sun Java 5 compilers.  At svn
-         * revision 14332, ant clean followed by ant equinox or ant install (depending on whether you are using
-         * the top level build file) will result in a java.lang.AssertionError.
-         * It took a fair bit of effort to track this down.
-         */
-        public DeleteAnnotationPropertyAction() {
-            super("Delete selected properties",
-                    new DeleteEntityIcon(new OWLAnnotationPropertyIcon(OWLEntityIcon.FillType.HOLLOW)),
-                    getOWLEditorKit(), getHierarchyProvider(), new InternalOWLEntitySetProvider());
-        }
-
-        @Override
-        protected String getPluralDescription() {
-            return "properties";
-        }
     }
 }
