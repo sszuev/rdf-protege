@@ -8,8 +8,6 @@ import org.semanticweb.owlapi.model.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.HashSet;
@@ -149,7 +147,7 @@ public class OWLEntitySelectorPanel extends JPanel implements OWLObjectSelector<
 
     public void transmitSelectionFromList() {
         if (isMultiSelect()){
-            OWLEntity ent = entityList.getSelectedObject();
+            OWLEntity ent = entityList.getSelectedValue();
             setTreeSelection(ent);
         }
     }
@@ -157,7 +155,7 @@ public class OWLEntitySelectorPanel extends JPanel implements OWLObjectSelector<
 
     public OWLEntity getSelectedObject() {
         if (isMultiSelect()){
-            return entityList.getSelectedObject();
+            return entityList.getSelectedValue();
         }
         else{
             final Set<? extends OWLEntity> sel = getCurrentSelection();

@@ -9,11 +9,11 @@ import org.protege.editor.core.ui.wizard.AbstractWizardPanel;
 import org.protege.editor.core.ui.wizard.Wizard;
 import org.protege.editor.owl.ProtegeOWL;
 import org.protege.editor.owl.ui.action.OntologyFormatPage;
+import org.semanticweb.owlapi.model.IRI;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -31,61 +31,60 @@ import java.util.Set;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 01-Sep-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class PhysicalLocationPanel extends AbstractWizardPanel {
-	private static final long serialVersionUID = 6938908942192087326L;
+    private static final long serialVersionUID = 6938908942192087326L;
 
-	public static final String ID = PhysicalLocationPanel.class.getName();
-
+    public static final String ID = PhysicalLocationPanel.class.getName();
     public static final String DEFAULT_LOCAL_BASE_KEY = "DEFAULT_LOCAL_BASE_KEY";
-
     public static final String RECENT_LOCATIONS_KEY = "RECENT_LOCATIONS_KEY";
 
     private JTextField locationField;
-
     private File locationBase;
+    private JList<File> recentLocations;
 
-    private JList recentLocations;
-
-    private ListSelectionListener listSelectionListener = e -> {
+    private final ListSelectionListener listSelectionListener = e -> {
         if (!e.getValueIsAdjusting()) {
             setBaseFromRecentLocationList();
         }
     };
 
-
     public PhysicalLocationPanel(EditorKit editorKit) {
         super(ID, "Physical Location", editorKit);
         Preferences prefs = PreferencesManager.getInstance().getApplicationPreferences(ProtegeOWL.ID);
         String path = prefs.getString(DEFAULT_LOCAL_BASE_KEY,
-                                      new File(new File(System.getProperty("user.home")), "ontologies").toString());
+                new File(new File(System.getProperty("user.home")), "ontologies").toString());
         locationBase = new File(path);
     }
 
-
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         parent.setLayout(new BorderLayout(10, 10));
-        setInstructions("Please specify the file path that points to the location where your ontology will be saved to." + " (Click on a location in the \'recent locations\' list to automatically select that location).");
+        setInstructions("Please specify the file path that points " +
+                "to the location where your ontology will be saved to. " +
+                "(Click on a location in the 'recent locations' list to automatically select that location).");
         JPanel locationPanel = new JPanel(new BorderLayout(3, 3));
 
         locationField = new JTextField();
-        locationField.getDocument().addDocumentListener(new DocumentListener(){
+        locationField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void insertUpdate(DocumentEvent event) {
                 updateState();
             }
 
+            @Override
             public void removeUpdate(DocumentEvent event) {
                 updateState();
             }
 
+            @Override
             public void changedUpdate(DocumentEvent event) {
             }
         });
-
-
 
         JPanel locationFieldPanel = new JPanel(new BorderLayout(3, 3));
         locationFieldPanel.add(locationField, BorderLayout.NORTH);
@@ -105,7 +104,7 @@ public class PhysicalLocationPanel extends AbstractWizardPanel {
         parent.add(holder, BorderLayout.SOUTH);
         parent.add(locationPanel, BorderLayout.NORTH);
 
-        recentLocations = new JList(new DefaultListModel());
+        recentLocations = new JList<>(new DefaultListModel<>());
         JPanel recentLocationsPanel = new JPanel(new BorderLayout(3, 3));
         recentLocationsPanel.add(new JLabel("RecentLocations"), BorderLayout.NORTH);
         recentLocationsPanel.add(ComponentFactory.createScrollPane(recentLocations));
@@ -113,15 +112,14 @@ public class PhysicalLocationPanel extends AbstractWizardPanel {
         loadRecentLocations();
     }
 
-
     private void setBaseFromRecentLocationList() {
-        File file = (File) recentLocations.getSelectedValue();
-        if (file != null) {
-            locationBase = file;
-            locationField.setText(new File(file, getOntologyLocalName()).toString());
+        File file = recentLocations.getSelectedValue();
+        if (file == null) {
+            return;
         }
+        locationBase = file;
+        locationField.setText(new File(file, getOntologyLocalName()).toString());
     }
-
 
     private void browseForLocation() {
         Set<String> exts = new HashSet<>();
@@ -132,7 +130,6 @@ public class PhysicalLocationPanel extends AbstractWizardPanel {
             locationField.setText(file.toString());
         }
     }
-
 
     private void updateLocationField() {
         String name = getOntologyLocalName();
@@ -150,28 +147,25 @@ public class PhysicalLocationPanel extends AbstractWizardPanel {
         f = new File(f, name);
         try {
             locationField.setText(f.getCanonicalPath());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
     private String getOntologyLocalName() {
         Wizard wizard = getWizard();
-        OntologyIDPanel IDPanel = (OntologyIDPanel) wizard.getModel().getPanel(OntologyIDPanel.ID);
+        OntologyIDPanel id = (OntologyIDPanel) wizard.getModel().getPanel(OntologyIDPanel.ID);
         String uriString = "";
-        if (IDPanel != null) {
+        if (id != null) {
             // @@TODO handle anonymous ontologies
-            uriString = IDPanel.getOntologyID().getOntologyIRI().get().toString();
+            uriString = id.getOntologyID().getOntologyIRI().map(IRI::getIRIString).orElseThrow(IllegalStateException::new);
         }
         int lastSlashIndex = uriString.lastIndexOf("/");
         if (lastSlashIndex == -1) {
             return uriString;
         }
-        return uriString.substring(lastSlashIndex + 1, uriString.length());
+        return uriString.substring(lastSlashIndex + 1);
     }
-
 
     public void displayingPanel() {
         updateLocationField();
@@ -191,15 +185,14 @@ public class PhysicalLocationPanel extends AbstractWizardPanel {
         Preferences prefs = PreferencesManager.getInstance().getApplicationPreferences(ProtegeOWL.ID);
         List<String> list = new ArrayList<>();
         list = prefs.getStringList(RECENT_LOCATIONS_KEY, list);
-        DefaultListModel model = new DefaultListModel();
+        DefaultListModel<File> model = new DefaultListModel<>();
         for (String s : list) {
             try {
                 File file = new File(URI.create(s));
                 if (file.exists()) {
                     model.add(0, file);
                 }
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                 // this is not important enough to warrant any action.
             }
         }
@@ -211,7 +204,7 @@ public class PhysicalLocationPanel extends AbstractWizardPanel {
     public void storeRecentLocations() {
         Preferences prefs = PreferencesManager.getInstance().getApplicationPreferences(ProtegeOWL.ID);
         List<String> list = new ArrayList<>();
-        DefaultListModel model = ((DefaultListModel) recentLocations.getModel());
+        DefaultListModel<File> model = ((DefaultListModel<File>) recentLocations.getModel());
         // Add in current file
         if (getLocationURL() != null) {
             File file = new File(getLocationURL()).getParentFile();
@@ -232,46 +225,42 @@ public class PhysicalLocationPanel extends AbstractWizardPanel {
         prefs.putStringList(RECENT_LOCATIONS_KEY, list);
     }
 
-
     protected void setDefaultLocalBase() {
         File folder = UIUtil.chooseFolder(this, "Please select a folder");
-        if (folder != null) {
-            locationBase = folder;
-            Preferences prefs = PreferencesManager.getInstance().getApplicationPreferences(ProtegeOWL.ID);
-            prefs.putString(DEFAULT_LOCAL_BASE_KEY, locationBase.toString());
-            updateLocationField();
+        if (folder == null) {
+            return;
         }
+        locationBase = folder;
+        Preferences prefs = PreferencesManager.getInstance().getApplicationPreferences(ProtegeOWL.ID);
+        prefs.putString(DEFAULT_LOCAL_BASE_KEY, locationBase.toString());
+        updateLocationField();
     }
-
 
     public URI getLocationURL() {
         File f = new File(locationField.getText());
         return f.toURI();
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
         return OntologyFormatPage.ID;
     }
 
-
+    @Override
     public Object getBackPanelDescriptor() {
         return OntologyIDPanel.ID;
     }
 
-    
+    @Override
     public void aboutToDisplayPanel() {
         updateState();
     }
-
 
     private void updateState() {
         getWizard().setNextFinishButtonEnabled(isValidLocation());
     }
 
-
     private boolean isValidLocation() {
-        File f = new File(locationField.getText());
-        return f.getName() != null;
+        return locationField.getText() != null;
     }
 }

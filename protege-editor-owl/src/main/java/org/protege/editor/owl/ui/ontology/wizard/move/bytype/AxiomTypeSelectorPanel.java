@@ -26,19 +26,18 @@ import java.util.Set;
 public class AxiomTypeSelectorPanel extends MoveAxiomsKitConfigurationPanel {
 
     private final MoveAxiomsByTypeKit kit;
-    private MList typeSource;
+    private MList<Object> typeSource;
     private RemovableObjectList<AxiomType<?>> typeSelection;
 
     public AxiomTypeSelectorPanel(MoveAxiomsByTypeKit kit) {
         this.kit = kit;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialise() {
         setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-        typeSource = new MList();
+        typeSource = new MList<>();
         List<Object> data = createTypesByTypeList();
 
         typeSource.setListData(data.toArray());

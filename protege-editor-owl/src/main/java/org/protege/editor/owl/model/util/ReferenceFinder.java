@@ -3,7 +3,6 @@ package org.protege.editor.owl.model.util;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.model.parameters.Imports;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,71 +28,61 @@ public class ReferenceFinder {
      * values that may be IRIs, and ontology annotation have values that may be IRIs, the reference set includes these
      * axioms where the IRI is the IRI of one or more of the specified entities.
      */
-    public ReferenceSet getReferenceSet(
-            Collection<? extends OWLEntity> entities,
-            OWLOntology ontology) {
-
-
+    public ReferenceSet getReferenceSet(Collection<? extends OWLEntity> entities, OWLOntology ontology) {
         ImmutableSet.Builder<OWLAxiom> axiomSetBuilder = ImmutableSet.builder();
-
         ImmutableSet.Builder<OWLAnnotation> ontologyAnnotationSetBuilder = ImmutableSet.builder();
 
-
-        Set<IRI> entityIRIs = new HashSet<>(entities.size());
-        for (OWLEntity entity : entities) {
-            Set<OWLAxiom> refs = ontology.getReferencingAxioms(entity, Imports.EXCLUDED);
-            axiomSetBuilder.addAll(refs);
-            entityIRIs.add(entity.getIRI());
-        }
-
-        // Optimisation for the case where there is just one entity.
-        if(entityIRIs.size() == 1) {
-            entityIRIs = Collections.singleton(entityIRIs.iterator().next());
-        }
-
-        for (OWLAnnotationAssertionAxiom axiom : ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
+        Collection<IRI> entityIRIs = collectIRIs(entities, ontology, axiomSetBuilder);
+        ontology.axioms(AxiomType.ANNOTATION_ASSERTION).forEach(axiom -> {
             OWLAnnotationSubject subject = axiom.getSubject();
             if (subject instanceof IRI && entityIRIs.contains(subject)) {
                 axiomSetBuilder.add(axiom);
+                return;
             }
-            else {
-                OWLAnnotationValue value = axiom.getValue();
-                if (value instanceof IRI && entityIRIs.contains(value)) {
-                    axiomSetBuilder.add(axiom);
-                }
+            OWLAnnotationValue value = axiom.getValue();
+            if (value instanceof IRI && entityIRIs.contains(value)) {
+                axiomSetBuilder.add(axiom);
             }
-        }
+        });
 
-        for (OWLAnnotation annotation : ontology.getAnnotations()) {
+        ontology.annotations().forEach(annotation -> {
             OWLAnnotationValue value = annotation.getValue();
             if (value instanceof IRI && entityIRIs.contains(value)) {
                 ontologyAnnotationSetBuilder.add(annotation);
+                return;
             }
-            else {
-                if (entities.contains(annotation.getProperty())) {
-                    ontologyAnnotationSetBuilder.add(annotation);
-                }
+            if (entities.contains(annotation.getProperty())) {
+                ontologyAnnotationSetBuilder.add(annotation);
             }
-        }
+        });
 
-        return new ReferenceSet(
-                ontology,
-                axiomSetBuilder.build(),
-                ontologyAnnotationSetBuilder.build()
-        );
-
+        return new ReferenceSet(ontology, axiomSetBuilder.build(), ontologyAnnotationSetBuilder.build());
     }
 
+    private Collection<IRI> collectIRIs(Collection<? extends OWLEntity> entities,
+                                        OWLOntology ontology,
+                                        ImmutableSet.Builder<OWLAxiom> axiomSetBuilder) {
+        // @ssz: original logic is preserved
+        Set<IRI> res = new HashSet<>(entities.size());
+        for (OWLEntity entity : entities) {
+            ontology.referencingAxioms(entity).forEach(axiomSetBuilder::add);
+            res.add(entity.getIRI());
+        }
+        // Optimisation for the case where there is just one entity.
+        if (res.size() == 1) {
+            res = Collections.singleton(res.iterator().next());
+        }
+        return res;
+    }
 
     public static final class ReferenceSet {
-
         private final OWLOntology ontology;
-
         private final ImmutableCollection<OWLAxiom> referencingAxioms;
-
         private final ImmutableCollection<OWLAnnotation> referencingOntologyAnnotations;
 
-        public ReferenceSet(OWLOntology ontology, ImmutableCollection<OWLAxiom> referencingAxioms, ImmutableCollection<OWLAnnotation> referencingOntologyAnnotations) {
+        public ReferenceSet(OWLOntology ontology,
+                            ImmutableCollection<OWLAxiom> referencingAxioms,
+                            ImmutableCollection<OWLAnnotation> referencingOntologyAnnotations) {
             this.ontology = checkNotNull(ontology);
             this.referencingAxioms = checkNotNull(referencingAxioms);
             this.referencingOntologyAnnotations = checkNotNull(referencingOntologyAnnotations);

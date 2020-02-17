@@ -6,9 +6,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.model.parameters.Imports;
 
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -19,39 +19,37 @@ import static org.mockito.Mockito.when;
  * Matthew Horridge
  * Stanford Center for Biomedical Informatics Research
  * 20 May 16
+ * todo: using mockito here was brilliant idea.
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ReferenceFinder_TestCase {
 
     private ReferenceFinder referenceFinder;
-
     @Mock
     private OWLOntology ontology;
-
     @Mock
     private OWLAnnotationProperty entity;
-
     @Mock
     private OWLAxiom axiom;
-
     @Mock
     private OWLAnnotationAssertionAxiom annotationAssertionAxiom;
-
     @Mock
     private IRI iri;
-
     @Mock
     private OWLAnnotation ontologyAnnotation;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         referenceFinder = new ReferenceFinder();
         when(entity.getIRI()).thenReturn(iri);
     }
 
     @Test
     public void shouldRetrieveNonAnnotationAssertionAxiom() {
-        when(ontology.getReferencingAxioms(entity, Imports.EXCLUDED)).thenReturn(Collections.singleton(axiom));
+        when(ontology.referencingAxioms(entity)).thenReturn(Stream.of(axiom));
+        when(ontology.annotations()).thenReturn(Stream.empty());
+        when(ontology.axioms(AxiomType.ANNOTATION_ASSERTION)).thenReturn(Stream.empty());
+
 
         ReferenceFinder.ReferenceSet referenceSet = getReferenceSet();
         assertThat(referenceSet.getReferencingAxioms(), hasItem(axiom));
@@ -59,7 +57,10 @@ public class ReferenceFinder_TestCase {
 
     @Test
     public void shouldRetrieveAnnotationAssertionAxiomBySubjectReference() {
-        when(ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)).thenReturn(Collections.singleton(annotationAssertionAxiom));
+        when(ontology.axioms(AxiomType.ANNOTATION_ASSERTION)).thenReturn(Stream.of(annotationAssertionAxiom));
+        when(ontology.referencingAxioms(entity)).thenReturn(Stream.empty());
+        when(ontology.annotations()).thenReturn(Stream.empty());
+
         when(annotationAssertionAxiom.getSubject()).thenReturn(iri);
         when(annotationAssertionAxiom.getValue()).thenReturn(mock(IRI.class));
 
@@ -69,7 +70,10 @@ public class ReferenceFinder_TestCase {
 
     @Test
     public void shouldRetrieveAnnotationAssertionAxiomByObjectReference() {
-        when(ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)).thenReturn(Collections.singleton(annotationAssertionAxiom));
+        when(ontology.axioms(AxiomType.ANNOTATION_ASSERTION)).thenReturn(Stream.of(annotationAssertionAxiom));
+        when(ontology.referencingAxioms(entity)).thenReturn(Stream.empty());
+        when(ontology.annotations()).thenReturn(Stream.empty());
+
         when(annotationAssertionAxiom.getValue()).thenReturn(iri);
         when(annotationAssertionAxiom.getSubject()).thenReturn(mock(IRI.class));
 
@@ -79,7 +83,10 @@ public class ReferenceFinder_TestCase {
 
     @Test
     public void shouldRetrieveOntologyAnnotationsByValue() {
-        when(ontology.getAnnotations()).thenReturn(Collections.singleton(ontologyAnnotation));
+        when(ontology.annotations()).thenReturn(Stream.of(ontologyAnnotation));
+        when(ontology.referencingAxioms(entity)).thenReturn(Stream.empty());
+        when(ontology.axioms(AxiomType.ANNOTATION_ASSERTION)).thenReturn(Stream.empty());
+
         when(ontologyAnnotation.getProperty()).thenReturn(mock(OWLAnnotationProperty.class));
         when(ontologyAnnotation.getValue()).thenReturn(iri);
 
@@ -89,7 +96,10 @@ public class ReferenceFinder_TestCase {
 
     @Test
     public void shouldRetrieveOntologyAnnotationsByProperty() {
-        when(ontology.getAnnotations()).thenReturn(Collections.singleton(ontologyAnnotation));
+        when(ontology.annotations()).thenReturn(Stream.of(ontologyAnnotation));
+        when(ontology.referencingAxioms(entity)).thenReturn(Stream.empty());
+        when(ontology.axioms(AxiomType.ANNOTATION_ASSERTION)).thenReturn(Stream.empty());
+
         when(ontologyAnnotation.getProperty()).thenReturn(entity);
         when(ontologyAnnotation.getValue()).thenReturn(mock(IRI.class));
 

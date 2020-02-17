@@ -15,23 +15,22 @@ import java.awt.*;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 17-Jul-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class PickRootClassPanel extends AbstractOWLWizardPanel {
-	private static final long serialVersionUID = 3010893357248469815L;
-
-	public static final String ID = "PickRootClassPanel";
+    private static final long serialVersionUID = 3010893357248469815L;
+    public static final String ID = "PickRootClassPanel";
 
     private OWLModelManagerTree<OWLClass> tree;
-
 
     public PickRootClassPanel(OWLEditorKit owlEditorKit) {
         super(ID, "Pick root class", owlEditorKit);
     }
 
-
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         parent.setLayout(new BorderLayout());
         setInstructions("Please select the root class");
@@ -41,27 +40,20 @@ public class PickRootClassPanel extends AbstractOWLWizardPanel {
         parent.add(ComponentFactory.createScrollPane(tree));
     }
 
-
+    @Override
     public void displayingPanel() {
         tree.requestFocus();
     }
 
-
     public OWLClass getRootClass() {
         OWLClass cls = tree.getSelectedObject();
-        if (cls == null) {
-            return getOWLModelManager().getOWLDataFactory().getOWLThing();
-        }
-        else {
-            return tree.getSelectedObject();
-        }
+        return cls == null ? getOWLModelManager().getOWLDataFactory().getOWLThing() : tree.getSelectedObject();
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
         return TabIndentedHierarchyPanel.ID;
     }
-
 
     public void dispose() {
         tree.dispose();
