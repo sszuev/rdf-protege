@@ -4,12 +4,6 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 import java.util.Set;
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
-
 
 /**
  * Author: Matthew Horridge<br>
@@ -19,9 +13,7 @@ import java.util.Set;
  */
 public class AxiomListFrame extends AbstractOWLFrame<Set<OWLAxiom>> {
 
-
     public AxiomListFrame(OWLEditorKit owlEditorKit) {
-        super(owlEditorKit.getModelManager().getOWLOntologyManager());
         addSection(new AxiomListFrameSection(owlEditorKit, this));
     }
 }

@@ -56,21 +56,6 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
         return rootObject;
     }
 
-    /**
-     * Default implementation which returns <code>null</code>
-     *
-     * @return {@code Object}
-     */
-    @Override
-    public Object getUserObject() {
-        return userObject;
-    }
-
-    @Override
-    public void setUserObject(Object object) {
-        this.userObject = object;
-    }
-
     public boolean isFixedHeight() {
         return false;
     }

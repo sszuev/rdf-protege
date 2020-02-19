@@ -26,7 +26,7 @@ import java.util.*;
 public class OpenFromURLPanel extends JPanel implements VerifiedInputEditor {
 
     private JTextField uriField;
-    private MList bookmarksList;
+    private MList<Object> bookmarksList;
     private LoadSettingsPanel settings;
     private List<InputVerificationStatusChangedListener> listeners = new ArrayList<>();
 
@@ -60,7 +60,11 @@ public class OpenFromURLPanel extends JPanel implements VerifiedInputEditor {
         JPanel bookmarksHolder = new JPanel(new BorderLayout());
         bookmarksHolder.setBorder(ComponentFactory.createTitledBorder("Bookmarks"));
         this.add(bookmarksHolder);
-        bookmarksList = new MList() {
+        bookmarksList = new MList<Object>() {
+            {
+                uncheckedSetCellRenderer(new BookmarkedItemListRenderer());
+            }
+
             @Override
             protected void handleAdd() {
                 addURI();
@@ -72,7 +76,6 @@ public class OpenFromURLPanel extends JPanel implements VerifiedInputEditor {
             }
         };
 
-        bookmarksList.setCellRenderer(new BookmarkedItemListRenderer());
         bookmarksHolder.add(new JScrollPane(bookmarksList));
         fillList();
         bookmarksList.addListSelectionListener(e -> {
@@ -136,7 +139,6 @@ public class OpenFromURLPanel extends JPanel implements VerifiedInputEditor {
         JOptionPane.showMessageDialog(this, e.getMessage(), "Invalid URI", JOptionPane.ERROR_MESSAGE);
     }
 
-    @SuppressWarnings("unchecked")
     private void fillList() {
         BookMarkedURIManager man = BookMarkedURIManager.getInstance();
         Set<URI> ts = new TreeSet<>(man.getBookMarkedURIs());
@@ -211,7 +213,7 @@ public class OpenFromURLPanel extends JPanel implements VerifiedInputEditor {
 
     private static class URIListItem implements MListItem {
 
-        private URI uri;
+        private final URI uri;
 
         public URIListItem(URI uri) {
             this.uri = uri;
@@ -250,4 +252,5 @@ public class OpenFromURLPanel extends JPanel implements VerifiedInputEditor {
         URI uri = res == JOptionPane.OK_OPTION ? panel.getURI() : null;
         return OWLSource.create(uri, props);
     }
+
 }

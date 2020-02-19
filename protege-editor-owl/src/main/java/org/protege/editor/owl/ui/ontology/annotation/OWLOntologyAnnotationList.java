@@ -11,15 +11,15 @@ import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
 import java.util.ArrayList;
 import java.util.List;
 /*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
+ * Copyright (C) 2007, University of Manchester
+ *
+ *
+ */
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Jun 1, 2009<br><br>
@@ -30,14 +30,14 @@ public class OWLOntologyAnnotationList extends AbstractAnnotationsList<OntologyA
         super(eKit);
     }
 
-
+    @Override
     protected List<OWLOntologyChange> getAddChanges(OWLAnnotation annot) {
         List<OWLOntologyChange> changes = new ArrayList<>();
         changes.add(new AddOntologyAnnotation(getRoot().getOntology(), annot));
         return changes;
     }
 
-
+    @Override
     protected List<OWLOntologyChange> getReplaceChanges(OWLAnnotation oldAnnotation, OWLAnnotation newAnnotation) {
         List<OWLOntologyChange> changes = new ArrayList<>();
         changes.add(new RemoveOntologyAnnotation(getRoot().getOntology(), oldAnnotation));
@@ -45,23 +45,24 @@ public class OWLOntologyAnnotationList extends AbstractAnnotationsList<OntologyA
         return changes;
     }
 
-
+    @Override
     protected List<OWLOntologyChange> getDeleteChanges(OWLAnnotation annot) {
         List<OWLOntologyChange> changes = new ArrayList<>();
         changes.add(new RemoveOntologyAnnotation(getRoot().getOntology(), annot));
         return changes;
     }
 
-
+    @Override
     protected void handleOntologyChanges(List<? extends OWLOntologyChange> changes) {
-        for (OWLOntologyChange change : changes){
-            if (change instanceof AddOntologyAnnotation ||
-                change instanceof RemoveOntologyAnnotation){
-                if (change.getOntology().equals(getRoot().getOntology())){
-                    refresh();
-                    return;
-                }
+        for (OWLOntologyChange change : changes) {
+            if (!(change instanceof AddOntologyAnnotation) && !(change instanceof RemoveOntologyAnnotation)) {
+                continue;
             }
+            if (!change.getOntology().equals(getRoot().getOntology())) {
+                continue;
+            }
+            refresh();
+            return;
         }
     }
 }

@@ -20,36 +20,28 @@ import java.util.*;
 
 
 /**
+ * The visitor methods can be overridden to be notified when an axiom is added or removed
+ * <p>
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
  * Bio-Health Informatics Group<br>
  * Date: 19-Jan-2007<br><br>
- *
- * The visitor methods can be overriden to be notified when an axiom is added or removed
  */
-public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxiom, E> 
+@SuppressWarnings("NullableProblems")
+public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
         implements OWLAxiomVisitor, OWLFrameSection<R, A, E>, OWLObjectEditorHandler<E> {
 
-	private final Logger logger = LoggerFactory.getLogger(AbstractOWLFrameSection.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOWLFrameSection.class);
 
-    private static int inconsistentOntologyWarnings = 0;
-
-    private OWLEditorKit owlEditorKit;
-
-    private OWLFrame<? extends R> frame;
-
-    private List<OWLFrameSectionRow<R, A, E>> rows;
+    private final OWLEditorKit owlEditorKit;
+    private final OWLFrame<? extends R> frame;
+    private final List<OWLFrameSectionRow<R, A, E>> rows;
+    private final String rowLabel;
+    private final OWLOntologyChangeListener listener = this::processOntologyChanges;
 
     private String label;
-
-    private String rowLabel;
-
     private OWLObjectEditor<E> editor;
-
     private boolean cacheEditor = true;
-
-    private OWLOntologyChangeListener listener = changes -> processOntologyChanges(changes);
-
 
     protected AbstractOWLFrameSection(OWLEditorKit editorKit, String label, String rowLabel, OWLFrame<? extends R> frame) {
         this.owlEditorKit = editorKit;
@@ -57,67 +49,46 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
         this.rowLabel = rowLabel;
         this.frame = frame;
         this.rows = new ArrayList<>();
-
         getOWLModelManager().addOntologyChangeListener(listener);
     }
 
-    
     protected AbstractOWLFrameSection(OWLEditorKit editorKit, String label, OWLFrame<? extends R> frame) {
         this(editorKit, label, null, frame);
     }
 
-
     // not the perfect solution, but prevents us from breaking the API
-    protected void setCacheEditor(boolean cacheEditor){
+    @SuppressWarnings("SameParameterValue")
+    protected void setCacheEditor(boolean cacheEditor) {
         this.cacheEditor = cacheEditor;
     }
-
 
     public List<MListButton> getAdditionalButtons() {
         return Collections.emptyList();
     }
-    
 
-    
-    @SuppressWarnings("deprecation")
-	private void processOntologyChanges(List<? extends OWLOntologyChange> changes) {
+    private void processOntologyChanges(List<? extends OWLOntologyChange> changes) {
         if (getRootObject() == null) {
             return;
         }
-    	handleChanges(changes);
+        for (OWLOntologyChange change : changes) {
+            if (change.isAxiomChange()) {
+                change.getAxiom().accept(AbstractOWLFrameSection.this);
+            }
+        }
         for (OWLOntologyChange change : changes) {
             if (isResettingChange(change)) {
                 reset();
                 break;
             }
         }
-        handleOntologyChanges(changes);
     }
 
-    /*
-     * @deprecated For backwards compatibility only.  Use isResettingChange instead or 
-     * override handleOntologyChanges.
-     */
-    @Deprecated
-    protected void handleChanges(List<? extends OWLOntologyChange> changes) {
-
-        for (OWLOntologyChange change : changes) {
-            if (change.isAxiomChange()) {
-                change.getAxiom().accept(AbstractOWLFrameSection.this);
-            }
-        }
-    }
-    
     protected boolean isResettingChange(OWLOntologyChange change) {
-    	return false;
-    }
-    
-    protected void handleOntologyChanges(List<? extends OWLOntologyChange> changes) {
-
+        return false;
     }
 
-
-    final public void dispose() {
+    @Override
+    public final void dispose() {
         getOWLModelManager().removeOntologyChangeListener(listener);
         disposeOfSection();
         if (editor != null) {
@@ -125,34 +96,30 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
         }
     }
 
-
     protected void setLabel(String label) {
         this.label = label;
     }
-
 
     protected OWLReasoner getReasoner() {
         return getOWLModelManager().getReasoner();
     }
 
-
     protected void disposeOfSection() {
-
     }
 
-
+    @Override
     public String getLabel() {
         return label;
     }
 
-
-    public String getRowLabel(OWLFrameSectionRow row) {
+    @Override
+    public String getRowLabel(OWLFrameSectionRow<R, A, E> row) {
         return rowLabel;
     }
 
-
-    final public OWLObjectEditor<E> getEditor() {
-        if (!cacheEditor && editor != null){
+    @Override
+    public final OWLObjectEditor<E> getEditor() {
+        if (!cacheEditor && editor != null) {
             editor.dispose();
             editor = null;
         }
@@ -173,7 +140,7 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
         return editor;
     }
 
-
+    @Override
     public void handleEditingFinished(Set<E> editedObjects) {
         if (editedObjects == null) {
             return;
@@ -190,68 +157,53 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
             axioms.add(ax);
         }
         getOWLModelManager().applyChanges(changes);
-        for (A axiom : axioms){
-            if (!getOWLModelManager().getActiveOntology().containsAxiom(axiom)){
-                logger.warn("Editing of an axiom finished, but the axiom was not added to the active ontology. Axiom: {}.", axiom);
+        for (A axiom : axioms) {
+            if (!getOWLModelManager().getActiveOntology().containsAxiom(axiom)) {
+                LOGGER.warn("Editing of an axiom finished, but the axiom was not added to the active ontology. Axiom: {}.", axiom);
             }
         }
     }
 
-
     protected abstract A createAxiom(E object);
-
 
     public abstract OWLObjectEditor<E> getObjectEditor();
 
+    @Override
     public boolean checkEditorResults(OWLObjectEditor<E> editor) {
-    	return true;
+        return true;
     }
-
-    /**
-     * Gets the index of the specified section row.
-     * @param row The row whose index is to be obtained.
-     * @return The index of the row, or -1 if the row is
-     *         not contained within this section.
-     */
-    public int getRowIndex(OWLFrameSectionRow row) {
-        return rows.indexOf(row);
-    }
-
 
     public OWLEditorKit getOWLEditorKit() {
         return owlEditorKit;
     }
 
-
     public OWLModelManager getOWLModelManager() {
         return owlEditorKit.getModelManager();
     }
-
 
     public OWLOntologyManager getOWLOntologyManager() {
         return getOWLModelManager().getOWLOntologyManager();
     }
 
-
     public OWLDataFactory getOWLDataFactory() {
         return getOWLModelManager().getOWLDataFactory();
     }
-    
+
     public OWLReasoner getCurrentReasoner() {
-    	return getOWLModelManager().getOWLReasonerManager().getCurrentReasoner();
+        return getOWLModelManager().getOWLReasonerManager().getCurrentReasoner();
     }
 
-
+    @Override
     public OWLFrame<? extends R> getFrame() {
         return frame;
     }
 
-
+    @Override
     public R getRootObject() {
         return frame.getRootObject();
     }
 
-
+    @Override
     public void setRootObject(R rootObject) {
         rows.clear();
         clear();
@@ -260,29 +212,25 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
                 refill(ontology);
             }
             try {
-            	refillInferred();
-            }
-            catch (InconsistentOntologyException ioe) {
-                logger.error("An InconsistentOntologyException was thrown when refilling the inferred information" +
+                refillInferred();
+            } catch (InconsistentOntologyException ioe) {
+                LOGGER.error("An InconsistentOntologyException was thrown when refilling the inferred information" +
                         " in a frame section.  The frame section implementation should take care of this.", ioe);
-            }
-            catch (Exception e) {
-            	logger.warn("An error occurred whilst filling the {} frame with inferred information: {}", getClass().getName(), e);
+            } catch (Exception e) {
+                LOGGER.warn("An error occurred whilst filling the {} frame with inferred information: {}", getClass().getName(), e);
             }
         }
 
         Comparator<OWLFrameSectionRow<R, A, E>> comparator = getRowComparator();
         if (comparator != null) {
-            Collections.sort(rows, comparator);
+            rows.sort(comparator);
         }
         fireContentChanged();
     }
 
-
     protected Set<OWLOntology> getOntologies() {
         return getOWLModelManager().getActiveOntologies();
     }
-
 
     /**
      * Refills the section with rows.  This method will be called
@@ -291,33 +239,28 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
      */
     protected abstract void refill(OWLOntology ontology);
 
-
     protected abstract void clear();
-
 
     protected void refillInferred() {
         // Do nothing by default
     }
 
-
     protected void addRow(OWLFrameSectionRow<R, A, E> row) {
         rows.add(row);
     }
-    
-    protected void addInferredRowIfNontrivial(OWLFrameSectionRow<R, A, E> row) {
-    	if (row.isInferred() && 
-    			(VacuousAxiomVisitor.isVacuousAxiom(row.getAxiom()) || VacuousAxiomVisitor.involvesInverseSquared(row.getAxiom()))) {
-    		return;
-    	}
-    	addRow(row);
-    }
 
+    protected void addInferredRowIfNontrivial(OWLFrameSectionRow<R, A, E> row) {
+        if (row.isInferred() &&
+                (VacuousAxiomVisitor.isVacuousAxiom(row.getAxiom()) || VacuousAxiomVisitor.involvesInverseSquared(row.getAxiom()))) {
+            return;
+        }
+        addRow(row);
+    }
 
     protected void reset() {
         setRootObject(getRootObject());
         fireContentChanged();
     }
-
 
     private void fireContentChanged() {
         getFrame().fireContentChanged();
@@ -327,50 +270,52 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
     /**
      * Gets the rows that this section contains.
      */
+    @Override
     public List<OWLFrameSectionRow<R, A, E>> getRows() {
         return Collections.unmodifiableList(rows);
     }
-    
-    public List<A> getAxioms() {
-    	List<A> axioms = new ArrayList<>();
-    	for (OWLFrameSectionRow<R,A,E> row : rows) {
-    		axioms.add(row.getAxiom());
-    	}
-    	return axioms;
-    }
 
+    @Override
+    public List<A> getAxioms() {
+        List<A> axioms = new ArrayList<>();
+        for (OWLFrameSectionRow<R, A, E> row : rows) {
+            axioms.add(row.getAxiom());
+        }
+        return axioms;
+    }
 
     /**
      * Gets the rendering for this section, which will be used
      * to visually indicate the section.
+     *
      * @return A <code>String</code> representation of the section.  This
-     *         is typically the section label.
+     * is typically the section label.
      */
     public String getRendering() {
         return label;
     }
 
-
+    @Override
     public boolean canAdd() {
         return getOWLModelManager().isActiveOntologyMutable();
     }
 
-
+    @Override
     public boolean canAcceptDrop(List<OWLObject> objects) {
         return false;
     }
 
-
+    @Override
     public boolean dropObjects(List<OWLObject> objects) {
         return false;
     }
 
-
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getRendering());
         sb.append(":\n");
-        for (OWLFrameSectionRow row : getRows()) {
+        for (OWLFrameSectionRow<?, ?, ?> row : getRows()) {
             sb.append("\t");
             sb.append(row);
             sb.append("\n");
@@ -378,11 +323,10 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
         return sb.toString();
     }
 
+    @Override
     public String getName() {
         return getLabel();
     }
-
-    
 
 
     /**
@@ -699,9 +643,4 @@ public abstract class AbstractOWLFrameSection<R extends Object, A extends OWLAxi
     @Deprecated
     public void visit(SWRLRule rule) {
     }
-
-    
-
-
-
 }

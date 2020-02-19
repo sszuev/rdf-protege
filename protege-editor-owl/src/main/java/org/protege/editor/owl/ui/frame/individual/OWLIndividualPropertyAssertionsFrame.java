@@ -14,7 +14,6 @@ import org.semanticweb.owlapi.model.OWLIndividual;
 public class OWLIndividualPropertyAssertionsFrame<O extends OWLIndividual> extends AbstractOWLFrame<O> {
 
     public OWLIndividualPropertyAssertionsFrame(OWLEditorKit owlEditorKit) {
-        super(owlEditorKit.getModelManager().getOWLOntologyManager());
         addSection(new OWLObjectPropertyAssertionAxiomFrameSection(owlEditorKit, this));
         addSection(new OWLDataPropertyAssertionAxiomFrameSection(owlEditorKit, this));
         addSection(new OWLNegativeObjectPropertyAssertionFrameSection(owlEditorKit, this));

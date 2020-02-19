@@ -14,7 +14,6 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 public class OWLObjectPropertyDescriptionFrame extends AbstractOWLFrame<OWLObjectProperty> {
 
     public OWLObjectPropertyDescriptionFrame(OWLEditorKit editorKit) {
-        super(editorKit.getModelManager().getOWLOntologyManager());
         addSection(new OWLEquivalentObjectPropertiesAxiomFrameSection(editorKit, this));
         addSection(new OWLSubObjectPropertyAxiomSuperPropertyFrameSection(editorKit, this));
         addSection(new OWLInverseObjectPropertiesAxiomFrameSection(editorKit, this));

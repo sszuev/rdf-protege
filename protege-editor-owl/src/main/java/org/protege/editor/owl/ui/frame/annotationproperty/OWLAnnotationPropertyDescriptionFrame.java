@@ -3,11 +3,6 @@ package org.protege.editor.owl.ui.frame.annotationproperty;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.frame.AbstractOWLFrame;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-/*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
 
 /**
  * Author: drummond<br>
@@ -20,7 +15,6 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 public class OWLAnnotationPropertyDescriptionFrame extends AbstractOWLFrame<OWLAnnotationProperty> {
 
     public OWLAnnotationPropertyDescriptionFrame(OWLEditorKit owlEditorKit) {
-        super(owlEditorKit.getModelManager().getOWLOntologyManager());
         addSection(new OWLAnnotationPropertyDomainFrameSection(owlEditorKit, this));
         addSection(new OWLAnnotationPropertyRangeFrameSection(owlEditorKit, this));
         addSection(new OWLSubAnnotationPropertyFrameSection(owlEditorKit, this));

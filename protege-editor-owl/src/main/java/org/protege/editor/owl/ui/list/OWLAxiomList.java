@@ -20,6 +20,7 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 14-Sep-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class OWLAxiomList extends MList {
 	private static final long serialVersionUID = 2024889684812090240L;
 

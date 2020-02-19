@@ -55,7 +55,6 @@ public class OWLEntityFrame extends AbstractOWLFrame implements OWLEntityVisitor
 
     @SuppressWarnings("rawtypes")
 	public OWLEntityFrame(OWLEditorKit editorKit) {
-        super(editorKit.getModelManager().getOWLOntologyManager());
         this.editorKit = editorKit;
 
         owlOntologyFrameSections = new ArrayList<>();

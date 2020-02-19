@@ -26,13 +26,13 @@ import static org.protege.editor.owl.ui.renderer.InlineAnnotationRendering.RENDE
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLFrameListRenderer implements ListCellRenderer, RendererWithInsets {
+public class OWLFrameListRenderer implements ListCellRenderer<Object>, RendererWithInsets {
 
     private OWLEditorKit owlEditorKit;
 
     private OWLCellRenderer owlCellRenderer;
 
-    private ListCellRenderer separatorRenderer;
+    private ListCellRenderer<Object> separatorRenderer;
 
     private OWLAnnotationCellRenderer2 annotationRenderer;
 

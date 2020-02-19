@@ -1,6 +1,5 @@
 package org.protege.editor.owl.ui.frame;
 
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,117 +13,93 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 19-Jan-2007<br><br>
  */
-public abstract class AbstractOWLFrame<R extends Object> implements OWLFrame<R> {
+public abstract class AbstractOWLFrame<R> implements OWLFrame<R> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOWLFrame.class);
 
-    private final Logger logger = LoggerFactory.getLogger(AbstractOWLFrame.class);
     private R rootObject;
 
-    private OWLOntologyManager owlOntologyManager;
+    private final List<OWLFrameListener> listeners;
+    private final List<OWLFrameSection<? super R, ?, ?>> sections;
 
-    private List<OWLFrameListener> listeners;
-
-    private List<OWLFrameSection> sections;
-
-
-    public AbstractOWLFrame(OWLOntologyManager owlOntologyManager) {
-        this.owlOntologyManager = owlOntologyManager;
+    public AbstractOWLFrame() {
         listeners = new ArrayList<>();
         sections = new ArrayList<>();
     }
 
-
-    protected void addSection(OWLFrameSection<? extends Object, ? extends Object, ? extends Object> section,
-                              int index) {
+    protected void addSection(OWLFrameSection<? super R, ?, ?> section, int index) {
         sections.add(index, section);
     }
 
-
-    protected int getSectionCount() {
-        return sections.size();
-    }
-
-
-    protected void addSection(OWLFrameSection<? extends Object, ? extends Object, ? extends Object> section) {
+    protected void addSection(OWLFrameSection<? super R, ?, ?> section) {
         sections.add(section);
     }
-
 
     protected void clearSections() {
         sections.clear();
         fireContentChanged();
     }
 
-
+    @Override
     public void dispose() {
         sections.forEach(OWLFrameSection::dispose);
     }
 
-
-    /**
-     * Gets the sections within this frame.
-     */
-    public List<OWLFrameSection> getFrameSections() {
+    @Override
+    public List<OWLFrameSection<? super R, ?, ?>> getFrameSections() {
         return sections;
     }
 
-
+    @Override
     public R getRootObject() {
         return rootObject;
     }
 
-
-    protected OWLOntologyManager getManager() {
-        return owlOntologyManager;
-    }
-
-
+    @Override
     public void setRootObject(R rootObject) {
         this.rootObject = rootObject;
         refill();
         fireContentChanged();
     }
 
-
     public void refill() {
-        for (OWLFrameSection<R, ? extends Object, ? extends Object> section : getFrameSections()) {
+        getFrameSections().forEach(section -> {
             try {
                 section.setRootObject(rootObject);
+            } catch (Exception ex) {
+                LOGGER.warn("An error occurred whilst refilling the {} frame.  Error: ", getClass().getName(), ex);
             }
-            catch (Exception ex) {
-                logger.warn("An error occurred whilst refilling the {} frame.  Error: ", getClass().getName(), ex);
-            }
-        }
+        });
     }
 
-
+    @Override
     public void addFrameListener(OWLFrameListener listener) {
         listeners.add(listener);
     }
 
-
+    @Override
     public void removeFrameListener(OWLFrameListener listener) {
         listeners.remove(listener);
     }
 
-
+    @Override
     public void fireContentChanged() {
-        for (OWLFrameListener listener : listeners) {
+        listeners.forEach(listener -> {
             try {
                 listener.frameContentChanged();
+            } catch (Exception e) {
+                LOGGER.warn("An error was thrown whilst dispatching a fireContentChanged event " +
+                        "to a registered frame listener: '{}'", e.getMessage(), e);
             }
-            catch (Exception e) {
-            	logger.warn("An error was thrown whilst dispatching a fireContentChanged event to a registered frame listener: {}", e);
-            }
-        }
+        });
     }
 
-
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getRootObject());
         sb.append("\n\n");
 
-        for (OWLFrameSection sec : getFrameSections()) {
+        for (OWLFrameSection<?, ?, ?> sec : getFrameSections()) {
             sb.append(sec.toString());
             sb.append("\n");
         }

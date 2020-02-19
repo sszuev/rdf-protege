@@ -14,7 +14,6 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 public class OWLObjectPropertyDomainsAndRangesFrame extends AbstractOWLFrame<OWLObjectProperty> {
 
     public OWLObjectPropertyDomainsAndRangesFrame(OWLEditorKit owlEditorKit) {
-        super(owlEditorKit.getModelManager().getOWLOntologyManager());
         addSection(new OWLObjectPropertyDomainFrameSection(owlEditorKit, this));
         addSection(new OWLObjectPropertyRangeFrameSection(owlEditorKit, this));
     }

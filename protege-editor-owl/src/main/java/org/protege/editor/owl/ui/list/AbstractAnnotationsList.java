@@ -16,66 +16,59 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 /*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
+ * Copyright (C) 2007, University of Manchester
+ *
+ *
+ */
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Jun 8, 2009<br><br>
- *
+ * <p>
  * Don't want to write this again - Matthew is adding an interface that Axiom and OWLOntology can implement
  * that allows us to get the annotations.
  */
-public abstract class AbstractAnnotationsList<O extends AnnotationContainer> extends MList {
+public abstract class AbstractAnnotationsList<O extends AnnotationContainer> extends MList<Object> {
 
     private static final String HEADER_TEXT = "Annotations";
+    private final OWLEditorKit editorKit;
+    private final MListSectionHeader header = new MListSectionHeader() {
 
-
-    private OWLEditorKit editorKit;
-
-    private OWLAnnotationEditor editor;
-
-    private O root;
-
-    private MListSectionHeader header = new MListSectionHeader() {
-
+        @Override
         public String getName() {
             return HEADER_TEXT;
         }
 
+        @Override
         public boolean canAdd() {
             return true;
         }
     };
+    private final OWLOntologyChangeListener ontChangeListener = this::handleOntologyChanges;
 
-    private OWLOntologyChangeListener ontChangeListener = changes -> handleOntologyChanges(changes);
-
-    private MouseListener mouseListener = new MouseAdapter(){
-        public void mouseReleased(MouseEvent e) {
-            if (e.getClickCount() == 2) {
-                handleEdit();
-            }
-        }
-    };
-
+    private OWLAnnotationEditor editor;
+    private O root;
 
     public AbstractAnnotationsList(OWLEditorKit eKit) {
         this.editorKit = eKit;
-        setCellRenderer(new OWLAnnotationCellRenderer2(eKit));
+        uncheckedSetCellRenderer(new OWLAnnotationCellRenderer2(eKit));
+        MouseListener mouseListener = new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    handleEdit();
+                }
+            }
+        };
         addMouseListener(mouseListener);
         eKit.getOWLModelManager().addOntologyChangeListener(ontChangeListener);
     }
-
 
     protected abstract List<OWLOntologyChange> getAddChanges(OWLAnnotation annot);
 
@@ -85,10 +78,10 @@ public abstract class AbstractAnnotationsList<O extends AnnotationContainer> ext
 
     protected abstract void handleOntologyChanges(List<? extends OWLOntologyChange> changes);
 
-
+    @Override
     protected void handleAdd() {
         // don't need to check the section as only the direct imports can be added
-        if (editor == null){
+        if (editor == null) {
             editor = new OWLAnnotationEditor(editorKit);
         }
 
@@ -100,7 +93,7 @@ public abstract class AbstractAnnotationsList<O extends AnnotationContainer> ext
         if (ret == JOptionPane.OK_OPTION) {
             OWLAnnotation annot = editor.getEditedObject();
             if (annot != null) {
-            	editorKit.getModelManager().applyChanges(getAddChanges(annot));
+                editorKit.getModelManager().applyChanges(getAddChanges(annot));
             }
         }
     }
@@ -109,8 +102,7 @@ public abstract class AbstractAnnotationsList<O extends AnnotationContainer> ext
         return editorKit.getOWLModelManager().getActiveOntology();
     }
 
-
-    public void setRootObject(O root){
+    public void setRootObject(O root) {
         this.root = root;
         refill(root);
     }
@@ -120,19 +112,19 @@ public abstract class AbstractAnnotationsList<O extends AnnotationContainer> ext
 
         data.add(header);
 
-        if (root != null){
+        if (root != null) {
             List<OWLAnnotation> annotations = new ArrayList<>(root.getAnnotations());
             Comparator<OWLObject> owlObjectComparator = editorKit.getOWLModelManager().getOWLObjectComparator();
             AnnotationPropertyComparator annotationPropertyComparator =
                     AnnotationPropertyComparator.withDefaultOrdering(owlObjectComparator);
             annotations.sort((a1, a2) -> {
                 int propComp = annotationPropertyComparator.compare(a1.getProperty(), a2.getProperty());
-                if(propComp != 0) {
+                if (propComp != 0) {
                     return propComp;
                 }
                 return owlObjectComparator.compare(a1.getValue(), a2.getValue());
             });
-            for (OWLAnnotation annot : annotations){
+            for (OWLAnnotation annot : annotations) {
                 data.add(new AnnotationsListItem(annot));
             }
         }
@@ -142,80 +134,71 @@ public abstract class AbstractAnnotationsList<O extends AnnotationContainer> ext
     }
 
 
-    public O getRoot(){
+    public O getRoot() {
         return root;
     }
-
 
     protected void refresh() {
         setRootObject(root);
     }
 
-
-    protected void updateGlobalSelection(OWLObject owlObject){
-        editorKit.getOWLWorkspace().getOWLSelectionModel().setSelectedObject(owlObject);
-    }
-
-
     public void dispose() {
         editorKit.getOWLModelManager().removeOntologyChangeListener(ontChangeListener);
         if (editor != null) {
-        	editor.dispose();
-        	editor = null;
+            editor.dispose();
+            editor = null;
         }
     }
 
-
     public class AnnotationsListItem implements MListItem {
 
-        private OWLAnnotation annot;
+        private final OWLAnnotation annotation;
 
-        public AnnotationsListItem(OWLAnnotation annot) {
-            this.annot = annot;
+        public AnnotationsListItem(OWLAnnotation annotation) {
+            this.annotation = annotation;
         }
-
 
         public OWLAnnotation getAnnotation() {
-            return annot;
+            return annotation;
         }
 
-
+        @Override
         public boolean isEditable() {
             return true;
         }
 
-
+        @Override
         public void handleEdit() {
             // don't need to check the section as only the direct imports can be added
-            if (editor == null){
+            if (editor == null) {
                 editor = new OWLAnnotationEditor(editorKit);
             }
-            editor.setEditedObject(annot);
+            editor.setEditedObject(annotation);
             UIHelper uiHelper = new UIHelper(editorKit);
             int ret = uiHelper.showValidatingDialog("Ontology Annotation", editor.getEditorComponent(), null);
 
             if (ret == JOptionPane.OK_OPTION) {
                 OWLAnnotation newAnnotation = editor.getEditedObject();
-                if (newAnnotation != null && !newAnnotation.equals(annot)){
-                    List<OWLOntologyChange> changes = getReplaceChanges(annot, newAnnotation);
+                if (newAnnotation != null && !newAnnotation.equals(annotation)) {
+                    List<OWLOntologyChange> changes = getReplaceChanges(annotation, newAnnotation);
                     editorKit.getModelManager().applyChanges(changes);
                 }
             }
         }
 
-
+        @Override
         public boolean isDeleteable() {
             return true;
         }
 
-
+        @Override
         public boolean handleDelete() {
-            List<OWLOntologyChange> changes = getDeleteChanges(annot);
+            List<OWLOntologyChange> changes = getDeleteChanges(annotation);
             editorKit.getModelManager().applyChanges(changes);
             return true;
         }
 
-
+        @Override
         public String getTooltip() {
             return "";
         }

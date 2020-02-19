@@ -2,12 +2,6 @@ package org.protege.editor.owl.ui.frame;
 
 import org.protege.editor.owl.OWLEditorKit;
 import org.semanticweb.owlapi.model.OWLOntology;
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
-
 
 /**
  * Author: Matthew Horridge<br>
@@ -18,7 +12,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 public class InferredAxiomsFrame extends AbstractOWLFrame<OWLOntology> {
 
     public InferredAxiomsFrame(OWLEditorKit owlEditorKit) {
-        super(owlEditorKit.getModelManager().getOWLOntologyManager());
         addSection(new InferredAxiomsFrameSection(owlEditorKit, this));
     }
 }

@@ -13,7 +13,6 @@ import org.semanticweb.owlapi.model.OWLAnnotationSubject;
 public class OWLAnnotationsFrame extends AbstractOWLFrame<OWLAnnotationSubject> {
 
     public OWLAnnotationsFrame(OWLEditorKit man) {
-        super(man.getModelManager().getOWLOntologyManager());
         addSection(new OWLAnnotationFrameSection(man, this));
     }
 }

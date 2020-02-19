@@ -26,6 +26,7 @@ public class MList<E> extends JList<E> {
     private static final Color FRAME_SECTION_HEADER_FOREGROUND = Color.GRAY;
     private static final Color FRAME_SECTION_HEADER_HIGH_CONTRAST_FOREGROUND = new Color(40, 40, 40);
     private static final Color ITEM_BACKGROUND_COLOR = Color.WHITE;
+
     private static final int BUTTON_DIMENSION = 16;
     private static final int BUTTON_MARGIN = 2;
 
@@ -52,10 +53,9 @@ public class MList<E> extends JList<E> {
     private final List<MListButton> editAndDeleteButtonList = Arrays.asList(editButton, deleteButton);
     private final List<MListButton> editButtonList = Collections.singletonList(editButton);
     private final List<MListButton> deleteButtonList = Collections.singletonList(deleteButton);
-
+    public int lastMousePositionCellIndex = 0;
     private Font sectionHeaderFont = new Font("Lucida Grande", Font.PLAIN, 10);
     private boolean mouseDown;
-    public int lastMousePositionCellIndex = 0;
 
     public MList() {
         ListCellRenderer<? super E> renderer = getCellRenderer();
@@ -154,6 +154,11 @@ public class MList<E> extends JList<E> {
         }
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    protected void uncheckedSetCellRenderer(ListCellRenderer renderer) {
+        setCellRenderer(renderer);
+    }
+
     protected void handleAdd() {
         if (!(this.getSelectedValue() instanceof MListItem)) {
             return;
@@ -225,58 +230,6 @@ public class MList<E> extends JList<E> {
 
     protected Color getItemBackgroundColor(MListItem item) {
         return ITEM_BACKGROUND_COLOR;
-    }
-
-    public class MListCellRenderer<X> implements ListCellRenderer<X> {
-
-        private ListCellRenderer<? super X> contentRenderer;
-
-        private DefaultListCellRenderer defaultListCellRenderer = new DefaultListCellRenderer();
-
-        @Override
-        public Component getListCellRendererComponent(JList<? extends X> list,
-                                                      X value,
-                                                      int index,
-                                                      boolean isSelected,
-                                                      boolean cellHasFocus) {
-
-            // We now modify the component so that it has a nice border and
-            // background
-            if (value instanceof MListSectionHeader) {
-                JLabel label = (JLabel) defaultListCellRenderer.getListCellRendererComponent(list, " ", index, isSelected, cellHasFocus);
-                label.setBorder(BorderFactory.createCompoundBorder(createPaddingBorder(list, " ", index, isSelected, cellHasFocus),
-                        BorderFactory.createEmptyBorder(3, 3, 2, 2)));
-                label.setVerticalTextPosition(SwingConstants.TOP);
-                return label;
-            }
-            JComponent component = (JComponent) contentRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            Dimension prefSize = component.getPreferredSize();
-            component.setOpaque(true);
-            if (value instanceof MListItem) {
-                Border paddingBorder = createPaddingBorder(list, value, index, isSelected, cellHasFocus);
-                Border itemBorder = createListItemBorder(list, value, index, isSelected, cellHasFocus);
-                Border border = BorderFactory.createCompoundBorder(paddingBorder, itemBorder);
-                int buttonSpan = getButtons(value).size() * (getButtonDimension() + 2) + BUTTON_MARGIN * 2;
-                border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(1, 1, 1, buttonSpan));
-                component.setBorder(border);
-                if (!isSelected) {
-                    component.setBackground(getItemBackgroundColor((MListItem) value));
-                }
-                if (component instanceof RendererWithInsets) {
-                    Insets insets = component.getInsets();
-                    prefSize.height = prefSize.height + insets.top + insets.bottom;
-                    component.setPreferredSize(prefSize);
-                }
-            }
-            if (isSelected) {
-                component.setBackground(list.getSelectionBackground());
-            }
-            return component;
-        }
-
-        public void setContentRenderer(ListCellRenderer<? super X> renderer) {
-            this.contentRenderer = renderer;
-        }
     }
 
     public int getButtonDimension() {
@@ -484,5 +437,57 @@ public class MList<E> extends JList<E> {
             return button.getBackground();
         }
         return this.mouseDown ? Color.DARK_GRAY : button.getRollOverColor();
+    }
+
+    public class MListCellRenderer<X extends E> implements ListCellRenderer<X> {
+
+        private ListCellRenderer<? super X> contentRenderer;
+
+        private DefaultListCellRenderer defaultListCellRenderer = new DefaultListCellRenderer();
+
+        public void setContentRenderer(ListCellRenderer<? super X> renderer) {
+            this.contentRenderer = renderer;
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<? extends X> list,
+                                                      X value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+
+            // We now modify the component so that it has a nice border and
+            // background
+            if (value instanceof MListSectionHeader) {
+                JLabel label = (JLabel) defaultListCellRenderer.getListCellRendererComponent(list, " ", index, isSelected, cellHasFocus);
+                label.setBorder(BorderFactory.createCompoundBorder(createPaddingBorder(list, " ", index, isSelected, cellHasFocus),
+                        BorderFactory.createEmptyBorder(3, 3, 2, 2)));
+                label.setVerticalTextPosition(SwingConstants.TOP);
+                return label;
+            }
+            JComponent component = (JComponent) contentRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            Dimension prefSize = component.getPreferredSize();
+            component.setOpaque(true);
+            if (value instanceof MListItem) {
+                Border paddingBorder = createPaddingBorder(list, value, index, isSelected, cellHasFocus);
+                Border itemBorder = createListItemBorder(list, value, index, isSelected, cellHasFocus);
+                Border border = BorderFactory.createCompoundBorder(paddingBorder, itemBorder);
+                int buttonSpan = getButtons(value).size() * (getButtonDimension() + 2) + BUTTON_MARGIN * 2;
+                border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(1, 1, 1, buttonSpan));
+                component.setBorder(border);
+                if (!isSelected) {
+                    component.setBackground(getItemBackgroundColor((MListItem) value));
+                }
+                if (component instanceof RendererWithInsets) {
+                    Insets insets = component.getInsets();
+                    prefSize.height = prefSize.height + insets.top + insets.bottom;
+                    component.setPreferredSize(prefSize);
+                }
+            }
+            if (isSelected) {
+                component.setBackground(list.getSelectionBackground());
+            }
+            return component;
+        }
     }
 }

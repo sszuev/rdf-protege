@@ -9,53 +9,51 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 19-Jan-2007<br><br>
  */
-public interface OWLFrame<R extends Object> {
+public interface OWLFrame<R> {
 
     /**
-     * Disposes of the frame by cleaning up any
-     * resource and listeners used by the frame
+     * Disposes of the frame by cleaning up any resource and listeners used by the frame
      */
     void dispose();
 
-
     /**
      * Sets the root object.
-     * @param rootObject The root object, may be <code>null</code>.
+     *
+     * @param rootObject the root object, may be <code>null</code>.
      */
     void setRootObject(R rootObject);
 
 
     /**
      * Gets the frame root object.
-     * @return The frame root object.  The return value
-     *         may be <code>null</code>.
+     *
+     * @return the frame root object; the return value may be <code>null</code>
      */
     R getRootObject();
 
-
     /**
      * Gets the sections within this frame.
+     *
+     * @return {@code List}
      */
-    List<OWLFrameSection> getFrameSections();
-
+    List<OWLFrameSection<? super R, ?, ?>> getFrameSections();
 
     /**
      * Adds a frame listener to this frame.
-     * @param listener The listener to be added.
+     *
+     * @param listener the listener to be added
      */
     void addFrameListener(OWLFrameListener listener);
 
-
     /**
      * Removes a frame listener from this frame.
-     * @param listener The listener to be removed.
+     *
+     * @param listener the listener to be removed
      */
     void removeFrameListener(OWLFrameListener listener);
 
-
     /**
-     * Called when the frame content (either the sections or
-     * the rows within sections) have changed.
+     * Called when the frame content (either the sections or the rows within sections) have changed.
      */
     void fireContentChanged();
 }

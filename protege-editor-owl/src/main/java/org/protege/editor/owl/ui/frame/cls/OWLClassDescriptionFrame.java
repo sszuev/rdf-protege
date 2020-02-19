@@ -14,7 +14,7 @@ import org.semanticweb.owlapi.model.OWLClass;
 public class OWLClassDescriptionFrame extends AbstractOWLFrame<OWLClass> {
 
     public OWLClassDescriptionFrame(OWLEditorKit editorKit) {
-        super(editorKit.getModelManager().getOWLOntologyManager());
+        super();
         addSection(new OWLEquivalentClassesAxiomFrameSection(editorKit, this));
         addSection(new OWLSubClassAxiomFrameSection(editorKit, this));
         addSection(new OWLClassGeneralClassAxiomFrameSection(editorKit, this));

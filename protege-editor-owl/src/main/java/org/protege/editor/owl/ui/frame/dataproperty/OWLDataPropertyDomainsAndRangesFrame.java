@@ -4,7 +4,6 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.frame.AbstractOWLFrame;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 
-
 /**
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
@@ -14,7 +13,6 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 public class OWLDataPropertyDomainsAndRangesFrame extends AbstractOWLFrame<OWLDataProperty> {
 
     public OWLDataPropertyDomainsAndRangesFrame(OWLEditorKit owlEditorKit) {
-        super(owlEditorKit.getModelManager().getOWLOntologyManager());
         addSection(new OWLDataPropertyDomainFrameSection(owlEditorKit, this));
         addSection(new OWLDataPropertyRangeFrameSection(owlEditorKit, this));
     }

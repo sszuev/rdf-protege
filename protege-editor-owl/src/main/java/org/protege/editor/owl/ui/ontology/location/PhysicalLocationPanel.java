@@ -42,7 +42,6 @@ import java.util.*;
  */
 public class PhysicalLocationPanel extends JPanel {
     private static final Logger LOGGER = LoggerFactory.getLogger(PhysicalLocationPanel.class);
-
     private static final Color ROLL_OVER_COLOR = new Color(50, 50, 255);
 
     private final OWLEditorKit owlEditorKit;
