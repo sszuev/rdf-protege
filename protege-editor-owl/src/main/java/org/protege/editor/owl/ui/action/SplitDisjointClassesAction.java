@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Author: Nick Drummond<br>
@@ -17,53 +18,51 @@ import java.util.Set;
  * Date: May 19, 2008
  */
 public class SplitDisjointClassesAction extends ProtegeOWLAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SplitDisjointClassesAction.class);
 
-    private final Logger logger = LoggerFactory.getLogger(SplitDisjointClassesAction.class);
-
-    @SuppressWarnings("unchecked")
+    @Override
     public void actionPerformed(ActionEvent actionEvent) {
         List<OWLOntologyChange> changes = new ArrayList<>();
-        int axiomsRemoved = 0;
-        int axiomsAdded = 0;
-        for (OWLOntology ont : getOWLModelManager().getActiveOntologies()){
-            for (OWLDisjointClassesAxiom ax : ont.getAxioms(AxiomType.DISJOINT_CLASSES)){
-                Set<OWLDisjointClassesAxiom> pairwiseAxioms = split(ax);
-                if (!pairwiseAxioms.isEmpty()){
-                    changes.add(new RemoveAxiom(ont, ax));
-                    axiomsRemoved++;
-                    for (OWLDisjointClassesAxiom pairwiseAxiom : pairwiseAxioms){
-                        changes.add(new AddAxiom(ont, pairwiseAxiom));
-                        axiomsAdded++;
+        getOWLModelManager().getActiveOntologies().forEach(ont -> ont.axioms(AxiomType.DISJOINT_CLASSES)
+                .forEach(ax -> {
+                    Set<OWLDisjointClassesAxiom> res = split(ax);
+                    if (res.isEmpty()) {
+                        return;
                     }
-                }
-            }
-        }
+                    changes.add(new RemoveAxiom(ont, ax));
+                    res.stream().map(x -> new AddAxiom(ont, x)).forEach(changes::add);
+                }));
+
         getOWLModelManager().applyChanges(changes);
-        logger.info("Split " + axiomsRemoved + " disjointClasses axioms into " + axiomsAdded + " pairwise axioms");
+        LOGGER.info("Split {} disjointClasses axioms into {} pairwise axioms",
+                changes.stream().filter(OWLOntologyChange::isRemoveAxiom).count(),
+                changes.stream().filter(OWLOntologyChange::isAddAxiom).count());
     }
 
-
-    public Set<OWLDisjointClassesAxiom> split(OWLDisjointClassesAxiom ax){
-        Set<OWLDisjointClassesAxiom> pairwiseAxioms = new HashSet<>();
-        if (ax.getClassExpressions().size() > 2){
-            List<OWLClassExpression> orderedOperands = new ArrayList<>(ax.getClassExpressions());
-            for (int i=0; i<orderedOperands.size(); i++){
-                OWLClassExpression a = orderedOperands.get(i);
-                for (int j=i+1; j<orderedOperands.size(); j++){
-                    OWLClassExpression b = orderedOperands.get(j);
-                    OWLDisjointClassesAxiom pairwiseAxiom = getOWLDataFactory().getOWLDisjointClassesAxiom(a, b);
-                    pairwiseAxioms.add(pairwiseAxiom);
-                }
+    public Set<OWLDisjointClassesAxiom> split(OWLDisjointClassesAxiom ax) {
+        Set<OWLDisjointClassesAxiom> res = new HashSet<>();
+        Set<OWLClassExpression> classes = ax.classExpressions().collect(Collectors.toSet());
+        if (classes.size() <= 2) {
+            return res;
+        }
+        List<OWLClassExpression> ordered = new ArrayList<>(classes);
+        for (int i = 0; i < ordered.size(); i++) {
+            OWLClassExpression a = ordered.get(i);
+            for (int j = i + 1; j < ordered.size(); j++) {
+                OWLClassExpression b = ordered.get(j);
+                OWLDisjointClassesAxiom p = getOWLDataFactory().getOWLDisjointClassesAxiom(a, b);
+                res.add(p);
             }
         }
-        return pairwiseAxioms;
+        return res;
     }
 
-
+    @Override
     public void initialise() throws Exception {
         // do nothing
     }
 
+    @Override
     public void dispose() throws Exception {
         // do nothing
     }

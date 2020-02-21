@@ -13,24 +13,21 @@ import java.awt.*;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 17-Oct-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class ResolutionTypePanel extends AbstractOWLWizardPanel {
-
-    private JRadioButton specifyFileRadioButton;
-
-    private JRadioButton specifyLibraryButton;
-
     public static final String ID = "ResolutionTypePanel";
 
+    private JRadioButton specifyFileRadioButton;
 
     public ResolutionTypePanel(OWLEditorKit owlEditorKit) {
         super(ID, "Missing import resolution type", owlEditorKit);
     }
 
-
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         parent.setLayout(new BorderLayout());
         setInstructions("Please choose what you want to do in order to resolve the missing import");
@@ -40,20 +37,15 @@ public class ResolutionTypePanel extends AbstractOWLWizardPanel {
         box.add(specifyFileRadioButton);
         bg.add(specifyFileRadioButton);
         box.add(Box.createVerticalStrut(3));
-        specifyLibraryButton = new JRadioButton("Add a new ontology library that contains the ontology");
+        JRadioButton specifyLibraryButton = new JRadioButton("Add a new ontology library that contains the ontology");
         box.add(specifyLibraryButton);
         bg.add(specifyLibraryButton);
         specifyFileRadioButton.setSelected(true);
         parent.add(box, BorderLayout.NORTH);
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
-        if (specifyFileRadioButton.isSelected()) {
-            return SpecifyFilePathPanel.ID;
-        }
-        else {
-            return WizardPanel.FINISH;
-        }
+        return specifyFileRadioButton.isSelected() ? SpecifyFilePathPanel.ID : WizardPanel.FINISH;
     }
 }

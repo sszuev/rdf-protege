@@ -5,14 +5,7 @@ import org.protege.editor.owl.OWLEditorKit;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-/*
- * Copyright (C) 2008, University of Manchester
- *
- *
- */
-
 
 /**
  * Author: Matthew Horridge<br> The University Of Manchester<br> Information Management Group<br> Date:
@@ -23,16 +16,15 @@ public class SelectActionPanel extends AbstractMoveAxiomsWizardPanel {
     public static final String ID = "SelectActionPanel";
 
     private JRadioButton moveAxiomsButton;
-
     private JRadioButton copyAxiomsButton;
-
     private JRadioButton deleteAxiomsButton;
 
     public SelectActionPanel(OWLEditorKit owlEditorKit) {
         super(ID, "Copy, move or delete axioms", owlEditorKit);
     }
 
-
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         parent.setLayout(new BorderLayout());
 
@@ -60,37 +52,36 @@ public class SelectActionPanel extends AbstractMoveAxiomsWizardPanel {
         setInstructions("Specify whether you want to copy, move or delete the axioms from the source ontology.");
     }
 
-
+    @Override
     public Object getBackPanelDescriptor() {
         return getWizard().getLastPanelIDForKit();
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
-        if (moveAxiomsButton.isSelected() || copyAxiomsButton.isSelected()){
+        if (moveAxiomsButton.isSelected() || copyAxiomsButton.isSelected()) {
             return SelectTargetOntologyTypePanel.ID;
         }
         return WizardPanel.FINISH;
     }
 
-
+    @Override
     public void aboutToDisplayPanel() {
         super.aboutToDisplayPanel();
 
     }
 
- 
+    @Override
     public void aboutToHidePanel() {
         super.aboutToHidePanel();
- 
-        if(deleteAxiomsButton.isSelected()) {
-            getWizard().setMoveType(MoveType.DELETE);
+        MoveType t;
+        if (deleteAxiomsButton.isSelected()) {
+            t = MoveType.DELETE;
+        } else if (moveAxiomsButton.isSelected()) {
+            t = MoveType.MOVE;
+        } else {
+            t = MoveType.COPY;
         }
-        else if(moveAxiomsButton.isSelected()) {
-            getWizard().setMoveType(MoveType.MOVE);
-        }
-        else {
-            getWizard().setMoveType(MoveType.COPY);
-        }
+        getWizard().setMoveType(t);
     }
 }

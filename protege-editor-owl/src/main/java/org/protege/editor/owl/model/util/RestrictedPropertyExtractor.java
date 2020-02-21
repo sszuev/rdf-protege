@@ -23,6 +23,7 @@ import java.util.Set;
  * out, so any restrictions that are contained as one of their operands
  * are also visited.
  */
+@Deprecated // todo: has single used usage - subclass -> delete
 public class RestrictedPropertyExtractor implements OWLClassExpressionVisitor {
 
     private Set<OWLPropertyExpression> properties;

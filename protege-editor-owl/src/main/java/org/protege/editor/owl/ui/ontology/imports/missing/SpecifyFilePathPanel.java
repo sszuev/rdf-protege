@@ -5,8 +5,6 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.AbstractOWLWizardPanel;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.HashSet;
 
@@ -16,7 +14,7 @@ import java.util.HashSet;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 17-Oct-2006<br><br>
-
+ * <p>
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
@@ -26,12 +24,12 @@ public class SpecifyFilePathPanel extends AbstractOWLWizardPanel {
 
     private FilePathPanel filePathPanel;
 
-
     public SpecifyFilePathPanel(OWLEditorKit owlEditorKit) {
         super(ID, "Specify file", owlEditorKit);
     }
 
-
+    @SuppressWarnings("deprecation")
+    @Override
     protected void createUI(JComponent parent) {
         parent.setLayout(new BorderLayout());
         setInstructions("Please specify the path to the file containing the ontology");
@@ -42,24 +40,23 @@ public class SpecifyFilePathPanel extends AbstractOWLWizardPanel {
         });
     }
 
-
+    @Override
     public void displayingPanel() {
         super.displayingPanel();
         filePathPanel.requestFocus();
         updateState();
     }
 
-
     private void updateState() {
         getWizard().setNextFinishButtonEnabled(filePathPanel.getFile() != null && filePathPanel.getFile().exists());
     }
 
-
+    @Override
     public Object getBackPanelDescriptor() {
         return ResolutionTypePanel.ID;
     }
 
-
+    @Override
     public Object getNextPanelDescriptor() {
         return CopyOptionPanel.ID;
     }

@@ -12,6 +12,7 @@ import org.semanticweb.owlapi.model.*;
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class SomeValuesFromPropertyExtractor extends RestrictedPropertyExtractor {
 
     public void visit(OWLDataAllValuesFrom node) {

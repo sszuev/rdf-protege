@@ -11,13 +11,6 @@ import org.semanticweb.owlapi.model.SWRLRule;
 import java.util.Comparator;
 
 
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
-
-
 /**
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
@@ -26,48 +19,46 @@ import java.util.Comparator;
  */
 public class SWRLRulesFrameSection extends AbstractOWLFrameSection<OWLOntology, SWRLRule, SWRLRule> {
 
-
     public SWRLRulesFrameSection(OWLEditorKit editorKit, OWLFrame<? extends OWLOntology> owlFrame) {
         super(editorKit, "Rules", "Rule", owlFrame);
     }
 
-
+    @Override
     protected SWRLRule createAxiom(SWRLRule object) {
         return object;
     }
 
-
+    @Override
     public OWLObjectEditor<SWRLRule> getObjectEditor() {
         return new SWRLRuleEditor(getOWLEditorKit());
     }
 
-
+    @Override
     public boolean canAdd() {
         return true;
     }
 
-
+    @Override
     protected void refill(OWLOntology ontology) {
-        for (SWRLRule rule : ontology.getAxioms(AxiomType.SWRL_RULE)) {
-            addRow(new SWRLRuleFrameSectionRow(getOWLEditorKit(), this, ontology, ontology, rule));
-        }
+        ontology.axioms(AxiomType.SWRL_RULE)
+                .forEach(r -> addRow(new SWRLRuleFrameSectionRow(getOWLEditorKit(), this, ontology, ontology, r)));
     }
 
-
+    @Override
     protected void clear() {
     }
 
-
+    @Override
     public Comparator<OWLFrameSectionRow<OWLOntology, SWRLRule, SWRLRule>> getRowComparator() {
         return null;
     }
 
     @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
-    	if (!change.isAxiomChange()) {
-    		return false;
-    	}
-    	return change.getAxiom() instanceof SWRLRule;
+        if (!change.isAxiomChange()) {
+            return false;
+        }
+        return change.getAxiom() instanceof SWRLRule;
     }
 
 }
