@@ -2,6 +2,7 @@ package org.protege.editor.owl.ui.frame;
 
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.OWLModelManager;
+import org.protege.editor.owl.model.OWLWorkspace;
 import org.protege.editor.owl.model.entity.AnnotationPropertyComparator;
 import org.protege.editor.owl.ui.editor.OWLAnnotationEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
@@ -10,6 +11,7 @@ import org.semanticweb.owlapi.model.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -19,29 +21,33 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 26-Jan-2007<br><br>
  */
-public class OWLAnnotationFrameSection extends AbstractOWLFrameSection<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> {
+public class OWLAnnotationFrameSection
+        extends AbstractOWLFrameSection<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> {
 
     private static final String LABEL = "Annotations";
 
-    private static OWLAnnotationSectionRowComparator comparator;
-
+    private final OWLAnnotationSectionRowComparator comparator;
 
     public OWLAnnotationFrameSection(OWLEditorKit editorKit, OWLFrame<? extends OWLAnnotationSubject> frame) {
         super(editorKit, LABEL, "Entity annotation", frame);
         comparator = new OWLAnnotationSectionRowComparator(editorKit.getModelManager());
     }
 
-
+    @Override
     protected void clear() {
     }
 
-
+    @Override
     protected void refill(OWLOntology ontology) {
         boolean hidden = false;
-        final OWLAnnotationSubject annotationSubject = getRootObject();
-        for (OWLAnnotationAssertionAxiom ax : ontology.getAnnotationAssertionAxioms(annotationSubject)) {
-            if (!getOWLEditorKit().getWorkspace().isHiddenAnnotationURI(ax.getAnnotation().getProperty().getIRI().toURI())) {
-                addRow(new OWLAnnotationsFrameSectionRow(getOWLEditorKit(), this, ontology, annotationSubject, ax));
+        OWLAnnotationSubject subject = getRootObject();
+        OWLEditorKit kit = getOWLEditorKit();
+        OWLWorkspace w = kit.getWorkspace();
+        Iterator<OWLAnnotationAssertionAxiom> iterator = ontology.annotationAssertionAxioms(subject).iterator();
+        while (iterator.hasNext()) {
+            OWLAnnotationAssertionAxiom ax = iterator.next();
+            if (!w.isHiddenAnnotationURI(ax.getAnnotation().getProperty().getIRI().toURI())) {
+                addRow(new OWLAnnotationsFrameSectionRow(kit, this, ontology, subject, ax));
             } else {
                 hidden = true;
             }
@@ -53,29 +59,28 @@ public class OWLAnnotationFrameSection extends AbstractOWLFrameSection<OWLAnnota
         }
     }
 
-
+    @Override
     protected OWLAnnotationAssertionAxiom createAxiom(OWLAnnotation object) {
         return getOWLDataFactory().getOWLAnnotationAssertionAxiom(getRootObject(), object);
     }
 
-
+    @Override
     public OWLObjectEditor<OWLAnnotation> getObjectEditor() {
         return new OWLAnnotationEditor(getOWLEditorKit());
     }
 
 
     /**
-     * Obtains a comparator which can be used to sort the rows
-     * in this section.
+     * Obtains a comparator which can be used to sort the rows in this section.
      *
-     * @return A comparator if to sort the rows in this section,
-     * or <code>null</code> if the rows shouldn't be sorted.
+     * @return A comparator if to sort the rows in this section, or <code>null</code> if the rows shouldn't be sorted
      */
+    @Override
     public Comparator<OWLFrameSectionRow<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation>> getRowComparator() {
         return comparator;
     }
 
-
+    @Override
     public boolean canAcceptDrop(List<OWLObject> objects) {
         for (OWLObject obj : objects) {
             if (!(obj instanceof OWLAnnotation)) {
@@ -85,7 +90,7 @@ public class OWLAnnotationFrameSection extends AbstractOWLFrameSection<OWLAnnota
         return true;
     }
 
-
+    @Override
     public boolean dropObjects(List<OWLObject> objects) {
         List<OWLOntologyChange> changes = new ArrayList<>();
         for (OWLObject obj : objects) {
@@ -109,14 +114,16 @@ public class OWLAnnotationFrameSection extends AbstractOWLFrameSection<OWLAnnota
     }
 
 
-    private static class OWLAnnotationSectionRowComparator implements Comparator<OWLFrameSectionRow<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation>> {
+    private static class OWLAnnotationSectionRowComparator
+            implements Comparator<OWLFrameSectionRow<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation>> {
 
-        private Comparator<OWLObject> owlObjectComparator;
+        private final Comparator<OWLObject> owlObjectComparator;
 
         public OWLAnnotationSectionRowComparator(OWLModelManager owlModelManager) {
             owlObjectComparator = owlModelManager.getOWLObjectComparator();
         }
 
+        @Override
         public int compare(OWLFrameSectionRow<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> o1,
                            OWLFrameSectionRow<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> o2) {
             OWLAnnotation annotation1 = o1.getAxiom().getAnnotation();
@@ -134,7 +141,6 @@ public class OWLAnnotationFrameSection extends AbstractOWLFrameSection<OWLAnnota
             }
             return diff;
         }
-
 
         private int getAnnotationPropertyDifference(OWLAnnotationProperty property1, OWLAnnotationProperty property2) {
             OWLRendererPreferences preferences = OWLRendererPreferences.getInstance();
@@ -154,22 +160,22 @@ public class OWLAnnotationFrameSection extends AbstractOWLFrameSection<OWLAnnota
 
         private int getAnnotationLanguageDifference(OWLAnnotationValue value1, OWLAnnotationValue value2) {
             int diff = 0;
-            if (value1 instanceof OWLLiteral && value2 instanceof OWLLiteral) {
-                OWLLiteral lit1 = (OWLLiteral) value1;
-                String lang1 = lit1.getLang();
-                OWLLiteral lit2 = (OWLLiteral) value2;
-                String lang2 = lit2.getLang();
-                List<String> langs = OWLRendererPreferences.getInstance().getAnnotationLangs();
-                int langIndex1 = langs.indexOf(lang1);
-                int langIndex2 = langs.indexOf(lang2);
-                if (langIndex1 == -1) {
-                    diff = 1;
-                } else if (langIndex2 == -1) {
-                    diff = -1;
-                } else {
-                    diff = langIndex1 - langIndex2;
-                }
-
+            if (!(value1 instanceof OWLLiteral) || !(value2 instanceof OWLLiteral)) {
+                return diff;
+            }
+            OWLLiteral lit1 = (OWLLiteral) value1;
+            String lang1 = lit1.getLang();
+            OWLLiteral lit2 = (OWLLiteral) value2;
+            String lang2 = lit2.getLang();
+            List<String> langs = OWLRendererPreferences.getInstance().getAnnotationLangs();
+            int langIndex1 = langs.indexOf(lang1);
+            int langIndex2 = langs.indexOf(lang2);
+            if (langIndex1 == -1) {
+                diff = 1;
+            } else if (langIndex2 == -1) {
+                diff = -1;
+            } else {
+                diff = langIndex1 - langIndex2;
             }
             return diff;
         }
@@ -178,5 +184,4 @@ public class OWLAnnotationFrameSection extends AbstractOWLFrameSection<OWLAnnota
             return owlObjectComparator.compare(value1, value2);
         }
     }
-
 }

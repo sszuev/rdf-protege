@@ -25,13 +25,13 @@ public class OntologyImportsItemRenderer extends PageCellRenderer {
     }
 
     @Override
-    protected void fillPage(Page page, JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    protected void fillPage(Page page, JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         render(list.getSelectionForeground(), list.getSelectionBackground(), page, value, isSelected);
     }
 
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         return c;
     }

@@ -40,8 +40,7 @@ public interface OWLFrameSection<R, A extends OWLAxiom, E> extends OWLFrameObjec
     /**
      * Obtains a comparator which can be used to sort the rows in this section.
      *
-     * @return A comparator if to sort the rows in this section,
-     * or <code>null</code> if the rows shouldn't be sorted
+     * @return A comparator if to sort the rows in this section, or <code>null</code> if the rows shouldn't be sorted
      */
     Comparator<OWLFrameSectionRow<R, A, E>> getRowComparator();
 }

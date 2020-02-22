@@ -8,48 +8,48 @@ import org.protege.editor.owl.ui.frame.OWLFrame;
 import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Jun 4, 2009<br><br>
  */
-public class OWLAnnotationPropertyDomainFrameSection extends AbstractOWLFrameSection<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI> {
+public class OWLAnnotationPropertyDomainFrameSection
+        extends AbstractOWLFrameSection<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI> {
 
     public static final String LABEL = "Domains (intersection)";
 
-    private Set<IRI> addedDomains = new HashSet<>();
-
     private OWLAnnotationPropertyDomainEditor editor;
-
 
     public OWLAnnotationPropertyDomainFrameSection(OWLEditorKit editorKit, OWLFrame<OWLAnnotationProperty> frame) {
         super(editorKit, LABEL, "Domain", frame);
     }
 
-
+    @Override
     protected OWLAnnotationPropertyDomainAxiom createAxiom(IRI iri) {
         return getOWLDataFactory().getOWLAnnotationPropertyDomainAxiom(getRootObject(), iri);
     }
 
-
-    protected Set<OWLAnnotationPropertyDomainAxiom> getAxioms(OWLOntology ontology) {
-        return ontology.getAnnotationPropertyDomainAxioms(getRootObject());
+    protected Stream<OWLAnnotationPropertyDomainAxiom> axioms(OWLOntology ontology) {
+        return ontology.annotationPropertyDomainAxioms(getRootObject());
     }
 
-
+    @Override
     public OWLObjectEditor<IRI> getObjectEditor() {
-        if (editor == null){
+        if (editor == null) {
             editor = new OWLAnnotationPropertyDomainEditor(getOWLEditorKit());
         }
         return editor;
     }
 
-
+    @Override
     public final boolean canAcceptDrop(List<OWLObject> objects) {
         for (OWLObject obj : objects) {
             if (!(obj instanceof OWLClassExpression)) {
@@ -59,7 +59,7 @@ public class OWLAnnotationPropertyDomainFrameSection extends AbstractOWLFrameSec
         return true;
     }
 
-
+    @Override
     public final boolean dropObjects(List<OWLObject> objects) {
         List<OWLOntologyChange> changes = new ArrayList<>();
         for (OWLObject obj : objects) {
@@ -67,8 +67,7 @@ public class OWLAnnotationPropertyDomainFrameSection extends AbstractOWLFrameSec
                 OWLEntity entity = (OWLEntity) obj;
                 OWLAxiom ax = createAxiom(entity.getIRI());
                 changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -76,33 +75,30 @@ public class OWLAnnotationPropertyDomainFrameSection extends AbstractOWLFrameSec
         return true;
     }
 
-
+    @Override
     protected void clear() {
-        addedDomains.clear();
     }
 
-
+    @Override
     protected final void refill(OWLOntology ontology) {
-        for (OWLAnnotationPropertyDomainAxiom ax : getAxioms(ontology)) {
-            addRow(new OWLAnnotationPropertyDomainFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), ax));
-            addedDomains.add(ax.getDomain());
-        }
+        axioms(ontology)
+                .map(ax -> new OWLAnnotationPropertyDomainFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), ax))
+                .forEach(this::addRow);
     }
 
-
+    @Override
     protected final void refillInferred() {
         // Could do some trivial manual inference to aid the user
     }
 
-
+    @Override
     public Comparator<OWLFrameSectionRow<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI>> getRowComparator() {
         return null;
     }
 
     @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
-    	return change.isAxiomChange() &&
-    			change.getAxiom() instanceof OWLAnnotationPropertyDomainAxiom &&
-    			((OWLAnnotationPropertyDomainAxiom) change.getAxiom()).getProperty().equals(getRootObject());
+        return change.isAxiomChange() && change.getAxiom() instanceof OWLAnnotationPropertyDomainAxiom
+                && ((OWLAnnotationPropertyDomainAxiom) change.getAxiom()).getProperty().equals(getRootObject());
     }
 }

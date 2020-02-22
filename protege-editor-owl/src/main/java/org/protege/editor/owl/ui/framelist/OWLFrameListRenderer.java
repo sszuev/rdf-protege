@@ -138,7 +138,6 @@ public class OWLFrameListRenderer implements ListCellRenderer<Object>, RendererW
             final OWLAxiom axiom = row.getAxiom();
             if (axiom instanceof OWLAnnotationAssertionAxiom && annotationRendererEnabled) {
                 OWLAnnotationAssertionAxiom annotationAssertionAxiom = (OWLAnnotationAssertionAxiom) axiom;
-                annotationRenderer.setReferenceOntology(row.getOntology());
                 annotationRenderer.setInlineAnnotationRendering(
                         getRenderAnnotationAnnotationsInline());
                 annotationRenderer.setInlineDatatypeRendering(

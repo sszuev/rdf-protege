@@ -18,9 +18,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Deprecated // todo: unused -> delete
 public class OWLClassAssertionSelectionModel implements Disposable {
 	public static Logger logger = LoggerFactory.getLogger(OWLClassAssertionSelectionModel.class);
-	
+
 	private OWLEditorKit editorKit;
 	private OWLSelectionModel mainSelectionModel;
 	private OWLClass owlClass;
@@ -28,9 +29,9 @@ public class OWLClassAssertionSelectionModel implements Disposable {
 	private OWLIndividual individual;
 	private boolean inferredOwlClassNeedsRecalculation = true;
 	private List<OWLSelectionModelListener> listeners = new ArrayList<>();
-	
+
 	private OWLSelectionModelListener mainSelectionListener = () -> mainSelectionChanged();
-	
+
 	public static OWLClassAssertionSelectionModel get(OWLEditorKit editorKit) {
 		OWLClassAssertionSelectionModel selectionModel = (OWLClassAssertionSelectionModel) editorKit.get(OWLClassAssertionSelectionModel.class);
 		if (selectionModel == null) {
@@ -40,15 +41,15 @@ public class OWLClassAssertionSelectionModel implements Disposable {
 		}
 		return selectionModel;
 	}
-	
+
 	private OWLClassAssertionSelectionModel(OWLEditorKit editorKit) {
 		this.editorKit = editorKit;
 	}
-	
+
 	private void initialise() {
 		mainSelectionModel = editorKit.getOWLWorkspace().getOWLSelectionModel();
 	}
-	
+
 	private void mainSelectionChanged() {
 		OWLEntity e = mainSelectionModel.getSelectedEntity();
 		if (e instanceof OWLClass) {
@@ -56,8 +57,7 @@ public class OWLClassAssertionSelectionModel implements Disposable {
 			inferredOwlClass = (OWLClass) e;
 			individual = null;
 			fireSelectionChanged();
-		}
-		else if (e instanceof OWLIndividual) {
+		} else if (e instanceof OWLIndividual) {
 			individual = individual;
 			inferredOwlClassNeedsRecalculation = true;
 			OWLModelManager modelManager = editorKit.getOWLModelManager();
@@ -73,7 +73,7 @@ public class OWLClassAssertionSelectionModel implements Disposable {
 			fireSelectionChanged();
 		}
 	}
-	
+
 	public OWLClass getOwlClass() {
 		return owlClass;
 	}
@@ -91,7 +91,7 @@ public class OWLClassAssertionSelectionModel implements Disposable {
 
 		return inferredOwlClass;
 	}
-	
+
 	private void recalculateInferredOwlClass(OWLReasoner reasoner) {
 		if (inferredOwlClass == null || !reasoner.getInstances(owlClass, true).containsEntity(individual.asOWLNamedIndividual())) {
 			inferredOwlClass = null;
@@ -105,22 +105,21 @@ public class OWLClassAssertionSelectionModel implements Disposable {
 	public OWLIndividual getIndividual() {
 		return individual;
 	}
-	
+
 	public void addListener(OWLSelectionModelListener listener) {
 		listeners.add(listener);
 	}
-	
+
 	public void removeListener(OWLSelectionModelListener listener) {
 		listeners.remove(listener);
 	}
-	
+
 	private void fireSelectionChanged() {
 		for (OWLSelectionModelListener listener : listeners) {
 			try {
 				listener.selectionChanged();
-			}
-			catch (Exception e) {
-                logger.warn("BAD LISTENER: (" + listener.getClass().getSimpleName() + ") ");
+			} catch (Exception e) {
+				logger.warn("BAD LISTENER: (" + listener.getClass().getSimpleName() + ") ");
 			}
 		}
 	}

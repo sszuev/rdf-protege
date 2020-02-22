@@ -1,6 +1,7 @@
 package org.protege.editor.owl.ui.frame.cls;
 
 import org.protege.editor.owl.OWLEditorKit;
+import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLIndividualEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
@@ -11,6 +12,7 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Author: Matthew Horridge<br>
@@ -19,124 +21,112 @@ import java.util.*;
  * Date: 27-Jan-2007<br>
  * <br>
  */
-public class OWLClassAssertionAxiomMembersSection extends AbstractOWLClassAxiomFrameSection<OWLClassAssertionAxiom, OWLNamedIndividual> {
+public class OWLClassAssertionAxiomMembersSection
+        extends AbstractOWLClassAxiomFrameSection<OWLClassAssertionAxiom, OWLNamedIndividual> {
 
     public static final String LABEL = "Instances";
-
     public static final boolean SHOW_DIRECT_INSTANCES = true;
 
-    private Set<OWLNamedIndividual> added = new HashSet<>();
-
+    private final Set<OWLNamedIndividual> added = new HashSet<>();
 
     public OWLClassAssertionAxiomMembersSection(OWLEditorKit editorKit, OWLFrame<? extends OWLClass> frame) {
-		super(editorKit, LABEL, "Type assertion", frame);
-	}
+        super(editorKit, LABEL, "Type assertion", frame);
+    }
 
-
+    @Override
     protected void clear() {
-		added.clear();
-	}
+        added.clear();
+    }
 
-
+    @Override
     protected void addAxiom(OWLClassAssertionAxiom ax, OWLOntology ont) {
         addRow(new OWLClassAssertionAxiomMembersSectionRow(getOWLEditorKit(), this, ont, getRootObject(), ax));
-        if (!ax.getIndividual().isAnonymous()){
+        if (!ax.getIndividual().isAnonymous()) {
             added.add(ax.getIndividual().asOWLNamedIndividual());
         }
     }
 
-
-    protected Set<OWLClassAssertionAxiom> getClassAxioms(OWLClassExpression descr, OWLOntology ont) {
-        if (!descr.isAnonymous()){
-            return ont.getClassAssertionAxioms(descr.asOWLClass());
+    @Override
+    protected Stream<OWLClassAssertionAxiom> classAxioms(OWLClassExpression clazz, OWLOntology ont) {
+        if (!clazz.isAnonymous()) {
+            return ont.classAssertionAxioms(clazz.asOWLClass());
         }
-        else{
-            Set<OWLClassAssertionAxiom> axioms = new HashSet<>();
-            for (OWLClassAssertionAxiom ax : ont.getAxioms(AxiomType.CLASS_ASSERTION)){
-                if (ax.getClassExpression().equals(descr)){
-                    axioms.add(ax);
-                }
-            }
-            return axioms;
-        }
+        return ont.axioms(AxiomType.CLASS_ASSERTION).filter(ax -> ax.getClassExpression().equals(clazz));
     }
 
-
-    protected void refillInferred() {
-        getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERED_CLASS_MEMBERS, () -> {
-            if (!getOWLModelManager().getReasoner().isConsistent()) {
-                return;
-            }
-            final OWLDataFactory df = getOWLModelManager().getOWLDataFactory();
-            NodeSet<OWLNamedIndividual> instances = getOWLModelManager().getReasoner().getInstances(getRootObject(), SHOW_DIRECT_INSTANCES);
-            if (instances != null) {
-                for (OWLIndividual ind : instances.getFlattened()) {
-                    if (!ind.isAnonymous() && !added.contains(ind.asOWLNamedIndividual())) {
-                        addRow(new OWLClassAssertionAxiomMembersSectionRow(getOWLEditorKit(),
-                                                                           OWLClassAssertionAxiomMembersSection.this,
-                                                                           null,
-                                                                           getRootObject(),
-                                                                           df.getOWLClassAssertionAxiom(getRootObject(), ind)));
-                        added.add(ind.asOWLNamedIndividual());
-                    }
-                }
-            }
-        });
+    @Override
+    protected void infer() {
+        OWLModelManager m = getOWLModelManager();
+        if (!m.getReasoner().isConsistent()) {
+            return;
+        }
+        OWLDataFactory df = m.getOWLDataFactory();
+        OWLClassExpression root = getRootObject();
+        NodeSet<OWLNamedIndividual> instances = m.getReasoner().getInstances(root, SHOW_DIRECT_INSTANCES);
+        if (instances == null) {
+            return;
+        }
+        instances.entities()
+                .filter(i -> !i.isAnonymous() && !added.contains(i.asOWLNamedIndividual()))
+                .forEach(i -> {
+                    addRow(new OWLClassAssertionAxiomMembersSectionRow(getOWLEditorKit(), this, null, root,
+                            df.getOWLClassAssertionAxiom(root, i)));
+                    added.add(i.asOWLNamedIndividual());
+                });
     }
 
+    @Override
+    protected OptionalInferenceTask getOptionalInferenceTask() {
+        return OptionalInferenceTask.SHOW_INFERED_CLASS_MEMBERS;
+    }
 
+    @Override
     protected OWLClassAssertionAxiom createAxiom(OWLNamedIndividual individual) {
-		return getOWLDataFactory().getOWLClassAssertionAxiom(getRootObject(), individual);
-	}
+        return getOWLDataFactory().getOWLClassAssertionAxiom(getRootObject(), individual);
+    }
 
-
+    @Override
     public OWLObjectEditor<OWLNamedIndividual> getObjectEditor() {
-		return new OWLIndividualEditor(getOWLEditorKit(), ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-	}
+        return new OWLIndividualEditor(getOWLEditorKit(), ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    }
 
-
+    @Override
     public boolean canAcceptDrop(List<OWLObject> objects) {
-		for (OWLObject obj : objects) {
-			if (!(obj instanceof OWLIndividual)) {
-				return false;
-			}
-		}
-		return true;
-	}
+        for (OWLObject obj : objects) {
+            if (!(obj instanceof OWLIndividual)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
+    @Override
+    public boolean dropObjects(List<OWLObject> objects) {
+        List<OWLOntologyChange> changes = new ArrayList<>();
+        for (OWLObject obj : objects) {
+            if (obj instanceof OWLIndividual) {
+                OWLIndividual ind = (OWLIndividual) obj;
+                OWLAxiom ax = getOWLDataFactory().getOWLClassAssertionAxiom(getRootObject(), ind);
+                changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
+            }
+        }
+        getOWLModelManager().applyChanges(changes);
+        return true;
+    }
 
-	public boolean dropObjects(List<OWLObject> objects) {
-		List<OWLOntologyChange> changes = new ArrayList<>();
-		for (OWLObject obj : objects) {
-			if (obj instanceof OWLIndividual) {
-				OWLIndividual ind = (OWLIndividual) obj;
-				OWLAxiom ax = getOWLDataFactory().getOWLClassAssertionAxiom(getRootObject(), ind);
-				changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
-			}
-		}
-		getOWLModelManager().applyChanges(changes);
-		return true;
-	}
-
-    
-    /**
-	 * Obtains a comparator which can be used to sort the rows in this section.
-	 * 
-	 * @return A comparator if to sort the rows in this section, or
-	 *         <code>null</code> if the rows shouldn't be sorted.
-	 */
-	public Comparator<OWLFrameSectionRow<OWLClassExpression, OWLClassAssertionAxiom, OWLNamedIndividual>> getRowComparator() {
-		return (o1, o2) -> {
-final String s1 = getOWLModelManager().getRendering(o1.getAxiom().getIndividual());
-final String s2 = getOWLModelManager().getRendering(o2.getAxiom().getIndividual());
-return s1.compareToIgnoreCase(s2);
+    @Override
+    public Comparator<OWLFrameSectionRow<OWLClassExpression, OWLClassAssertionAxiom, OWLNamedIndividual>> getRowComparator() {
+        return (o1, o2) -> {
+            OWLModelManager m = getOWLModelManager();
+            String s1 = m.getRendering(o1.getAxiom().getIndividual());
+            String s2 = m.getRendering(o2.getAxiom().getIndividual());
+            return s1.compareToIgnoreCase(s2);
         };
-	}
-	
-	@Override
-	protected boolean isResettingChange(OWLOntologyChange change) {
-		return change.isAxiomChange() && 
-				change.getAxiom() instanceof OWLClassAssertionAxiom &&
-				((OWLClassAssertionAxiom) change.getAxiom()).getClassExpression().equals(getRootObject());
-	}
+    }
+
+    @Override
+    protected boolean isResettingChange(OWLOntologyChange change) {
+        return change.isAxiomChange() && change.getAxiom() instanceof OWLClassAssertionAxiom
+                && ((OWLClassAssertionAxiom) change.getAxiom()).getClassExpression().equals(getRootObject());
+    }
 }
