@@ -19,7 +19,7 @@ import java.util.Set;
  *
  */
 
-// TODO Remove when added to the OWL API
+@Deprecated // todo: unused -> delete
 public interface AnnotationContainer {
 
     Set<OWLAnnotation> getAnnotations();

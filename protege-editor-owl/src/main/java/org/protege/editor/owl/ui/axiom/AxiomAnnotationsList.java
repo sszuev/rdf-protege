@@ -61,13 +61,13 @@ public class AxiomAnnotationsList extends AbstractAnnotationsList<OWLAxiomInstan
     }
 
     @Override
-    protected List<OWLOntologyChange> getDeleteChanges(OWLAnnotation oldAnnotation) {
+    protected List<OWLOntologyChange> getDeleteChanges(OWLAnnotation annotation) {
         List<OWLOntologyChange> changes = new ArrayList<>();
         OWLAxiom ax = getRoot().getAxiom();
         OWLOntology ont = getRoot().getOntology();
 
         Set<OWLAnnotation> annotations = ax.annotations().collect(Collectors.toSet());
-        annotations.remove(oldAnnotation);
+        annotations.remove(annotation);
 
         newAxiom = ax.getAxiomWithoutAnnotations().getAnnotatedAxiom(annotations);
 

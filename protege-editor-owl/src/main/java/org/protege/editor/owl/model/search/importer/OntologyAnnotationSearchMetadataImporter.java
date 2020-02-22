@@ -22,23 +22,23 @@ public class OntologyAnnotationSearchMetadataImporter extends OntologyBasedSearc
 
     @Override
     public void generateSearchMetadata(OWLOntology ontology, SearchMetadataImportContext context, SearchMetadataDB db) {
-        for (OWLAnnotation annotation : ontology.getAnnotations()) {
-            generateSearchMetadataForAnnotation(annotation, ontology, context, db);
-        }
+        ontology.annotations().forEach(a -> generateSearchMetadataForAnnotation(a, ontology, context, db));
     }
 
-    private void generateSearchMetadataForAnnotation(final OWLAnnotation annotation, OWLOntology ontology, final SearchMetadataImportContext context, SearchMetadataDB db) {
-        String groupDescription = context.getRendering(annotation.getProperty());
+    private void generateSearchMetadataForAnnotation(OWLAnnotation annotation,
+                                                     OWLOntology ontology,
+                                                     SearchMetadataImportContext context,
+                                                     SearchMetadataDB db) {
+        String gd = context.getRendering(annotation.getProperty());
         StyledString rendering = context.getStyledStringRendering(annotation);
-        SearchMetadata md = new SearchMetadata(SearchCategory.ANNOTATION_VALUE, groupDescription, ontology, context.getRendering(ontology), rendering.getString()) {
+        SearchMetadata md = new SearchMetadata(SearchCategory.ANNOTATION_VALUE, gd, ontology,
+                context.getRendering(ontology), rendering.getString()) {
             @Override
             public StyledString getStyledSearchSearchString() {
                 return context.getStyledStringRendering(annotation);
             }
         };
         db.addResult(md);
-        for (OWLAnnotation anno : annotation.getAnnotations()) {
-            generateSearchMetadataForAnnotation(anno, ontology, context, db);
-        }
+        annotation.annotations().forEach(a -> generateSearchMetadataForAnnotation(a, ontology, context, db));
     }
 }

@@ -46,9 +46,9 @@ public class OWLOntologyAnnotationList extends AbstractAnnotationsList<OntologyA
     }
 
     @Override
-    protected List<OWLOntologyChange> getDeleteChanges(OWLAnnotation annot) {
+    protected List<OWLOntologyChange> getDeleteChanges(OWLAnnotation annotation) {
         List<OWLOntologyChange> changes = new ArrayList<>();
-        changes.add(new RemoveOntologyAnnotation(getRoot().getOntology(), annot));
+        changes.add(new RemoveOntologyAnnotation(getRoot().getOntology(), annotation));
         return changes;
     }
 

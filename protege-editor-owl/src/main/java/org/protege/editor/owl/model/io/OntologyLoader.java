@@ -38,13 +38,11 @@ public class OntologyLoader {
 
     private final ProgressDialog dlg = new ProgressDialog();
 
-    private final ListeningExecutorService ontologyLoadingService = MoreExecutors.listeningDecorator(
-            Executors.newSingleThreadExecutor()
-    );
+    private final ListeningExecutorService ontologyLoadingService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
 
     public OntologyLoader(OWLModelManager modelManager, UserResolvedIRIMapper userResolvedIRIMapper) {
-        this.manager = modelManager;
-        this.userResolvedIRIMapper = userResolvedIRIMapper;
+        this.manager = Objects.requireNonNull(modelManager);
+        this.userResolvedIRIMapper = Objects.requireNonNull(userResolvedIRIMapper);
     }
 
     public Optional<OWLOntology> loadOntology(OWLOntologyDocumentSource src,
@@ -74,7 +72,7 @@ public class OntologyLoader {
                 throw (OWLOntologyCreationException) e.getCause();
             }
             LOGGER.error("An error occurred whilst loading the ontology at {}. Cause: '{}'",
-                    src.getDocumentIRI(), e.getCause().getMessage());
+                    src.getDocumentIRI(), e.getCause().getMessage(), e);
             return Optional.empty();
         }
     }
