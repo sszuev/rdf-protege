@@ -1,40 +1,37 @@
 package org.protege.editor.owl.ui.view.individual;
 
 import org.protege.editor.owl.model.selection.OWLSelectionModelListener;
-import org.protege.editor.owl.ui.OWLIcons;
-import org.protege.editor.owl.ui.renderer.OWLIconProviderImpl;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Only shows the members of the currently selected class
+ * <p>
+ * TODO - this class should probably no longer extend OWLIndividualListViewComponent.
+ *  there are too many hacks piling up.
+ *  It is not really selectable in the usual sense.
+ *  It completely overrides the process changes methods.
+ *  It should display anonymous individuals.
+ *
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Oct 14, 2008<br><br>
-
- * Only shows the members of the currently selected class
- */
-
-/*
- * TODO - this class should probably no longer extend OWLIndividualListViewComponent.
- *        there are too many hacks piling up.  It is not really selectable in the usual sense.
- *        It completely overrides the process changes methods.  It should display anonymous 
- *        individuals.
  */
 public class OWLMembersListViewComponent extends OWLIndividualListViewComponent {
 
     private final JLabel typeLabel = new JLabel();
 
-    private OWLSelectionModelListener l = () -> {
+    private final OWLSelectionModelListener l = () -> {
         if (getOWLWorkspace().getOWLSelectionModel().getSelectedObject() instanceof OWLClass) {
             refill();
         }
@@ -51,7 +48,7 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
         add(typePanel, BorderLayout.NORTH);
     }
 
-
+    @Override
     protected void refill() {
         individualsInList.clear();
         OWLClass cls = getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass();
@@ -67,8 +64,7 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
             if (cls.equals(getOWLModelManager().getOWLDataFactory().getOWLThing())) {
                 individualsInList.addAll(getUntypedIndividuals());
             }
-        }
-        else {
+        } else {
             typeLabel.setIcon(null);
             typeLabel.setText("Nothing selected");
             individualsInList.addAll(getUntypedIndividuals());
@@ -78,18 +74,10 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
 
     //TODO: do we want to cache this?
     protected Set<OWLNamedIndividual> getUntypedIndividuals() {
-        Set<OWLNamedIndividual> untypedIndividuals = new HashSet<>();
-        OWLOntology activeOntology = getOWLModelManager().getActiveOntology();
-        Set<OWLOntology> importsClosure = activeOntology.getImportsClosure();
-
-        for (OWLNamedIndividual individual : activeOntology.getIndividualsInSignature(Imports.INCLUDED)) {
-            Collection<OWLClassExpression> types = EntitySearcher.getTypes(individual, importsClosure.stream()).collect(Collectors.toList());
-            if (types.size() == 0) {
-                untypedIndividuals.add(individual);
-            }
-        }
-
-        return untypedIndividuals;
+        OWLOntology ont = getOWLModelManager().getActiveOntology();
+        return ont.individualsInSignature(Imports.INCLUDED)
+                .filter(i -> !EntitySearcher.getTypes(i, ont.importsClosure()).findFirst().isPresent())
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -97,7 +85,7 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
         refill(); // TODO for now this is ok - but things are bad
     }
 
-
+    @Override
     protected List<OWLOntologyChange> dofurtherCreateSteps(OWLIndividual newIndividual) {
         OWLClass cls = getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass();
         if (cls != null && !cls.isOWLThing()) {
@@ -107,7 +95,6 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
         }
         return new ArrayList<>();
     }
-
 
     @Override
     public void disposeView() {

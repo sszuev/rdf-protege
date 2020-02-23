@@ -19,16 +19,15 @@ import java.util.stream.Stream;
  */
 public class OWLDataTypeUtils {
 
-    private final OWLOntologyManager mngr;
+    private final OWLOntologyManager manager;
 
     public OWLDataTypeUtils(OWLOntologyManager mngr) {
-        this.mngr = Objects.requireNonNull(mngr);
+        this.manager = Objects.requireNonNull(mngr);
     }
 
     public Set<OWLDatatype> getBuiltinDatatypes() {
         Set<OWLDatatype> datatypes = new HashSet<>();
-        final OWLDataFactory df = mngr.getOWLDataFactory();
-
+        OWLDataFactory df = manager.getOWLDataFactory();
         datatypes.add(df.getTopDatatype());
         for (OWL2Datatype dt : OWL2Datatype.values()) {
             datatypes.add(df.getOWLDatatype(dt.getIRI()));

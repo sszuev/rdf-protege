@@ -21,59 +21,57 @@ import java.util.Set;
  * The University Of Manchester<br>
  * Medical Informatics Group<br>
  * Date: 19-Jun-2006<br><br>
-
  * matthew.horridge@cs.man.ac.uk<br>
  * www.cs.man.ac.uk/~horridgm<br><br>
  */
 public class OWLObjectList<O extends OWLObject> extends JList<O> {
 
-
-    public OWLObjectList(OWLEditorKit owlEditorKit) {
-        OWLCellRendererSimple renderer = new OWLCellRendererSimple(owlEditorKit);
+    public OWLObjectList(OWLEditorKit kit) {
+        OWLCellRendererSimple renderer = new OWLCellRendererSimple(kit);
         renderer.setDisplayQuotes(false);
         setCellRenderer(renderer);
         DragSource ds = DragSource.getDefaultDragSource();
-        ds.createDefaultDragGestureRecognizer(this,
-                                              DnDConstants.ACTION_COPY,
-                                              new OWLObjectListDragGestureListener(owlEditorKit, this));
+        ds.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, new OWLObjectListDragGestureListener(kit, this));
     }
 
-
+    @Override
     public String getToolTipText(MouseEvent event) {
         int index = locationToIndex(event.getPoint());
-        if (index >= 0){
-            Object element = getModel().getElementAt(index);
-            if (element != null && element instanceof OWLEntity){
-                return ((OWLEntity)element).getIRI().toString();
-            }
+        if (index < 0) {
+            return null;
+        }
+        Object element = getModel().getElementAt(index);
+        if (element instanceof OWLEntity) {
+            return ((OWLEntity) element).getIRI().toString();
         }
         return null;
     }
 
-
     public void setSelectedValues(Set<O> owlObjects, boolean shouldScroll) {
         getSelectionModel().clearSelection();
-        if (getSelectionMode() == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION){
-            int firstIndex = -1;
-            for (int i=0; i<getModel().getSize(); i++){
-                if (owlObjects.contains(getModel().getElementAt(i))){
-                    getSelectionModel().addSelectionInterval(i, i);
-                    if (firstIndex == -1){
-                        firstIndex = i;
-                    }
-                }
+        if (getSelectionMode() != ListSelectionModel.MULTIPLE_INTERVAL_SELECTION) {
+            return;
+        }
+        int firstIndex = -1;
+        ListModel<O> m = getModel();
+        for (int i = 0; i < m.getSize(); i++) {
+            if (!owlObjects.contains(m.getElementAt(i))) {
+                continue;
             }
-            if (shouldScroll && firstIndex != -1){
-                scrollRectToVisible(new Rectangle(getCellBounds(firstIndex, firstIndex)));
+            getSelectionModel().addSelectionInterval(i, i);
+            if (firstIndex == -1) {
+                firstIndex = i;
             }
         }
+        if (shouldScroll && firstIndex != -1) {
+            scrollRectToVisible(new Rectangle(getCellBounds(firstIndex, firstIndex)));
+        }
     }
-
 
     @SuppressWarnings("unchecked")
     public java.util.List<O> getSelectedOWLObjects(){
         List<O> sel = new ArrayList<>();
-        for (Object o : getSelectedValues()){
+        for (Object o : getSelectedValuesList()) {
             sel.add((O) o);
         }
         return sel;

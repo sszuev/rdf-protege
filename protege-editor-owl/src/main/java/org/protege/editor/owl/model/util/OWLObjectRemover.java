@@ -3,7 +3,6 @@ package org.protege.editor.owl.model.util;
 import org.semanticweb.owlapi.model.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -11,6 +10,7 @@ import java.util.List;
  * Stanford Center for Biomedical Informatics Research
  * 08/03/15
  */
+@Deprecated // todo: unused -> delete
 public class OWLObjectRemover {
 
     /**

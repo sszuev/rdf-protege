@@ -5,7 +5,6 @@ import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.OWLWorkspace;
 import org.protege.editor.owl.model.entity.OWLEntityCreationSet;
 import org.protege.editor.owl.model.event.EventType;
-import org.protege.editor.owl.model.event.OWLModelManagerChangeEvent;
 import org.protege.editor.owl.model.event.OWLModelManagerListener;
 import org.protege.editor.owl.model.util.OWLEntityDeleter;
 import org.protege.editor.owl.ui.list.OWLObjectList;
@@ -15,8 +14,6 @@ import org.semanticweb.owlapi.util.OWLEntityCollector;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,6 +32,7 @@ import java.util.TreeSet;
  * Bio-Health Informatics Group<br>
  * Date: 28-Oct-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class OWLIndividualListComponent extends JPanel {
 
 

@@ -3,7 +3,6 @@ package org.protege.editor.owl.ui.view.individual;
 import org.protege.editor.owl.model.selection.OWLSelectionModelListener;
 import org.protege.editor.owl.ui.framelist.OWLFrameList;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.reasoner.NodeSet;
@@ -12,12 +11,11 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import java.util.List;
 
 public class OWLInferredMemberListViewComponent extends OWLIndividualListViewComponent {
-        private OWLSelectionModelListener refillOnClassSelectionListener = () -> {
-            if (getOWLWorkspace().getOWLSelectionModel().getSelectedObject() instanceof OWLClass){
-                refill();
-            }
-        };
-
+    private final OWLSelectionModelListener refillOnClassSelectionListener = () -> {
+        if (getOWLWorkspace().getOWLSelectionModel().getSelectedObject() instanceof OWLClass) {
+            refill();
+        }
+    };
 
     @Override
     public void initialiseIndividualsView() throws Exception {
@@ -35,17 +33,19 @@ public class OWLInferredMemberListViewComponent extends OWLIndividualListViewCom
     protected void refill() {
         individualsInList.clear();
         OWLClass cls = getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass();
-        if (cls != null) {
-        	OWLReasoner reasoner = getOWLModelManager().getReasoner();
-        	NodeSet<OWLNamedIndividual> individuals = reasoner.getInstances(cls, true);
-        	if (individuals != null) {
-        		for (OWLIndividual ind : individuals.getFlattened()){
-        			if (!ind.isAnonymous()){
-        				individualsInList.add(ind.asOWLNamedIndividual());
-        			}
-        		}
-        	}
+        if (cls == null) {
+            reset();
+            return;
         }
+        OWLReasoner reasoner = getOWLModelManager().getReasoner();
+        NodeSet<OWLNamedIndividual> individuals = reasoner.getInstances(cls, true);
+        if (individuals == null) {
+            reset();
+            return;
+        }
+        individuals.entities()
+                .filter(i -> !i.isAnonymous())
+                .forEach(i -> individualsInList.add(i.asOWLNamedIndividual()));
         reset();
     }
     

@@ -18,6 +18,7 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 09-May-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public abstract class OWLObjectHierarchyCreator<E extends OWLEntity> {
 
     private OWLEditorKit editorKit;

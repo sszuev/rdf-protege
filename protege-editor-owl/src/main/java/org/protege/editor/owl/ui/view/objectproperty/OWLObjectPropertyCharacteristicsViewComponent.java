@@ -1,5 +1,6 @@
 package org.protege.editor.owl.ui.view.objectproperty;
 
+import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.axiom.FreshAxiomLocationPreferences;
 import org.protege.editor.owl.model.axiom.FreshAxiomLocationStrategy;
 import org.protege.editor.owl.model.axiom.FreshAxiomLocationStrategyFactory;
@@ -8,8 +9,6 @@ import org.semanticweb.owlapi.util.FilteringOWLOntologyChangeListener;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,35 +21,21 @@ import java.util.List;
  */
 public class OWLObjectPropertyCharacteristicsViewComponent extends AbstractOWLObjectPropertyViewComponent {
 
-//    private static final Logger logger = LoggerFactory.getLogger(OWLObjectPropertyCharacteristicsViewComponent.class);
-
-
-    /**
-     * 
-     */
     private static final long serialVersionUID = -1299595056337566960L;
 
     private JCheckBox functionalCB;
-
     private JCheckBox inverseFunctionalCB;
-
     private JCheckBox transitiveCB;
-
     private JCheckBox symmetricCB;
-
     private JCheckBox aSymmetricCB;
-
     private JCheckBox reflexiveCB;
-
     private JCheckBox irreflexiveCB;
-
     private List<JCheckBox> checkBoxes;
-
     private OWLOntologyChangeListener listener;
-
     private OWLObjectProperty prop;
 
-
+    @Override
+    @SuppressWarnings("NullableProblems")
     public void initialiseView() throws Exception {
         functionalCB = new JCheckBox("Functional");
         inverseFunctionalCB = new JCheckBox("Inverse functional");
@@ -91,43 +76,43 @@ public class OWLObjectPropertyCharacteristicsViewComponent extends AbstractOWLOb
         setupSetters();
 
         listener = new FilteringOWLOntologyChangeListener() {
+            @Override
             public void visit(OWLFunctionalObjectPropertyAxiom axiom) {
                 updateView(prop);
             }
 
-
+            @Override
             public void visit(OWLAsymmetricObjectPropertyAxiom axiom) {
                 updateView(prop);
             }
 
-
+            @Override
             public void visit(OWLInverseFunctionalObjectPropertyAxiom axiom) {
                 updateView(prop);
             }
 
-
+            @Override
             public void visit(OWLReflexiveObjectPropertyAxiom axiom) {
                 updateView(prop);
             }
 
-
+            @Override
             public void visit(OWLIrreflexiveObjectPropertyAxiom axiom) {
                 updateView(prop);
             }
 
-
+            @Override
             public void visit(OWLSymmetricObjectPropertyAxiom axiom) {
                 updateView(prop);
             }
 
-
+            @Override
             public void visit(OWLTransitiveObjectPropertyAxiom axiom) {
                 updateView(prop);
             }
         };
         getOWLModelManager().addOntologyChangeListener(listener);
     }
-
 
     private void setupSetters() {
         addSetter(functionalCB, () -> getOWLDataFactory().getOWLFunctionalObjectPropertyAxiom(getProperty()));
@@ -144,7 +129,6 @@ public class OWLObjectPropertyCharacteristicsViewComponent extends AbstractOWLOb
 
         addSetter(irreflexiveCB, () -> getOWLDataFactory().getOWLIrreflexiveObjectPropertyAxiom(getProperty()));
     }
-
 
     private void addSetter(final JCheckBox checkBox, final PropertyCharacteristicSetter setter) {
         checkBox.addActionListener(e -> {
@@ -170,16 +154,14 @@ public class OWLObjectPropertyCharacteristicsViewComponent extends AbstractOWLOb
         });
     }
 
-
     private OWLObjectProperty getProperty() {
         return prop;
     }
 
-
+    @Override
     public void disposeView() {
         getOWLModelManager().removeOntologyChangeListener(listener);
     }
-
 
     private void setCheckBoxesEnabled(boolean enable) {
         for (JCheckBox cb : checkBoxes) {
@@ -187,62 +169,62 @@ public class OWLObjectPropertyCharacteristicsViewComponent extends AbstractOWLOb
         }
     }
 
-
     private void clearAll() {
         for (JCheckBox cb : checkBoxes) {
             cb.setSelected(false);
         }
     }
 
-
+    @Override
     protected OWLObjectProperty updateView(OWLObjectProperty property) {
         prop = property;
         clearAll();
         setCheckBoxesEnabled(property != null);
         if (property == null) {
-        	return null;
+            return null;
         }
+        OWLModelManager m = getOWLModelManager();
         // We only require one axiom to specify that a property has a specific characteristic
-        for (OWLOntology ont : getOWLModelManager().getActiveOntologies()) {
-            if (!ont.getFunctionalObjectPropertyAxioms(property).isEmpty()) {
+        for (OWLOntology ont : m.getActiveOntologies()) {
+            if (ont.functionalObjectPropertyAxioms(property).findFirst().isPresent()) {
                 functionalCB.setSelected(true);
-                if (!getOWLModelManager().isMutable(ont)) {
+                if (!m.isMutable(ont)) {
                     functionalCB.setEnabled(false);
                 }
             }
-            if (!ont.getInverseFunctionalObjectPropertyAxioms(property).isEmpty()) {
+            if (ont.inverseFunctionalObjectPropertyAxioms(property).findFirst().isPresent()) {
                 inverseFunctionalCB.setSelected(true);
-                if (!getOWLModelManager().isMutable(ont)) {
+                if (!m.isMutable(ont)) {
                     inverseFunctionalCB.setEnabled(false);
                 }
             }
-            if (!ont.getTransitiveObjectPropertyAxioms(property).isEmpty()) {
+            if (ont.transitiveObjectPropertyAxioms(property).findFirst().isPresent()) {
                 transitiveCB.setSelected(true);
-                if (!getOWLModelManager().isMutable(ont)) {
+                if (!m.isMutable(ont)) {
                     transitiveCB.setEnabled(false);
                 }
             }
-            if (!ont.getSymmetricObjectPropertyAxioms(property).isEmpty()) {
+            if (ont.symmetricObjectPropertyAxioms(property).findFirst().isPresent()) {
                 symmetricCB.setSelected(true);
-                if (!getOWLModelManager().isMutable(ont)) {
+                if (!m.isMutable(ont)) {
                     symmetricCB.setEnabled(false);
                 }
             }
-            if (!ont.getAsymmetricObjectPropertyAxioms(property).isEmpty()) {
+            if (ont.asymmetricObjectPropertyAxioms(property).findFirst().isPresent()) {
                 aSymmetricCB.setSelected(true);
-                if (!getOWLModelManager().isMutable(ont)) {
+                if (!m.isMutable(ont)) {
                     aSymmetricCB.setEnabled(false);
                 }
             }
-            if (!ont.getReflexiveObjectPropertyAxioms(property).isEmpty()) {
+            if (ont.reflexiveObjectPropertyAxioms(property).findFirst().isPresent()) {
                 reflexiveCB.setSelected(true);
-                if (!getOWLModelManager().isMutable(ont)) {
+                if (!m.isMutable(ont)) {
                     reflexiveCB.setEnabled(false);
                 }
             }
-            if (!ont.getIrreflexiveObjectPropertyAxioms(property).isEmpty()) {
+            if (ont.irreflexiveObjectPropertyAxioms(property).findFirst().isPresent()) {
                 irreflexiveCB.setSelected(true);
-                if (!getOWLModelManager().isMutable(ont)) {
+                if (!m.isMutable(ont)) {
                     irreflexiveCB.setEnabled(false);
                 }
             }
@@ -251,9 +233,8 @@ public class OWLObjectPropertyCharacteristicsViewComponent extends AbstractOWLOb
         return property;
     }
 
-
     private interface PropertyCharacteristicSetter {
 
-        public OWLAxiom getAxiom();
+        OWLAxiom getAxiom();
     }
 }

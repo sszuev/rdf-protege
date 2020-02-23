@@ -20,24 +20,12 @@ public class OWLUtilities {
     }
 
 	public static boolean isDeprecated(OWLEntity o, Collection<OWLOntology> ontologies) {
-		for (OWLOntology ontology : ontologies) {
-    		for (OWLAnnotationAssertionAxiom assertion : ontology.getAnnotationAssertionAxioms(o.getIRI())) {
-
-    			if (!assertion.getProperty().isDeprecated()) {
-    				continue;
-    			}
-    			if (!(assertion.getValue() instanceof OWLLiteral)) {
-    				continue;
-    			}
-    			OWLLiteral value = (OWLLiteral) assertion.getValue();
-    			if (!value.isBoolean()) {
-    				continue;
-    			}
-    			if (value.parseBoolean()) {
-    				return true;
-    			}
-    		}
-    	}
-		return false;
+		return ontologies.stream().flatMap(x -> x.annotationAssertionAxioms(o.getIRI()))
+				.filter(a -> a.getProperty().isDeprecated())
+				.map(OWLAnnotationAssertionAxiom::getValue)
+				.filter(v -> v instanceof OWLLiteral)
+				.map(v -> (OWLLiteral) v)
+				.filter(OWLLiteral::isBoolean)
+				.anyMatch(OWLLiteral::parseBoolean);
 	}
 }

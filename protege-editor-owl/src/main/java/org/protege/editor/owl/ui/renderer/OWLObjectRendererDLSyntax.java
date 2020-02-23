@@ -12,6 +12,7 @@ import java.util.*;
  * Bio-Health Informatics Group<br>
  * Date: 24-Jan-2007<br><br>
  */
+@Deprecated // todo: unused -> delete
 public class OWLObjectRendererDLSyntax implements OWLObjectVisitor, OWLObjectRenderer<OWLObject> {
 
 //    private static final Logger logger = LoggerFactory.getLogger(OWLObjectRendererImpl.class);

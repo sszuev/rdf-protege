@@ -11,6 +11,7 @@ import java.awt.*;
  * Bio-Medical Informatics Research Group<br>
  * Date: 06/02/2012
  */
+@Deprecated // todo: unused -> delete
 public class OWLOntologyIdViewComponent extends AbstractOWLViewComponent {
 
     @Override
