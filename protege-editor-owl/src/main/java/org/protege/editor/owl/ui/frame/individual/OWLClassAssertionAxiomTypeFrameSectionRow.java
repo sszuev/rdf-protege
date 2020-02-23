@@ -6,8 +6,7 @@ import org.protege.editor.owl.ui.frame.AbstractOWLFrameSectionRow;
 import org.protege.editor.owl.ui.frame.OWLFrameSection;
 import org.semanticweb.owlapi.model.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
 
 /**
@@ -16,32 +15,28 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLClassAssertionAxiomTypeFrameSectionRow extends AbstractOWLFrameSectionRow<OWLIndividual, OWLClassAssertionAxiom, OWLClassExpression> {
+public class OWLClassAssertionAxiomTypeFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLIndividual, OWLClassAssertionAxiom, OWLClassExpression> {
 
-    public OWLClassAssertionAxiomTypeFrameSectionRow(OWLEditorKit owlEditorKit, 
-    												 OWLFrameSection<OWLIndividual, OWLClassAssertionAxiom, OWLClassExpression> section,
+    public OWLClassAssertionAxiomTypeFrameSectionRow(OWLEditorKit kit,
+                                                     OWLFrameSection<OWLIndividual, OWLClassAssertionAxiom, OWLClassExpression> section,
                                                      OWLOntology ontology, OWLIndividual rootObject,
                                                      OWLClassAssertionAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLClassExpression> getObjectEditor() {
-        return getOWLEditorKit().getWorkspace().getOWLComponentFactory().getOWLClassDescriptionEditor(getAxiom().getClassExpression(), AxiomType.CLASS_ASSERTION);
+        return getOWLComponentFactory().getOWLClassDescriptionEditor(getAxiom().getClassExpression(), AxiomType.CLASS_ASSERTION);
     }
 
-
+    @Override
     protected OWLClassAssertionAxiom createAxiom(OWLClassExpression editedObject) {
-        return getOWLDataFactory().getOWLClassAssertionAxiom(editedObject, getRootObject());
+        return getOWLDataFactory().getOWLClassAssertionAxiom(editedObject, getRoot());
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.  These objects
-     * could be placed on the clip board during a copy operation,
-     * or navigated to etc.
-     */
-    public List<OWLClassExpression> getManipulatableObjects() {
-        return Arrays.asList(getAxiom().getClassExpression());
+    @Override
+    public Stream<OWLClassExpression> manipulatableObjects() {
+        return Stream.of(getAxiom().getClassExpression());
     }
 }

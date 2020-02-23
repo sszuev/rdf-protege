@@ -14,6 +14,7 @@ import org.semanticweb.owlapi.model.OWLObject;
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.protege.editor.owl.ui.renderer.InlineAnnotationRendering.DO_NOT_RENDER_COMPOUND_ANNOTATIONS_INLINE;
@@ -28,88 +29,51 @@ import static org.protege.editor.owl.ui.renderer.InlineAnnotationRendering.RENDE
  */
 public class OWLFrameListRenderer implements ListCellRenderer<Object>, RendererWithInsets {
 
-    private OWLEditorKit owlEditorKit;
-
-    private OWLCellRenderer owlCellRenderer;
-
-    private ListCellRenderer<Object> separatorRenderer;
-
-    private OWLAnnotationCellRenderer2 annotationRenderer;
+    private final OWLEditorKit kit;
+    private final OWLCellRenderer owlCellRenderer;
+    private final ListCellRenderer<Object> separatorRenderer;
+    private final OWLAnnotationCellRenderer2 annotationRenderer;
+    private final Set<OWLEntity> crossedOutEntities;
 
     private boolean highlightKeywords;
-
     private boolean highlightUnsatisfiableClasses;
-
-    private boolean highlightUnsatisfiableProperties;
-
-    private Set<OWLEntity> crossedOutEntities;
-
     private boolean annotationRendererEnabled;
 
-    public OWLFrameListRenderer(OWLEditorKit owlEditorKit) {
-        this.owlEditorKit = owlEditorKit;
-        owlCellRenderer = new OWLCellRenderer(owlEditorKit);
+    public OWLFrameListRenderer(OWLEditorKit kit) {
+        this.kit = Objects.requireNonNull(kit);
+        owlCellRenderer = new OWLCellRenderer(kit);
         separatorRenderer = new DefaultListCellRenderer();
-        annotationRenderer = new OWLAnnotationCellRenderer2(owlEditorKit);
+        annotationRenderer = new OWLAnnotationCellRenderer2(kit);
         highlightKeywords = true;
         highlightUnsatisfiableClasses = true;
-        highlightUnsatisfiableProperties = true;
         annotationRendererEnabled = true;
         crossedOutEntities = new HashSet<>();
     }
 
-
     public OWLEditorKit getOWLEditorKit() {
-        return owlEditorKit;
+        return kit;
     }
-
 
     public void setHighlightKeywords(boolean highlightKeywords) {
         this.highlightKeywords = highlightKeywords;
     }
 
-
-    public void setAnnotationRendererEnabled(boolean enabled) {
-        this.annotationRendererEnabled = enabled;
-    }
-
-
     public OWLCellRenderer getOWLCellRenderer() {
         return owlCellRenderer;
     }
 
-    public void setHighlightUnsatisfiableClasses(boolean b) {
-        this.highlightUnsatisfiableClasses = b;
-    }
-
-
-    public boolean isHighlightUnsatisfiableClasses() {
-        return highlightUnsatisfiableClasses;
-    }
-
-
-    public boolean isHighlightUnsatisfiableProperties() {
-        return highlightUnsatisfiableProperties;
-    }
-
-
-    public void setHighlightUnsatisfiableProperties(boolean highlightUnsatisfiableProperties) {
-        this.highlightUnsatisfiableProperties = highlightUnsatisfiableProperties;
-    }
-
-
-    public void setCrossedOutEntities(Set<OWLEntity> entities) {
-        this.crossedOutEntities.clear();
-        this.crossedOutEntities.addAll(entities);
+    protected OWLRendererPreferences getOWLRendererPreferences() {
+        return OWLRendererPreferences.getInstance();
     }
 
     /**
-     * Return a component that has been configured to display the specified
+     * Returns a component that has been configured to display the specified
      * value. That component's <code>paint</code> method is then called to
      * "render" the cell.  If it is necessary to compute the dimensions
      * of a list because the list cells do not have a fixed size, this method
      * is called to generate a component on which <code>getPreferredSize</code>
      * can be invoked.
+     *
      * @param list         The JList we're painting.
      * @param value        The value returned by list.getModel().getElementAt(index).
      * @param index        The cells index.
@@ -120,90 +84,66 @@ public class OWLFrameListRenderer implements ListCellRenderer<Object>, RendererW
      * @see javax.swing.ListSelectionModel
      * @see javax.swing.ListModel
      */
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+    public Component getListCellRendererComponent(JList<?> list,
+                                                  Object value,
+                                                  int index,
+                                                  boolean isSelected,
                                                   boolean cellHasFocus) {
 
 
         if (value instanceof OWLFrameSection) {
-            JLabel label = (JLabel) separatorRenderer.getListCellRendererComponent(list,
-                                                                                   " ",
-                                                                                   index,
-                                                                                   isSelected,
-                                                                                   cellHasFocus);
+            JLabel label = (JLabel) separatorRenderer.getListCellRendererComponent(list, " ", index, isSelected, cellHasFocus);
             label.setVerticalAlignment(JLabel.TOP);
             return label;
         }
-        else {
-            final AbstractOWLFrameSectionRow row = (AbstractOWLFrameSectionRow) value;
-            final OWLAxiom axiom = row.getAxiom();
-            if (axiom instanceof OWLAnnotationAssertionAxiom && annotationRendererEnabled) {
-                OWLAnnotationAssertionAxiom annotationAssertionAxiom = (OWLAnnotationAssertionAxiom) axiom;
-                annotationRenderer.setInlineAnnotationRendering(
-                        getRenderAnnotationAnnotationsInline());
-                annotationRenderer.setInlineDatatypeRendering(
-                        getAnnotationLiteralDatatypeRendering()
-                );
-                annotationRenderer.setThumbnailRendering(
-                        getInlineThumbnailRendering()
-                );
-                return annotationRenderer.getListCellRendererComponent(list,
-                                                                       annotationAssertionAxiom,
-                                                                       index,
-                                                                       isSelected,
-                                                                       cellHasFocus);
-            }
 
-            boolean commentedOut = false;
-            owlCellRenderer.setCommentedOut(commentedOut);
-            Object valueToRender = getValueToRender(list, value, index, isSelected, cellHasFocus);
-            owlCellRenderer.setIconObject(getIconObject(list, value, index, isSelected, cellHasFocus));
-            owlCellRenderer.setOntology(((OWLFrameSectionRow) value).getOntology());
-            owlCellRenderer.setInferred(((OWLFrameSectionRow) value).isInferred());
-            owlCellRenderer.setHighlightKeywords(highlightKeywords);
-            owlCellRenderer.setHighlightUnsatisfiableClasses(highlightUnsatisfiableClasses);
-            owlCellRenderer.setCrossedOutEntities(crossedOutEntities);
-            return owlCellRenderer.getListCellRendererComponent(list,
-                                                                valueToRender,
-                                                                index,
-                                                                isSelected,
-                                                                cellHasFocus);
+        AbstractOWLFrameSectionRow<?, ?, ?> row = (AbstractOWLFrameSectionRow<?, ?, ?>) value;
+        OWLAxiom axiom = row.getAxiom();
+        if (axiom instanceof OWLAnnotationAssertionAxiom && annotationRendererEnabled) {
+            OWLAnnotationAssertionAxiom annotationAssertionAxiom = (OWLAnnotationAssertionAxiom) axiom;
+            annotationRenderer.setInlineAnnotationRendering(getRenderAnnotationAnnotationsInline());
+            annotationRenderer.setInlineDatatypeRendering(getAnnotationLiteralDatatypeRendering());
+            annotationRenderer.setThumbnailRendering(getInlineThumbnailRendering());
+            return annotationRenderer.getListCellRendererComponent(list, annotationAssertionAxiom, index, isSelected, cellHasFocus);
         }
+
+        owlCellRenderer.setCommentedOut(false);
+        Object valueToRender = getValueToRender(value);
+        owlCellRenderer.setIconObject(getIconObject(value));
+        owlCellRenderer.setOntology(((OWLFrameSectionRow<?, ?, ?>) value).getOntology());
+        owlCellRenderer.setInferred(((OWLFrameSectionRow<?, ?, ?>) value).isInferred());
+        owlCellRenderer.setHighlightKeywords(highlightKeywords);
+        owlCellRenderer.setHighlightUnsatisfiableClasses(highlightUnsatisfiableClasses);
+        owlCellRenderer.setCrossedOutEntities(crossedOutEntities);
+        return owlCellRenderer.getListCellRendererComponent(list, valueToRender, index, isSelected, cellHasFocus);
     }
 
     private InlineDatatypeRendering getAnnotationLiteralDatatypeRendering() {
-        return OWLRendererPreferences.getInstance().isDisplayLiteralDatatypesInline() ? InlineDatatypeRendering.RENDER_DATATYPE_INLINE : InlineDatatypeRendering.DO_NOT_RENDER_DATATYPE_INLINE;
+        return getOWLRendererPreferences().isDisplayLiteralDatatypesInline()
+                ? InlineDatatypeRendering.RENDER_DATATYPE_INLINE : InlineDatatypeRendering.DO_NOT_RENDER_DATATYPE_INLINE;
     }
 
     private InlineAnnotationRendering getRenderAnnotationAnnotationsInline() {
-        return OWLRendererPreferences.getInstance().isDisplayAnnotationAnnotationsInline() ? RENDER_COMPOUND_ANNOTATIONS_INLINE : DO_NOT_RENDER_COMPOUND_ANNOTATIONS_INLINE;
+        return getOWLRendererPreferences().isDisplayAnnotationAnnotationsInline()
+                ? RENDER_COMPOUND_ANNOTATIONS_INLINE : DO_NOT_RENDER_COMPOUND_ANNOTATIONS_INLINE;
     }
 
     private InlineThumbnailRendering getInlineThumbnailRendering() {
-        return OWLRendererPreferences.getInstance().isDisplayThumbnailsInline() ? InlineThumbnailRendering.DISPLAY_THUMBNAILS_INLINE : InlineThumbnailRendering.DO_NOT_DISPLAY_THUMBNAILS_INLINE;
+        return getOWLRendererPreferences().isDisplayThumbnailsInline()
+                ? InlineThumbnailRendering.DISPLAY_THUMBNAILS_INLINE : InlineThumbnailRendering.DO_NOT_DISPLAY_THUMBNAILS_INLINE;
     }
 
-    public void setWrap(boolean b) {
-        owlCellRenderer.setWrap(b);
-    }
-
-
-    protected OWLObject getIconObject(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value instanceof AbstractOWLFrameSectionRow) {
-            AbstractOWLFrameSectionRow row = (AbstractOWLFrameSectionRow) value;
-            if (!row.getManipulatableObjects().isEmpty()) {
-                Object firstObject = row.getManipulatableObjects().iterator().next();
-                if (firstObject instanceof OWLObject) {
-                    return (OWLObject) firstObject;
-                }
-            }
+    protected OWLObject getIconObject(Object value) {
+        if (!(value instanceof AbstractOWLFrameSectionRow)) {
+            return null;
         }
-        return null;
+        AbstractOWLFrameSectionRow<?, ?, ?> row = (AbstractOWLFrameSectionRow<?, ?, ?>) value;
+        return row.manipulatableObjects().findFirst().orElse(null);
     }
 
-
-    protected Object getValueToRender(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    protected Object getValueToRender(Object value) {
         if (value instanceof AbstractOWLFrameSectionRow) {
-            value = ((AbstractOWLFrameSectionRow) value).getRendering();
+            value = ((AbstractOWLFrameSectionRow<?, ?, ?>) value).getRendering();
         }
         return value;
     }

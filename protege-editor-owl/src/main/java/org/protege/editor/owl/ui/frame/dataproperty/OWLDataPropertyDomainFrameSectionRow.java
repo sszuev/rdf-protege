@@ -15,16 +15,18 @@ import org.semanticweb.owlapi.model.OWLOntology;
  * Bio-Health Informatics Group<br>
  * Date: 16-Feb-2007<br><br>
  */
-public class OWLDataPropertyDomainFrameSectionRow extends AbstractPropertyDomainFrameSectionRow<OWLDataProperty, OWLDataPropertyDomainAxiom> {
+public class OWLDataPropertyDomainFrameSectionRow
+        extends AbstractPropertyDomainFrameSectionRow<OWLDataProperty, OWLDataPropertyDomainAxiom> {
 
-    public OWLDataPropertyDomainFrameSectionRow(OWLEditorKit owlEditorKit, OWLFrameSection section,
+    public OWLDataPropertyDomainFrameSectionRow(OWLEditorKit owlEditorKit,
+                                                OWLFrameSection<OWLDataProperty, OWLDataPropertyDomainAxiom, OWLClassExpression> section,
                                                 OWLOntology ontology, OWLDataProperty rootObject,
                                                 OWLDataPropertyDomainAxiom axiom) {
         super(owlEditorKit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLDataPropertyDomainAxiom createAxiom(OWLClassExpression editedObject) {
-        return getOWLDataFactory().getOWLDataPropertyDomainAxiom(getRootObject(), editedObject);
+        return getOWLDataFactory().getOWLDataPropertyDomainAxiom(getRoot(), editedObject);
     }
 }

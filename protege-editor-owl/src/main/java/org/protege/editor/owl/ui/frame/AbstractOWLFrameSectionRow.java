@@ -6,9 +6,12 @@ import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.ui.UIHelper;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditorHandler;
+import org.protege.editor.owl.ui.util.OWLComponentFactory;
 import org.semanticweb.owlapi.model.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Author: Matthew Horridge<br>
@@ -23,27 +26,25 @@ import java.util.*;
 public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
         implements OWLFrameSectionRow<R, A, E>, OWLObjectEditorHandler<E> {
 
-    public static final String DEFAULT_DELIMETER = ", ";
+    public static final String DEFAULT_DELIMITER = ", ";
     public static final String DEFAULT_PREFIX = "";
     public static final String DEFAULT_SUFFIX = "";
 
-    private final OWLEditorKit owlEditorKit;
+    private final OWLEditorKit kit;
     private final OWLOntology ontology;
     private final R rootObject;
-    protected final A axiom;
+    private final A axiom;
     private final OWLFrameSection<R, A, E> section;
 
-    private Object userObject;
-
-    protected AbstractOWLFrameSectionRow(OWLEditorKit owlEditorKit,
+    protected AbstractOWLFrameSectionRow(OWLEditorKit kit,
                                          OWLFrameSection<R, A, E> section,
                                          OWLOntology ontology,
-                                         R rootObject,
+                                         R root,
                                          A axiom) {
-        this.owlEditorKit = owlEditorKit;
+        this.kit = Objects.requireNonNull(kit);
         this.section = section;
         this.ontology = ontology;
-        this.rootObject = rootObject;
+        this.rootObject = root;
         this.axiom = axiom;
     }
 
@@ -52,7 +53,8 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
         return section;
     }
 
-    public R getRootObject() {
+    @Override
+    public R getRoot() {
         return rootObject;
     }
 
@@ -70,6 +72,10 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
     }
 
     protected abstract OWLObjectEditor<E> getObjectEditor();
+
+    protected OWLComponentFactory getOWLComponentFactory() {
+        return getOWLEditorKit().getWorkspace().getOWLComponentFactory();
+    }
 
     @Override
     public boolean checkEditorResults(OWLObjectEditor<E> editor) {
@@ -116,7 +122,7 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
     }
 
     public OWLModelManager getOWLModelManager() {
-        return owlEditorKit.getModelManager();
+        return kit.getModelManager();
     }
 
     public OWLDataFactory getOWLDataFactory() {
@@ -129,17 +135,7 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
     }
 
     public OWLEditorKit getOWLEditorKit() {
-        return owlEditorKit;
-    }
-
-    /**
-     * Gets the root object of the frame that this row belongs to.
-     *
-     * @return {@link R}
-     */
-    @Override
-    public R getRoot() {
-        return rootObject;
+        return kit;
     }
 
     /**
@@ -167,7 +163,7 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
         if (ontology == null) {
             return "Inferred";
         }
-        UIHelper helper = new UIHelper(owlEditorKit);
+        UIHelper helper = new UIHelper(kit);
         StringBuilder sb = new StringBuilder("<html>\n\t<body>\n\t\tAsserted in: ");
         sb.append(helper.getHTMLOntologyList(Collections.singleton(ontology)));
         A axiom = getAxiom();
@@ -219,19 +215,19 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
         return getOntology() != null;
     }
 
-    public String getPrefix() {
+    protected String getPrefix() {
         return DEFAULT_PREFIX;
     }
 
-    public String getDelimeter() {
-        return DEFAULT_DELIMETER;
+    protected String getDelimiter() {
+        return DEFAULT_DELIMITER;
     }
 
-    public String getSuffix() {
+    protected String getSuffix() {
         return DEFAULT_SUFFIX;
     }
 
-    protected Object getObjectRendering(OWLObject ob) {
+    private String getObjectRendering(OWLObject ob) {
         return getOWLModelManager().getRendering(ob);
     }
 
@@ -243,20 +239,12 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
     /**
      * Gets the rendering of the value of a particular column.
      *
-     * @return The <code>String</code> representation of the column value.
+     * @return the {@code String}-representation of the column value
      */
     public String getRendering() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getPrefix());
-        for (Iterator<? extends OWLObject> it = getManipulatableObjects().iterator(); it.hasNext(); ) {
-            OWLObject obj = it.next();
-            sb.append(getObjectRendering(obj));
-            if (it.hasNext()) {
-                sb.append(getDelimeter());
-            }
-        }
-        sb.append(getSuffix());
-        return sb.toString();
+        return manipulatableObjects()
+                .map(this::getObjectRendering)
+                .collect(Collectors.joining(getDelimiter(), getPrefix(), getSuffix()));
     }
 
     @Override
@@ -275,5 +263,10 @@ public abstract class AbstractOWLFrameSectionRow<R, A extends OWLAxiom, E>
 
     public List<MListButton> getAdditionalButtons() {
         return Collections.emptyList();
+    }
+
+    protected <X> Stream<X> withoutRoot(Stream<X> stream) {
+        R root = getRoot();
+        return stream.filter(x -> !root.equals(x));
     }
 }

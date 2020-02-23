@@ -6,6 +6,7 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.clsdescriptioneditor.ExpressionEditor;
 import org.protege.editor.owl.ui.clsdescriptioneditor.OWLExpressionChecker;
 import org.protege.editor.owl.ui.selector.OWLClassSelectorPanel;
+import org.semanticweb.owlapi.model.AsOWLClass;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLException;
@@ -17,10 +18,8 @@ import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -29,64 +28,53 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 26-Feb-2007<br><br>
  */
-public class OWLClassExpressionSetEditor extends AbstractOWLObjectEditor<Set<OWLClassExpression>> implements VerifiedInputEditor {
+public class OWLClassExpressionSetEditor
+        extends AbstractOWLObjectEditor<Set<OWLClassExpression>> implements VerifiedInputEditor {
 
-    private final Logger logger = LoggerFactory.getLogger(OWLClassExpressionSetEditor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OWLClassExpressionSetEditor.class);
 
-
-    private OWLEditorKit owlEditorKit;
+    private final OWLEditorKit kit;
 
     private OWLClassSelectorPanel classSelectorPanel;
-
     private JComponent editorComponent;
-
     private ExpressionEditor<Set<OWLClassExpression>> expressionEditor;
-
     private JTabbedPane tabbedPane;
+    private Collection<OWLClassExpression> initialSelection;
+    private Collection<InputVerificationStatusChangedListener> listeners = new ArrayList<>();
 
-    private java.util.List<OWLClassExpression> initialSelection;
+    private final ChangeListener changeListener = x -> listeners.forEach(l -> l.verifiedStatusChanged(isValid()));
 
-    private java.util.List<InputVerificationStatusChangedListener> listeners = new ArrayList<>();
-
-    private ChangeListener changeListener = event -> {
-        for (InputVerificationStatusChangedListener l : listeners){
-            l.verifiedStatusChanged(isValid());
-        }
-    };
-
-
-    public OWLClassExpressionSetEditor(OWLEditorKit owlEditorKit) {
-        this.owlEditorKit = owlEditorKit;
+    public OWLClassExpressionSetEditor(OWLEditorKit kit) {
+        this.kit = kit;
     }
 
-    public OWLClassExpressionSetEditor(OWLEditorKit owlEditorKit, java.util.List<OWLClassExpression> selectedClasses) {
-        this.owlEditorKit = owlEditorKit;
-        this.initialSelection = selectedClasses;
+    public OWLClassExpressionSetEditor(OWLEditorKit kit, Collection<OWLClassExpression> selected) {
+        this.kit = Objects.requireNonNull(kit);
+        this.initialSelection = selected;
     }
 
     private void createEditor() {
         editorComponent = new JPanel(new BorderLayout());
-
-        final OWLExpressionChecker<Set<OWLClassExpression>> checker = owlEditorKit.getModelManager().getOWLExpressionCheckerFactory().getOWLClassExpressionSetChecker();
-        expressionEditor = new ExpressionEditor<>(owlEditorKit, checker);
+        OWLExpressionChecker<Set<OWLClassExpression>> checker = kit.getModelManager()
+                .getOWLExpressionCheckerFactory().getOWLClassExpressionSetChecker();
+        expressionEditor = new ExpressionEditor<>(kit, checker);
         JPanel holderPanel = new JPanel(new BorderLayout());
         holderPanel.add(expressionEditor);
         holderPanel.setPreferredSize(new Dimension(500, 400));
         holderPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
-        if (initialSelection == null){
-            classSelectorPanel = new OWLClassSelectorPanel(owlEditorKit);
-        }
-        else{
+        if (initialSelection == null) {
+            classSelectorPanel = new OWLClassSelectorPanel(kit);
+        } else {
             Set<OWLClass> clses = getNamedClassesFromInitialSelection();
-            if (clses.size() == initialSelection.size()){ // only show and initialise the tree if all are named
-                classSelectorPanel = new OWLClassSelectorPanel(owlEditorKit);
+            if (clses.size() == initialSelection.size()) { // only show and initialise the tree if all are named
+                classSelectorPanel = new OWLClassSelectorPanel(kit);
                 classSelectorPanel.setSelection(clses);
             }
             expressionEditor.setText(generateListText());
         }
 
-        if (classSelectorPanel != null){
+        if (classSelectorPanel != null) {
             classSelectorPanel.addSelectionListener(changeListener);
 
             tabbedPane = new JTabbedPane();
@@ -94,56 +82,45 @@ public class OWLClassExpressionSetEditor extends AbstractOWLObjectEditor<Set<OWL
             tabbedPane.add("Expression editor", holderPanel);
             tabbedPane.addChangeListener(changeListener);
             editorComponent.add(tabbedPane, BorderLayout.CENTER);
-        }
-        else{
+        } else {
             editorComponent.add(holderPanel, BorderLayout.CENTER);
         }
     }
 
-
     private String generateListText() {
-        StringBuilder sb = new StringBuilder();
-        for (OWLClassExpression c : initialSelection){
-            if (sb.length() > 0){
-                sb.append(", ");
-            }
-            sb.append(owlEditorKit.getModelManager().getRendering(c));
-        }
-        return sb.toString();
+        return initialSelection.stream()
+                .map(c -> kit.getModelManager().getRendering(c))
+                .collect(Collectors.joining(", "));
     }
-
 
     private Set<OWLClass> getNamedClassesFromInitialSelection() {
-        Set<OWLClass> clses = new HashSet<>();
-        if (initialSelection != null){
-            for (OWLClassExpression descr : initialSelection){
-                if (!descr.isAnonymous()){
-                    clses.add(descr.asOWLClass());
-                }
-            }
+        if (initialSelection == null) {
+            return new HashSet<>();
         }
-        return clses;
+        return initialSelection.stream()
+                .filter(c -> !c.isAnonymous())
+                .map(AsOWLClass::asOWLClass)
+                .collect(Collectors.toSet());
     }
 
-
     @Nonnull
+    @Override
     public String getEditorTypeName() {
         return "Set of OWL Class Expressions";
     }
 
-
+    @Override
     public boolean canEdit(Object object) {
         return checkSet(object, OWLClassExpression.class);
     }
 
-
     @Nonnull
+    @Override
     public JComponent getEditorComponent() {
         ensureEditorExists();
 //        classSelectorPanel.setSelection(owlEditorKit.getWorkspace().getOWLSelectionModel().getLastSelectedClass());
         return editorComponent;
     }
-
 
     private void ensureEditorExists() {
         if (editorComponent == null) {
@@ -151,36 +128,33 @@ public class OWLClassExpressionSetEditor extends AbstractOWLObjectEditor<Set<OWL
         }
     }
 
-
     @Nullable
+    @Override
     public Set<OWLClassExpression> getEditedObject() {
         ensureEditorExists();
         if (tabbedPane != null && tabbedPane.getSelectedComponent().equals(classSelectorPanel)) {
             return new HashSet<>(classSelectorPanel.getSelectedObjects());
         }
-        else {
-            try {
-                return expressionEditor.createObject();
-            }
-            catch (OWLException e) {
-                logger.error("An error occurred when trying to create the OWL object corresponding to the " +
-                        "entered expression.", e);
-            }
+        try {
+            return expressionEditor.createObject();
+        } catch (OWLException e) {
+            LOGGER.error("An error occurred when trying to create the OWL object corresponding to the " +
+                    "entered expression.", e);
         }
         return null;
     }
 
-
+    @Override
     public boolean setEditedObject(Set<OWLClassExpression> expressions) {
-        if (expressions == null){
+        if (expressions == null) {
             expressions = Collections.emptySet();
         }
 
         ensureEditorExists();
         expressionEditor.setExpressionObject(expressions);
-        if (containsOnlyNamedClasses(expressions)){
+        if (containsOnlyNamedClasses(expressions)) {
             Set<OWLClass> clses = new HashSet<>(expressions.size());
-            for (OWLClassExpression expr : expressions){
+            for (OWLClassExpression expr : expressions) {
                 clses.add(expr.asOWLClass());
             }
             classSelectorPanel.setSelection(clses);
@@ -190,43 +164,39 @@ public class OWLClassExpressionSetEditor extends AbstractOWLObjectEditor<Set<OWL
         return true;
     }
 
-
     private boolean containsOnlyNamedClasses(Set<OWLClassExpression> expressions) {
-        if (expressions != null){
-            for (OWLClassExpression expr : expressions){
-                if (expr.isAnonymous()){
-                    return false;
-                }
+        if (expressions == null) {
+            return true;
+        }
+        for (OWLClassExpression expr : expressions) {
+            if (expr.isAnonymous()) {
+                return false;
             }
         }
         return true;
     }
 
-
+    @Override
     public void dispose() {
-        if (classSelectorPanel != null){
+        if (classSelectorPanel != null) {
             classSelectorPanel.dispose();
         }
     }
 
-
-    private boolean isValid(){
-        if (tabbedPane != null && tabbedPane.getSelectedComponent().equals(classSelectorPanel)) {
-            return classSelectorPanel.getSelectedObject() != null;
-        }
-        else{
-            return expressionEditor.isWellFormed();
-        }
+    private boolean isValid() {
+        return tabbedPane != null && tabbedPane.getSelectedComponent().equals(classSelectorPanel)
+                ? classSelectorPanel.getSelectedObject() != null
+                : expressionEditor.isWellFormed();
     }
 
-
+    @Override
     public void addStatusChangedListener(InputVerificationStatusChangedListener listener) {
         listeners.add(listener);
         expressionEditor.addStatusChangedListener(listener);
         listener.verifiedStatusChanged(isValid());
     }
 
-
+    @Override
     public void removeStatusChangedListener(InputVerificationStatusChangedListener listener) {
         listeners.remove(listener);
         expressionEditor.removeStatusChangedListener(listener);

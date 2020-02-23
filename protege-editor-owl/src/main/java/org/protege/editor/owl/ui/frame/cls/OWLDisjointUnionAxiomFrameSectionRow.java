@@ -10,36 +10,38 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class OWLDisjointUnionAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLClass, OWLDisjointUnionAxiom, Set<OWLClassExpression>> {
+public class OWLDisjointUnionAxiomFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLClass, OWLDisjointUnionAxiom, Set<OWLClassExpression>> {
 
-	public OWLDisjointUnionAxiomFrameSectionRow(OWLEditorKit owlEditorKit, 
-												OWLFrameSection<OWLClass, OWLDisjointUnionAxiom, Set<OWLClassExpression>> section,
-												OWLOntology ontology, OWLClass rootObject,
-												OWLDisjointUnionAxiom axiom) {
-		super(owlEditorKit, section, ontology, rootObject, axiom);
-	}
+    public OWLDisjointUnionAxiomFrameSectionRow(OWLEditorKit kit,
+                                                OWLFrameSection<OWLClass, OWLDisjointUnionAxiom, Set<OWLClassExpression>> section,
+                                                OWLOntology ontology, OWLClass rootObject,
+                                                OWLDisjointUnionAxiom axiom) {
+        super(kit, section, ontology, rootObject, axiom);
+    }
 
-	public List<OWLClassExpression> getManipulatableObjects() {
-		return new ArrayList<>(getAxiom().getClassExpressions());
-	}
+    @Override
+    protected OWLObjectEditor<Set<OWLClassExpression>> getObjectEditor() {
+        return new OWLClassExpressionSetEditor(getOWLEditorKit(), manipulatableObjects().collect(Collectors.toList()));
+    }
 
-	@Override
-	protected OWLObjectEditor<Set<OWLClassExpression>> getObjectEditor() {
-		return new OWLClassExpressionSetEditor(getOWLEditorKit(), getManipulatableObjects());
-	}
+    @Override
+    protected OWLDisjointUnionAxiom createAxiom(Set<OWLClassExpression> editedObject) {
+        return getOWLDataFactory().getOWLDisjointUnionAxiom(getRoot(), editedObject);
+    }
 
-	@Override
-	protected OWLDisjointUnionAxiom createAxiom(Set<OWLClassExpression> editedObject) {
-		return getOWLDataFactory().getOWLDisjointUnionAxiom(getRootObject(), editedObject);
-	}
-	
-	@Override
+    @Override
     public boolean checkEditorResults(OWLObjectEditor<Set<OWLClassExpression>> editor) {
-    	Set<OWLClassExpression> disjoints = editor.getEditedObject();
-    	return disjoints.size() >= 2;
+        return Objects.requireNonNull(editor.getEditedObject()).size() >= 2;
+    }
+
+    @Override
+    public Stream<OWLClassExpression> manipulatableObjects() {
+        return getAxiom().classExpressions();
     }
 }

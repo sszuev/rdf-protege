@@ -5,8 +5,7 @@ import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 /*
  * Copyright (C) 2007, University of Manchester
  *
@@ -22,27 +21,29 @@ import java.util.List;
  */
 public class InferredAxiomsFrameSectionRow extends AbstractOWLFrameSectionRow<OWLOntology, OWLAxiom, OWLAxiom> {
 
-    private OWLAxiom axiom;
+    private final OWLAxiom axiom;
 
-
-    public InferredAxiomsFrameSectionRow(OWLEditorKit owlEditorKit, OWLFrameSection<OWLOntology, OWLAxiom, OWLAxiom> section, OWLOntology ontology, OWLOntology rootObject,
+    public InferredAxiomsFrameSectionRow(OWLEditorKit kit,
+                                         OWLFrameSection<OWLOntology, OWLAxiom, OWLAxiom> section,
+                                         OWLOntology ontology,
+                                         OWLOntology root,
                                          OWLAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, root, axiom);
         this.axiom = axiom;
     }
 
-
+    @Override
     protected OWLAxiom createAxiom(OWLAxiom editedObject) {
         return editedObject;
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLAxiom> getObjectEditor() {
         return null;
     }
 
-
-    public List<OWLAxiom> getManipulatableObjects() {
-        return Arrays.asList(axiom);
+    @Override
+    public Stream<OWLAxiom> manipulatableObjects() {
+        return Stream.of(axiom);
     }
 }

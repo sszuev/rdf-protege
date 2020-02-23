@@ -233,9 +233,10 @@ public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
     }
 
     /**
-     * Refills the section with rows.  This method will be called
-     * by the system and should be directly called.  The method will
-     * never be called if the root object is <code>null</code>
+     * Refills the section with rows.
+     * This method will be called by the system and should be directly called.
+     * The method will never be called if the root object is <code>null</code>
+     * @param ontology {@link OWLOntology}
      */
     protected abstract void refill(OWLOntology ontology);
 
@@ -642,5 +643,10 @@ public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
      */
     @Deprecated
     public void visit(SWRLRule rule) {
+    }
+
+    @Override
+    public Comparator<OWLFrameSectionRow<R, A, E>> getRowComparator() {
+        return null;
     }
 }

@@ -25,14 +25,11 @@ import java.util.Set;
  * Date: 04-Feb-2007<br><br>
  */
 public class OWLClassDescriptionViewComponent extends AbstractOWLClassViewComponent {
-
-    /**
-     * 
-     */
     private static final long serialVersionUID = -7899828024396593253L;
     private OWLFrameList<OWLClass> list;
 
-    public void initialiseClassView() throws Exception {
+    @Override
+    public void initialiseClassView() {
         list = new OWLFrameList<>(getOWLEditorKit(), new OWLClassDescriptionFrame(getOWLEditorKit()));
         setLayout(new BorderLayout());
         JScrollPane sp = new JScrollPane(list);
@@ -43,44 +40,40 @@ public class OWLClassDescriptionViewComponent extends AbstractOWLClassViewCompon
         list.addToPopupMenu(new CreateClosureAxiomAction());
     }
 
-
     /**
-     * This method is called to request that the view is updated with
-     * the specified class.
-     * @param selectedClass The class that the view should be updated with.  Note
-     *                      that this may be <code>null</code>, which indicates that the view should
-     *                      be cleared
-     * @return The actual class that the view is displaying after it has been updated
-     *         (may be <code>null</code>)
+     * This method is called to request that the view is updated with the specified class.
+     *
+     * @param selectedClass The class that the view should be updated with.
+     *                      Note that this may be <code>null</code>, which indicates that the view should be cleared
+     * @return The actual class that the view is displaying after it has been updated (may be <code>null</code>)
      */
+    @Override
     protected OWLClass updateView(OWLClass selectedClass) {
         list.setRootObject(selectedClass);
         return selectedClass;
     }
 
-
+    @Override
     public void disposeView() {
         list.dispose();
     }
 
 
     private class ConvertSelectionToEquivalentClassAction extends OWLFrameListPopupMenuAction<OWLClass> {
-
-
-
+        @Override
         protected void initialise() throws Exception {
         }
 
-
+        @Override
         protected void dispose() throws Exception {
         }
 
-
+        @Override
         protected String getName() {
             return "Convert selected rows to defined class";
         }
 
-
+        @Override
         protected void updateState() {
             if (list.getSelectedValue() == null) {
                 setEnabled(false);
@@ -95,36 +88,31 @@ public class OWLClassDescriptionViewComponent extends AbstractOWLClassViewCompon
             setEnabled(true);
         }
 
-
+        @Override
         public void actionPerformed(ActionEvent e) {
             convertSelectedRowsToDefinedClass();
         }
     }
 
-
     private void convertSelectedRowsToDefinedClass() {
-        final Object[] selVals = list.getSelectedValues();
-        if (selVals.length > 0){
-            Set<OWLClassExpression> descriptions = new HashSet<>();
-            List<OWLOntologyChange> changes = new ArrayList<>();
-            for (Object selVal : selVals) {
-                if (selVal instanceof OWLSubClassAxiomFrameSectionRow) {
-                    OWLSubClassAxiomFrameSectionRow row = (OWLSubClassAxiomFrameSectionRow) selVal;
-                    changes.add(new RemoveAxiom(row.getOntology(), row.getAxiom()));
-                    descriptions.add(row.getAxiom().getSuperClass());
-                }
-            }
-            OWLClassExpression equivalentClass;
-            if (descriptions.size() == 1) {
-                equivalentClass = descriptions.iterator().next();
-            }
-            else {
-                equivalentClass = getOWLDataFactory().getOWLObjectIntersectionOf(descriptions);
-            }
-            Set<OWLClassExpression> axiomOperands = CollectionFactory.createSet(list.getRootObject(), equivalentClass);
-            changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(),
-                                     getOWLDataFactory().getOWLEquivalentClassesAxiom(axiomOperands)));
-            getOWLModelManager().applyChanges(changes);
+        List<Object> selVals = list.getSelectedValuesList();
+        if (selVals.isEmpty()) {
+            return;
         }
+        Set<OWLClassExpression> descriptions = new HashSet<>();
+        List<OWLOntologyChange> changes = new ArrayList<>();
+        for (Object selVal : selVals) {
+            if (selVal instanceof OWLSubClassAxiomFrameSectionRow) {
+                OWLSubClassAxiomFrameSectionRow row = (OWLSubClassAxiomFrameSectionRow) selVal;
+                changes.add(new RemoveAxiom(row.getOntology(), row.getAxiom()));
+                descriptions.add(row.getAxiom().getSuperClass());
+            }
+        }
+        OWLClassExpression equivalentClass = descriptions.size() == 1
+                ? descriptions.iterator().next() : getOWLDataFactory().getOWLObjectIntersectionOf(descriptions);
+        Set<OWLClassExpression> axiomOperands = CollectionFactory.createSet(list.getRootObject(), equivalentClass);
+        changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(),
+                getOWLDataFactory().getOWLEquivalentClassesAxiom(axiomOperands)));
+        getOWLModelManager().applyChanges(changes);
     }
 }

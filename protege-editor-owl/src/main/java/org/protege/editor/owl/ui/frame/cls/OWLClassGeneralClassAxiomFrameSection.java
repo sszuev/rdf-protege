@@ -1,6 +1,7 @@
 package org.protege.editor.owl.ui.frame.cls;
 
 import org.protege.editor.owl.OWLEditorKit;
+import org.protege.editor.owl.model.OWLModelManager;
 import org.protege.editor.owl.model.OWLWorkspace;
 import org.protege.editor.owl.ui.editor.OWLGeneralAxiomEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
@@ -11,16 +12,14 @@ import org.semanticweb.owlapi.model.*;
 
 import javax.swing.*;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Matthew Horridge, Stanford University, Bio-Medical Informatics Research Group, Date: 09/06/2014
  */
-public class OWLClassGeneralClassAxiomFrameSection extends AbstractOWLFrameSection<
-        OWLClass,
-        OWLClassAxiom,
-        OWLClassAxiom> {
+public class OWLClassGeneralClassAxiomFrameSection
+        extends AbstractOWLFrameSection<OWLClass, OWLClassAxiom, OWLClassAxiom> {
 
     public OWLClassGeneralClassAxiomFrameSection(OWLEditorKit editorKit, OWLFrame<? extends OWLClass> frame) {
         super(editorKit, "General class axioms", "General class axiom", frame);
@@ -42,46 +41,39 @@ public class OWLClassGeneralClassAxiomFrameSection extends AbstractOWLFrameSecti
         super.handleEditingFinished(editedObjects);
     }
 
-    static void checkEditedAxiom(OWLEditorKit editorKit, Set<OWLClassAxiom> editedObjects, OWLClass root) {
-        if(editedObjects.isEmpty()) {
+    static void checkEditedAxiom(OWLEditorKit kit, Set<OWLClassAxiom> editedObjects, OWLClass root) {
+        if (editedObjects.isEmpty()) {
             return;
         }
-
         OWLClassAxiom axiom = editedObjects.iterator().next();
-        if(!axiom.containsEntityInSignature(root)) {
-            String classesInSigRendering = "";
-            for(Iterator<OWLClass> it = axiom.getClassesInSignature().iterator(); it.hasNext(); ) {
-                OWLClass cls = it.next();
-                classesInSigRendering += editorKit.getModelManager().getRendering(cls);
-                if(it.hasNext()) {
-                    classesInSigRendering += ",\n";
-                }
-            }
-
-            JOptionPane.showMessageDialog(editorKit.getOWLWorkspace(),
-                    "The axiom that you edited has been added to the ontology.  However, it will not be visible " +
-                            "in the view below as it does not mention the selected class (" + editorKit.getOWLModelManager().getRendering(root) + ").\n" +
-                            "To view the axiom, select any of the classes it mentions: \n" + classesInSigRendering);
+        if (axiom.containsEntityInSignature(root)) {
+            return;
         }
+        OWLModelManager m = kit.getModelManager();
+        String classesInSigRendering = axiom.classesInSignature().map(m::getRendering).collect(Collectors.joining(",\n"));
+        JOptionPane.showMessageDialog(kit.getOWLWorkspace(),
+                String.format("The axiom that you edited has been added to the ontology. " +
+                                "However, it will not be visible in the view below as " +
+                                "it does not mention the selected class (%s).\n" +
+                                "To view the axiom, select any of the classes it mentions: \n%s",
+                        kit.getOWLModelManager().getRendering(root), classesInSigRendering));
     }
 
     @Override
     protected void refill(OWLOntology ontology) {
         OWLWorkspace workspace = getOWLEditorKit().getOWLWorkspace();
-        OWLClass cls = workspace.getOWLSelectionModel().getLastSelectedClass();
-        if(cls == null) {
+        OWLClass clazz = workspace.getOWLSelectionModel().getLastSelectedClass();
+        if (clazz == null) {
             return;
         }
-        for(OWLClassAxiom ax : ontology.getGeneralClassAxioms()) {
-            if (ax.containsEntityInSignature(cls)) {
-                addRow(new OWLClassGeneralClassAxiomFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), ax));
-            }
-        }
+        ontology.generalClassAxioms()
+                .filter(ax -> ax.containsEntityInSignature(clazz))
+                .map(ax -> new OWLClassGeneralClassAxiomFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), ax))
+                .forEach(this::addRow);
     }
 
     @Override
     protected void clear() {
-
     }
 
     @Override
@@ -90,16 +82,16 @@ public class OWLClassGeneralClassAxiomFrameSection extends AbstractOWLFrameSecti
     }
 
     @Override
+    @SuppressWarnings("NullableProblems")
     protected boolean isResettingChange(OWLOntologyChange change) {
-        if(!change.isAxiomChange()) {
+        if (!change.isAxiomChange()) {
             return false;
         }
-        if(!change.getSignature().contains(getRootObject())) {
+        if (change.signature().filter(AsOWLClass::isOWLClass).noneMatch(x -> x.equals(getRootObject()))) {
             return false;
         }
         OWLAxiom axiom = change.getAxiom();
         return axiom.accept(new OWLAxiomVisitorEx<Boolean>() {
-
             @Override
             public Boolean visit(OWLSubClassOfAxiom axiom) {
                 return axiom.isGCI();

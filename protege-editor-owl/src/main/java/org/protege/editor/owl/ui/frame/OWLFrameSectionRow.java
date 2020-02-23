@@ -3,7 +3,9 @@ package org.protege.editor.owl.ui.frame;
 import org.protege.editor.core.ui.list.MListItem;
 import org.semanticweb.owlapi.model.*;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -56,7 +58,7 @@ public interface OWLFrameSectionRow<R, A extends OWLAxiom, E> extends OWLFrameOb
      * If a row is editable then it may be deleted/removed or edited.
      * A delete corresponds to the axiom that the row contains being removed from an ontology that contains it.
      *
-     * @return <code>true</code> if the row is editable, <code>false</code>  if the row is not editable.
+     * @return {@code true} if the row is editable, {@code false} if the row is not editable
      */
     boolean isEditable();
 
@@ -68,15 +70,20 @@ public interface OWLFrameSectionRow<R, A extends OWLAxiom, E> extends OWLFrameOb
      * Gets the changes which are required to delete this row.
      * If the row cannot be deleted this list will be empty.
      *
-     * @return {@code List}
+     * @return {@code Collection}
      */
-    List<? extends OWLOntologyChange> getDeletionChanges();
+    Collection<? extends OWLOntologyChange> getDeletionChanges();
 
     /**
      * Gets a list of objects contained in this row.
      * These objects could be placed on the clip board during a copy operation, or navigated to etc.
      *
-     * @return {@code List}
+     * @return {@code Stream}
      */
-    List<? extends OWLObject> getManipulatableObjects();
+    Stream<? extends OWLObject> manipulatableObjects();
+
+    @Deprecated
+    default Collection<? extends OWLObject> getManipulatableObjects() {
+        return manipulatableObjects().collect(Collectors.toSet());
+    }
 }

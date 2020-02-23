@@ -6,7 +6,6 @@ import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInfere
 import org.protege.editor.owl.ui.editor.OWLClassExpressionSetEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -80,7 +79,6 @@ public class OWLDisjointClassesAxiomFrameSection
                             df.getOWLDisjointClassesAxiom(getRootObject(), c)));
                     added.add(c);
                 });
-
     }
 
     @Override
@@ -127,10 +125,5 @@ public class OWLDisjointClassesAxiomFrameSection
     protected boolean isResettingChange(OWLOntologyChange change) {
         return change.isAxiomChange() && change.getAxiom() instanceof OWLDisjointClassesAxiom
                 && ((OWLDisjointClassesAxiom) change.getAxiom()).contains(getRootObject());
-    }
-
-    @Override
-    public Comparator<OWLFrameSectionRow<OWLClassExpression, OWLDisjointClassesAxiom, Set<OWLClassExpression>>> getRowComparator() {
-        return null;
     }
 }

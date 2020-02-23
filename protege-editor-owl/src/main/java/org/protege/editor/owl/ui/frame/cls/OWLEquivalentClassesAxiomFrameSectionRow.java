@@ -10,10 +10,9 @@ import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.util.CollectionFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -22,65 +21,52 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 19-Jan-2007<br><br>
  */
-public class OWLEquivalentClassesAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLClassExpression, OWLEquivalentClassesAxiom, OWLClassExpression> {
+public class OWLEquivalentClassesAxiomFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLClassExpression, OWLEquivalentClassesAxiom, OWLClassExpression> {
 
-    public OWLEquivalentClassesAxiomFrameSectionRow(OWLEditorKit owlEditorKit, 
-    												OWLFrameSection<OWLClassExpression, OWLEquivalentClassesAxiom, OWLClassExpression> section,
+    public OWLEquivalentClassesAxiomFrameSectionRow(OWLEditorKit kit,
+                                                    OWLFrameSection<OWLClassExpression, OWLEquivalentClassesAxiom, OWLClassExpression> section,
                                                     OWLOntology ontology, OWLClassExpression rootObject,
                                                     OWLEquivalentClassesAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
-    protected List<OWLClassExpression> getObjects() {
-        Set<OWLClassExpression> clses = new HashSet<>(getAxiom().getClassExpressions());
-        clses.remove(getRoot());
-        return new ArrayList<>(clses);
-    }
-
+    @Override
     public boolean isEditable() {
-        Set<OWLClassExpression> descs = new HashSet<>(getAxiom().getClassExpressions());
-        descs.remove(getRoot());
-        return descs.size() == 1;
+        return manipulatableObjects().limit(2).count() == 1;
     }
-    
+
     @Override
     public boolean isDeleteable() {
-    	return true;
+        return true;
     }
-    
+
+    @Override
     protected OWLObjectEditor<OWLClassExpression> getObjectEditor() {
-        Set<OWLClassExpression> descs = new HashSet<>(getAxiom().getClassExpressions());
-        descs.remove(getRoot());
-        return descs.size() == 1 ? getOWLEditorKit().getWorkspace().getOWLComponentFactory().getOWLClassDescriptionEditor(descs.iterator().next(), AxiomType.EQUIVALENT_CLASSES)
-        		: null;
+        Set<OWLClassExpression> res = manipulatableObjects().limit(2).collect(Collectors.toSet());
+        return res.size() != 1 ? null :
+                getOWLComponentFactory().getOWLClassDescriptionEditor(res.iterator().next(), AxiomType.EQUIVALENT_CLASSES);
     }
-    
+
+    @Override
     public boolean checkEditorResults(OWLObjectEditor<OWLClassExpression> editor) {
-    	Set<OWLClassExpression> equivalents = editor.getEditedObjects();
-    	return equivalents.size() != 1 || !equivalents.contains(getRootObject());
+        Set<OWLClassExpression> equivalents = editor.getEditedObjects();
+        return equivalents.size() != 1 || !equivalents.contains(getRoot());
     }
-    
+
     @Override
     public void handleEditingFinished(Set<OWLClassExpression> editedObjects) {
-    	editedObjects = new HashSet<>(editedObjects);
-    	editedObjects.remove(getRootObject());
-    	super.handleEditingFinished(editedObjects);
+        super.handleEditingFinished(withoutRoot(editedObjects.stream()).collect(Collectors.toSet()));
     }
 
-
+    @Override
     protected OWLEquivalentClassesAxiom createAxiom(OWLClassExpression editedObject) {
         return getOWLDataFactory().getOWLEquivalentClassesAxiom(CollectionFactory.createSet(getRoot(), editedObject));
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.  These objects
-     * could be placed on the clip board during a copy operation,
-     * or navigated to etc.
-     */
-    public List<OWLClassExpression> getManipulatableObjects() {
-        return getObjects();
+    @Override
+    public Stream<OWLClassExpression> manipulatableObjects() {
+        return withoutRoot(getAxiom().classExpressions());
     }
 }
 

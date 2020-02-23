@@ -6,14 +6,8 @@ import org.protege.editor.owl.ui.editor.SWRLRuleEditor;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.SWRLRule;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
 /**
  * Author: Matthew Horridge<br>
  * The University Of Manchester<br>
@@ -22,37 +16,38 @@ import java.util.List;
  */
 public class SWRLRuleFrameSectionRow extends AbstractOWLFrameSectionRow<OWLOntology, SWRLRule, SWRLRule> {
 
-    public SWRLRuleFrameSectionRow(OWLEditorKit owlEditorKit, 
-    		                       OWLFrameSection<OWLOntology, SWRLRule, SWRLRule> section, 
-    		                       OWLOntology ontology,
-                                   OWLOntology rootObject, SWRLRule axiom) {
+    public SWRLRuleFrameSectionRow(OWLEditorKit owlEditorKit,
+                                   OWLFrameSection<OWLOntology, SWRLRule, SWRLRule> section,
+                                   OWLOntology ontology,
+                                   OWLOntology rootObject,
+                                   SWRLRule axiom) {
         super(owlEditorKit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<SWRLRule> getObjectEditor() {
         SWRLRuleEditor editor = new SWRLRuleEditor(getOWLEditorKit());
         editor.setEditedObject(getAxiom());
         return editor;
     }
 
-
+    @Override
     public boolean isDeleteable() {
         return true;
     }
 
-
+    @Override
     public boolean isEditable() {
         return true;
     }
 
-
+    @Override
     protected SWRLRule createAxiom(SWRLRule editedObject) {
         return editedObject;
     }
 
-
-    public List<SWRLRule> getManipulatableObjects() {
-        return Arrays.asList(getAxiom());
+    @Override
+    public Stream<SWRLRule> manipulatableObjects() {
+        return Stream.of(getAxiom());
     }
 }

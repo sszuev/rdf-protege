@@ -9,10 +9,10 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -21,40 +21,36 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 19-Jan-2007<br><br>
  */
-public class OWLDisjointClassesAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLClassExpression, OWLDisjointClassesAxiom, Set<OWLClassExpression>> {
+public class OWLDisjointClassesAxiomFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLClassExpression, OWLDisjointClassesAxiom, Set<OWLClassExpression>> {
 
 
-    public OWLDisjointClassesAxiomFrameSectionRow(OWLEditorKit owlEditorKit, 
-    											  OWLFrameSection<OWLClassExpression, OWLDisjointClassesAxiom, Set<OWLClassExpression>> section,
+    public OWLDisjointClassesAxiomFrameSectionRow(OWLEditorKit kit,
+                                                  OWLFrameSection<OWLClassExpression, OWLDisjointClassesAxiom, Set<OWLClassExpression>> section,
                                                   OWLOntology ontology, OWLClassExpression rootObject,
                                                   OWLDisjointClassesAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<Set<OWLClassExpression>> getObjectEditor() {
-        return new OWLClassExpressionSetEditor(getOWLEditorKit(), getManipulatableObjects());
+        return new OWLClassExpressionSetEditor(getOWLEditorKit(), manipulatableObjects().collect(Collectors.toList()));
     }
-    
+
     @Override
     public boolean checkEditorResults(OWLObjectEditor<Set<OWLClassExpression>> editor) {
-    	Set<OWLClassExpression> disjoints = editor.getEditedObject();
-    	return disjoints.size() != 1 || !disjoints.contains(getRoot());
+        Set<OWLClassExpression> disjoints = Objects.requireNonNull(editor.getEditedObject());
+        return disjoints.size() != 1 || !disjoints.contains(getRoot());
     }
 
-
+    @Override
     protected OWLDisjointClassesAxiom createAxiom(Set<OWLClassExpression> editedObject) {
-        editedObject.add(getRootObject());
+        editedObject.add(getRoot());
         return getOWLDataFactory().getOWLDisjointClassesAxiom(editedObject);
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.
-     */
-    public List<OWLClassExpression> getManipulatableObjects() {
-        Set<OWLClassExpression> disjointClasses = new HashSet<>(getAxiom().getClassExpressions());
-        disjointClasses.remove(getRootObject());
-        return new ArrayList<>(disjointClasses);
+    @Override
+    public Stream<OWLClassExpression> manipulatableObjects() {
+        return withoutRoot(getAxiom().classExpressions());
     }
 }

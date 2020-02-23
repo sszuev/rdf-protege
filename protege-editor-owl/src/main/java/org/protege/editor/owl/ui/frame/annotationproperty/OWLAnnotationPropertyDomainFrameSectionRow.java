@@ -9,44 +9,41 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Arrays;
-import java.util.List;
-/*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
+import java.util.stream.Stream;
 
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Jun 4, 2009<br><br>
  */
-public class OWLAnnotationPropertyDomainFrameSectionRow extends AbstractOWLFrameSectionRow<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI> {
+public class OWLAnnotationPropertyDomainFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI> {
 
-    public OWLAnnotationPropertyDomainFrameSectionRow(OWLEditorKit owlEditorKit, OWLFrameSection<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI> section,
-                                                OWLOntology ontology, OWLAnnotationProperty property,
-                                                OWLAnnotationPropertyDomainAxiom axiom) {
-        super(owlEditorKit, section, ontology, property, axiom);
+    public OWLAnnotationPropertyDomainFrameSectionRow(OWLEditorKit kit,
+                                                      OWLFrameSection<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI> section,
+                                                      OWLOntology ontology,
+                                                      OWLAnnotationProperty property,
+                                                      OWLAnnotationPropertyDomainAxiom axiom) {
+        super(kit, section, ontology, property, axiom);
     }
 
-
+    @Override
     protected OWLAnnotationPropertyDomainEditor getObjectEditor() {
         final OWLAnnotationPropertyDomainEditor editor = new OWLAnnotationPropertyDomainEditor(getOWLEditorKit());
         editor.setEditedObject(getAxiom().getDomain());
         return editor;
     }
 
-
+    @Override
     protected OWLAnnotationPropertyDomainAxiom createAxiom(IRI iri) {
-        return getOWLDataFactory().getOWLAnnotationPropertyDomainAxiom(getRootObject(), iri);
+        return getOWLDataFactory().getOWLAnnotationPropertyDomainAxiom(getRoot(), iri);
     }
 
-
-    public List<IRI> getManipulatableObjects() {
-        return Arrays.asList(getAxiom().getDomain());
+    @Override
+    public Stream<IRI> manipulatableObjects() {
+        return Stream.of(getAxiom().getDomain());
     }
 }

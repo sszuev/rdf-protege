@@ -10,8 +10,8 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 
 /**
@@ -20,35 +20,31 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLPropertyChainAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLObjectProperty, OWLSubPropertyChainOfAxiom, List<OWLObjectPropertyExpression>> {
+public class OWLPropertyChainAxiomFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLObjectProperty, OWLSubPropertyChainOfAxiom, List<OWLObjectPropertyExpression>> {
 
-    public OWLPropertyChainAxiomFrameSectionRow(OWLEditorKit editorKit, 
-    											OWLFrameSection<OWLObjectProperty, OWLSubPropertyChainOfAxiom, List<OWLObjectPropertyExpression>> section, 
-    											OWLOntology ontology,
+    public OWLPropertyChainAxiomFrameSectionRow(OWLEditorKit kit,
+                                                OWLFrameSection<OWLObjectProperty, OWLSubPropertyChainOfAxiom, List<OWLObjectPropertyExpression>> section,
+                                                OWLOntology ontology,
                                                 OWLObjectProperty rootObject,
                                                 OWLSubPropertyChainOfAxiom axiom) {
-        super(editorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<List<OWLObjectPropertyExpression>> getObjectEditor() {
         OWLObjectPropertyChainEditor editor = new OWLObjectPropertyChainEditor(getOWLEditorKit());
         editor.setAxiom(getAxiom());
         return editor;
     }
 
-
+    @Override
     protected OWLSubPropertyChainOfAxiom createAxiom(List<OWLObjectPropertyExpression> editedObject) {
-        return getOWLDataFactory().getOWLSubPropertyChainOfAxiom(editedObject, getRootObject());
+        return getOWLDataFactory().getOWLSubPropertyChainOfAxiom(editedObject, getRoot());
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.  These objects
-     * could be placed on the clip board during a copy operation,
-     * or navigated to etc.
-     */
-    public List<OWLSubPropertyChainOfAxiom> getManipulatableObjects() {
-        return Arrays.asList(getAxiom());
+    @Override
+    public Stream<OWLSubPropertyChainOfAxiom> manipulatableObjects() {
+        return Stream.of(getAxiom());
     }
 }

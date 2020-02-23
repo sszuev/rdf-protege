@@ -6,9 +6,8 @@ import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 
 /**
@@ -19,34 +18,33 @@ import java.util.Set;
  */
 public class OWLGeneralClassAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLOntology, OWLClassAxiom, OWLClassAxiom> {
 
-    public OWLGeneralClassAxiomFrameSectionRow(OWLEditorKit owlEditorKit, 
-    										   OWLFrameSection<OWLOntology, OWLClassAxiom, OWLClassAxiom> section, 
-    										   OWLOntology ontology,
+    public OWLGeneralClassAxiomFrameSectionRow(OWLEditorKit kit,
+                                               OWLFrameSection<OWLOntology, OWLClassAxiom, OWLClassAxiom> section,
+                                               OWLOntology ontology,
                                                OWLOntology rootObject, OWLClassAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLClassAxiom> getObjectEditor() {
-        OWLGeneralAxiomEditor editor =  new OWLGeneralAxiomEditor(getOWLEditorKit());
+        OWLGeneralAxiomEditor editor = new OWLGeneralAxiomEditor(getOWLEditorKit());
         editor.setEditedObject(getAxiom());
         return editor;
     }
 
     @Override
     public void handleEditingFinished(Set<OWLClassAxiom> editedObjects) {
-    	super.handleEditingFinished(editedObjects);
-    	OWLGeneralClassAxiomsFrameSection.checkEditedAxiom(getOWLEditorKit(), editedObjects);
+        super.handleEditingFinished(editedObjects);
+        OWLGeneralClassAxiomsFrameSection.checkEditedAxiom(getOWLEditorKit(), editedObjects);
     }
-    
 
-
+    @Override
     protected OWLClassAxiom createAxiom(OWLClassAxiom editedObject) {
         return editedObject;
     }
 
-
-    public List<OWLClassAxiom> getManipulatableObjects() {
-        return Arrays.asList(getAxiom());
+    @Override
+    public Stream<OWLClassAxiom> manipulatableObjects() {
+        return Stream.of(getAxiom());
     }
 }

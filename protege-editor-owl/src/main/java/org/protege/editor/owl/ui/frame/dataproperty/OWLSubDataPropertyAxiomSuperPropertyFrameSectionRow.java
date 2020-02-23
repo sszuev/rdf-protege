@@ -10,8 +10,7 @@ import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
 
 /**
@@ -20,32 +19,34 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 16-Feb-2007<br><br>
  */
-public class OWLSubDataPropertyAxiomSuperPropertyFrameSectionRow extends AbstractOWLFrameSectionRow<OWLDataProperty, OWLSubDataPropertyOfAxiom, OWLDataProperty> {
+public class OWLSubDataPropertyAxiomSuperPropertyFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLDataProperty, OWLSubDataPropertyOfAxiom, OWLDataProperty> {
 
-    public OWLSubDataPropertyAxiomSuperPropertyFrameSectionRow(OWLEditorKit owlEditorKit, 
-    														   OWLFrameSection<OWLDataProperty, OWLSubDataPropertyOfAxiom, OWLDataProperty> section,
-                                                               OWLOntology ontology, OWLDataProperty rootObject,
+    public OWLSubDataPropertyAxiomSuperPropertyFrameSectionRow(OWLEditorKit kit,
+                                                               OWLFrameSection<OWLDataProperty, OWLSubDataPropertyOfAxiom, OWLDataProperty> section,
+                                                               OWLOntology ontology,
+                                                               OWLDataProperty rootObject,
                                                                OWLSubDataPropertyOfAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLSubDataPropertyOfAxiom createAxiom(OWLDataProperty editedObject) {
-        return getOWLDataFactory().getOWLSubDataPropertyOfAxiom(getRootObject(), editedObject);
+        return getOWLDataFactory().getOWLSubDataPropertyOfAxiom(getRoot(), editedObject);
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLDataProperty> getObjectEditor() {
         OWLDataPropertyEditor editor = new OWLDataPropertyEditor(getOWLEditorKit());
         OWLDataPropertyExpression p = getAxiom().getSuperProperty();
-        if (!p.isAnonymous()){
+        if (!p.isAnonymous()) {
             editor.setEditedObject(p.asOWLDataProperty());
         }
         return editor;
     }
 
-
-    public List<OWLDataPropertyExpression> getManipulatableObjects() {
-        return Arrays.asList(getAxiom().getSuperProperty());
+    @Override
+    public Stream<OWLDataPropertyExpression> manipulatableObjects() {
+        return Stream.of(getAxiom().getSuperProperty());
     }
 }

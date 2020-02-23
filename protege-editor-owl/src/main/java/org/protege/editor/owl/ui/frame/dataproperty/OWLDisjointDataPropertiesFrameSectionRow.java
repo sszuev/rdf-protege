@@ -5,15 +5,13 @@ import org.protege.editor.owl.ui.editor.OWLDataPropertySetEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.frame.AbstractOWLFrameSectionRow;
 import org.protege.editor.owl.ui.frame.OWLFrameSection;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
-import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -22,34 +20,31 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 16-Feb-2007<br><br>
  */
-public class OWLDisjointDataPropertiesFrameSectionRow extends AbstractOWLFrameSectionRow<OWLDataProperty, OWLDisjointDataPropertiesAxiom, Set<OWLDataProperty>> {
+public class OWLDisjointDataPropertiesFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLDataProperty, OWLDisjointDataPropertiesAxiom, Set<OWLDataProperty>> {
 
-    public OWLDisjointDataPropertiesFrameSectionRow(OWLEditorKit owlEditorKit, 
-    												OWLFrameSection<OWLDataProperty, OWLDisjointDataPropertiesAxiom, Set<OWLDataProperty>> section,
+    public OWLDisjointDataPropertiesFrameSectionRow(OWLEditorKit owlEditorKit,
+                                                    OWLFrameSection<OWLDataProperty, OWLDisjointDataPropertiesAxiom, Set<OWLDataProperty>> section,
                                                     OWLOntology ontology, OWLDataProperty rootObject,
                                                     OWLDisjointDataPropertiesAxiom axiom) {
         super(owlEditorKit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLDisjointDataPropertiesAxiom createAxiom(Set<OWLDataProperty> editedObject) {
         Set<OWLDataProperty> props = new HashSet<>();
-        props.add(getRootObject());
+        props.add(getRoot());
         props.addAll(editedObject);
         return getOWLDataFactory().getOWLDisjointDataPropertiesAxiom(props);
     }
 
-
+    @Override
     protected OWLObjectEditor<Set<OWLDataProperty>> getObjectEditor() {
         OWLDataPropertySetEditor editor = new OWLDataPropertySetEditor(getOWLEditorKit());
-        final Set<OWLDataPropertyExpression> disjoints = getAxiom().getProperties();
-        final Set<OWLDataProperty> namedDisjoints = new HashSet<>();
-        for (OWLDataPropertyExpression p : disjoints){
-            if (!p.isAnonymous()){
-                namedDisjoints.add(p.asOWLDataProperty());
-            }
-        }
-        namedDisjoints.remove(getRootObject());
+        Set<OWLDataProperty> namedDisjoints = manipulatableObjects()
+                .filter(p -> !p.isAnonymous())
+                .map(AsOWLDataProperty::asOWLDataProperty)
+                .collect(Collectors.toSet());
         editor.setEditedObject(namedDisjoints);
         // @@TODO handle property expressions
         return editor;
@@ -57,13 +52,11 @@ public class OWLDisjointDataPropertiesFrameSectionRow extends AbstractOWLFrameSe
 
     @Override
     public boolean checkEditorResults(OWLObjectEditor<Set<OWLDataProperty>> editor) {
-    	Set<OWLDataProperty> equivalents = editor.getEditedObject();
-    	return !equivalents.contains(getRootObject());
+        return !Objects.requireNonNull(editor.getEditedObject()).contains(getRoot());
     }
 
-    public List<OWLDataPropertyExpression> getManipulatableObjects() {
-        List<OWLDataPropertyExpression> props = new ArrayList<>(getAxiom().getProperties());
-        props.remove(getRootObject());
-        return props;
+    @Override
+    public Stream<OWLDataPropertyExpression> manipulatableObjects() {
+        return withoutRoot(getAxiom().properties());
     }
 }

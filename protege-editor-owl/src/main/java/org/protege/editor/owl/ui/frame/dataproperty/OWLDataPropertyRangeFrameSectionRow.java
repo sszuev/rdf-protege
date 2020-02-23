@@ -10,8 +10,7 @@ import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLDataRange;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
 
 /**
@@ -20,28 +19,31 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 16-Feb-2007<br><br>
  */
-public class OWLDataPropertyRangeFrameSectionRow extends AbstractOWLFrameSectionRow<OWLDataProperty, OWLDataPropertyRangeAxiom, OWLDataRange> {
+public class OWLDataPropertyRangeFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLDataProperty, OWLDataPropertyRangeAxiom, OWLDataRange> {
 
-    public OWLDataPropertyRangeFrameSectionRow(OWLEditorKit owlEditorKit, 
-    		                                   OWLFrameSection<OWLDataProperty, OWLDataPropertyRangeAxiom, OWLDataRange> section, OWLOntology ontology,
-                                               OWLDataProperty rootObject, OWLDataPropertyRangeAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+    public OWLDataPropertyRangeFrameSectionRow(OWLEditorKit kit,
+                                               OWLFrameSection<OWLDataProperty, OWLDataPropertyRangeAxiom, OWLDataRange> section,
+                                               OWLOntology ontology,
+                                               OWLDataProperty rootObject,
+                                               OWLDataPropertyRangeAxiom axiom) {
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLDataPropertyRangeAxiom createAxiom(OWLDataRange editedObject) {
-        return getOWLDataFactory().getOWLDataPropertyRangeAxiom(getRootObject(), editedObject);
+        return getOWLDataFactory().getOWLDataPropertyRangeAxiom(getRoot(), editedObject);
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLDataRange> getObjectEditor() {
         OWLDataRangeEditor editor = new OWLDataRangeEditor(getOWLEditorKit());
         editor.setEditedObject(getAxiom().getRange());
         return editor;
     }
 
-
-    public List<OWLDataRange> getManipulatableObjects() {
-        return Arrays.asList(getAxiom().getRange());
+    @Override
+    public Stream<OWLDataRange> manipulatableObjects() {
+        return Stream.of(getAxiom().getRange());
     }
 }

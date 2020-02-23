@@ -46,6 +46,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -599,9 +600,7 @@ public class OWLFrameList<R> extends MList<Object>
     }
 
     private List<OWLObject> getCuttableObjects() {
-        List<OWLObject> res = new ArrayList<>();
-        selectedValues().forEach(row -> res.addAll(row.getManipulatableObjects()));
-        return res;
+        return selectedValues().flatMap(OWLFrameSectionRow::manipulatableObjects).collect(Collectors.toList());
     }
 
     private Stream<OWLFrameSectionRow<?, ?, ?>> selectedValues() {
@@ -615,7 +614,7 @@ public class OWLFrameList<R> extends MList<Object>
         List<OWLObject> res = new ArrayList<>();
         List<OWLOntologyChange> changes = new ArrayList<>();
         selectedValues().filter(OWLFrameSectionRow::isInferred).forEach(row -> {
-            res.addAll(row.getManipulatableObjects());
+            row.manipulatableObjects().forEach(res::add);
             changes.add(new RemoveAxiom(row.getOntology(), row.getAxiom()));
         });
         editorKit.getModelManager().applyChanges(changes);

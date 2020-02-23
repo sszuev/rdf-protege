@@ -5,13 +5,12 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.frame.OWLFrame;
 import org.protege.editor.owl.ui.frame.property.AbstractPropertyDomainFrameSection;
-import org.protege.editor.owl.ui.frame.property.AbstractPropertyDomainFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import java.util.Set;
+import java.util.stream.Stream;
 
 
 /**
@@ -20,28 +19,30 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 16-Feb-2007<br><br>
  */
-public class OWLDataPropertyDomainFrameSection extends AbstractPropertyDomainFrameSection<OWLDataProperty, OWLDataPropertyDomainAxiom> {
+public class OWLDataPropertyDomainFrameSection
+        extends AbstractPropertyDomainFrameSection<OWLDataProperty, OWLDataPropertyDomainAxiom> {
 
-    public OWLDataPropertyDomainFrameSection(OWLEditorKit editorKit, OWLFrame<OWLDataProperty> owlDataPropertyOWLFrame) {
-        super(editorKit, owlDataPropertyOWLFrame);
+    public OWLDataPropertyDomainFrameSection(OWLEditorKit kit, OWLFrame<OWLDataProperty> frame) {
+        super(kit, frame);
     }
 
-
+    @Override
     protected OWLDataPropertyDomainAxiom createAxiom(OWLClassExpression object) {
         return getOWLDataFactory().getOWLDataPropertyDomainAxiom(getRootObject(), object);
     }
 
-
-    protected AbstractPropertyDomainFrameSectionRow<OWLDataProperty, OWLDataPropertyDomainAxiom> createFrameSectionRow(OWLDataPropertyDomainAxiom domainAxiom, OWLOntology ontology) {
-        return new OWLDataPropertyDomainFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), domainAxiom);
+    @Override
+    protected OWLDataPropertyDomainFrameSectionRow createFrameSectionRow(OWLDataPropertyDomainAxiom axiom,
+                                                                         OWLOntology ontology) {
+        return new OWLDataPropertyDomainFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), axiom);
     }
 
-
-    protected Set<OWLDataPropertyDomainAxiom> getAxioms(OWLOntology ontology) {
-        return ontology.getDataPropertyDomainAxioms(getRootObject());
+    @Override
+    protected Stream<OWLDataPropertyDomainAxiom> axioms(OWLOntology ontology) {
+        return ontology.dataPropertyDomainAxioms(getRootObject());
     }
 
-
+    @Override
     protected NodeSet<OWLClass> getInferredDomains() {
         OWLReasoner reasoner = getOWLModelManager().getReasoner();
         OWLDataProperty p = getRootObject();
@@ -50,31 +51,30 @@ public class OWLDataPropertyDomainFrameSection extends AbstractPropertyDomainFra
             return new OWLClassNodeSet(reasoner.getTopClassNode());
         }
         OWLClassExpression domain = factory.getOWLDataSomeValuesFrom(p, factory.getTopDatatype());
-        Node<OWLClass> domainNode = reasoner.getEquivalentClasses(domain);
-        if (domainNode != null && !domainNode.getEntities().isEmpty()) {
-            return new OWLClassNodeSet(domainNode);
+        Node<OWLClass> node = reasoner.getEquivalentClasses(domain);
+        if (node != null && node.getSize() != 0) {
+            return new OWLClassNodeSet(node);
         }
-        else {
-            return reasoner.getDataPropertyDomains(getRootObject(), true);
-        }
+        return reasoner.getDataPropertyDomains(getRootObject(), true);
     }
-    
+
     @Override
-    protected void refillInferred() {
-        getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERRED_DATATYPE_PROPERTY_DOMAINS,
-                () -> {
-                    if (!getOWLModelManager().getReasoner().isConsistent()) {
-                        return;
-                    }
-                    OWLDataPropertyDomainFrameSection.super.refillInferred();
-                });
+    protected void infer() {
+        if (!getOWLModelManager().getReasoner().isConsistent()) {
+            return;
+        }
+        super.infer();
+    }
+
+    @Override
+    protected OptionalInferenceTask getOptionalInferenceTask() {
+        return OptionalInferenceTask.SHOW_INFERRED_DATATYPE_PROPERTY_DOMAINS;
     }
 
     @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
-    	return change.isAxiomChange() &&
-    			change.getAxiom() instanceof OWLDataPropertyDomainAxiom &&
-    			((OWLDataPropertyDomainAxiom) change.getAxiom()).getProperty().equals(getRootObject());
+        return change.isAxiomChange() && change.getAxiom() instanceof OWLDataPropertyDomainAxiom &&
+                ((OWLDataPropertyDomainAxiom) change.getAxiom()).getProperty().equals(getRootObject());
     }
-    
+
 }

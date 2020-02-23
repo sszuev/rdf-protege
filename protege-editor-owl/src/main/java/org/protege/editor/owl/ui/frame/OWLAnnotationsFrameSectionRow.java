@@ -8,8 +8,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationSubject;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
 
 /**
@@ -18,39 +17,30 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 26-Jan-2007<br><br>
  */
-public class OWLAnnotationsFrameSectionRow extends AbstractOWLFrameSectionRow<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> {
+public class OWLAnnotationsFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> {
 
-    public OWLAnnotationsFrameSectionRow(OWLEditorKit owlEditorKit, 
-    									 OWLFrameSection<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> section, 
-    									 OWLOntology ontology,
+    public OWLAnnotationsFrameSectionRow(OWLEditorKit kit,
+                                         OWLFrameSection<OWLAnnotationSubject, OWLAnnotationAssertionAxiom, OWLAnnotation> section,
+                                         OWLOntology ontology,
                                          OWLAnnotationSubject rootObject, OWLAnnotationAssertionAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
-    protected List<OWLAnnotation> getObjects() {
-        return Arrays.asList(getAxiom().getAnnotation());
-    }
-
-
+    @Override
     protected OWLObjectEditor<OWLAnnotation> getObjectEditor() {
         OWLAnnotationEditor editor = new OWLAnnotationEditor(getOWLEditorKit());
         editor.setEditedObject(getAxiom().getAnnotation());
         return editor;
     }
 
-
+    @Override
     protected OWLAnnotationAssertionAxiom createAxiom(OWLAnnotation editedObject) {
-        return getOWLDataFactory().getOWLAnnotationAssertionAxiom(getRootObject(), editedObject);
+        return getOWLDataFactory().getOWLAnnotationAssertionAxiom(getRoot(), editedObject);
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.  These objects
-     * could be placed on the clip board during a copy operation,
-     * or navigated to etc.
-     */
-    public List<OWLAnnotation> getManipulatableObjects() {
-        return getObjects();
+    @Override
+    public Stream<OWLAnnotation> manipulatableObjects() {
+        return getAxiom().annotations();
     }
 }

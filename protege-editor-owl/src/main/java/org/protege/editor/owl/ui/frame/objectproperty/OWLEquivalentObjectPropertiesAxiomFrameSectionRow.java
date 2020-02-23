@@ -9,12 +9,10 @@ import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.util.CollectionFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -23,18 +21,20 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLEquivalentObjectPropertiesAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLObjectProperty, OWLEquivalentObjectPropertiesAxiom, OWLObjectPropertyExpression> {
+public class OWLEquivalentObjectPropertiesAxiomFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLObjectProperty, OWLEquivalentObjectPropertiesAxiom, OWLObjectPropertyExpression> {
 
-    public OWLEquivalentObjectPropertiesAxiomFrameSectionRow(OWLEditorKit owlEditorKit, 
-    														 OWLFrameSection<OWLObjectProperty, OWLEquivalentObjectPropertiesAxiom, OWLObjectPropertyExpression> section,
-                                                             OWLOntology ontology, OWLObjectProperty rootObject,
+    public OWLEquivalentObjectPropertiesAxiomFrameSectionRow(OWLEditorKit kit,
+                                                             OWLFrameSection<OWLObjectProperty, OWLEquivalentObjectPropertiesAxiom, OWLObjectPropertyExpression> section,
+                                                             OWLOntology ontology,
+                                                             OWLObjectProperty rootObject,
                                                              OWLEquivalentObjectPropertiesAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
-    
+
     @Override
     public boolean isEditable() {
-    	return getAxiom().getProperties().size() <= 2;
+        return getAxiom().properties().limit(3).count() <= 2;
     }
     
     @Override
@@ -42,47 +42,33 @@ public class OWLEquivalentObjectPropertiesAxiomFrameSectionRow extends AbstractO
     	return true;
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLObjectPropertyExpression> getObjectEditor() {
-        final OWLObjectPropertyExpressionEditor editor = new OWLObjectPropertyExpressionEditor(getOWLEditorKit());
-        final Set<OWLObjectPropertyExpression> equivs =
-                new HashSet<>(getAxiom().getProperties());
-        equivs.remove(getRootObject());
-        if (equivs.size() == 1){
-            final OWLObjectPropertyExpression p = equivs.iterator().next();
-            editor.setEditedObject(p);
+        OWLObjectPropertyExpressionEditor editor = new OWLObjectPropertyExpressionEditor(getOWLEditorKit());
+        Set<OWLObjectPropertyExpression> set = manipulatableObjects().limit(2).collect(Collectors.toSet());
+        if (set.size() == 1) {
+            editor.setEditedObject(set.iterator().next());
         }
-        return editor;    
+        return editor;
     }
     
     @Override
     public boolean checkEditorResults(OWLObjectEditor<OWLObjectPropertyExpression> editor) {
-    	Set<OWLObjectPropertyExpression> equivalents = editor.getEditedObjects();
-    	return equivalents.size() != 1 || !equivalents.contains(getRootObject());
+        Set<OWLObjectPropertyExpression> equivalents = editor.getEditedObjects();
+        return equivalents.size() != 1 || !equivalents.contains(getRoot());
     }
-    
+
     @Override
     public void handleEditingFinished(Set<OWLObjectPropertyExpression> editedObjects) {
-    	editedObjects = new HashSet<>(editedObjects);
-    	editedObjects.remove(getRootObject());
-    	super.handleEditingFinished(editedObjects);
+        super.handleEditingFinished(withoutRoot(editedObjects.stream()).collect(Collectors.toSet()));
     }
-
 
     protected OWLEquivalentObjectPropertiesAxiom createAxiom(OWLObjectPropertyExpression editedObject) {
-        return getOWLDataFactory().getOWLEquivalentObjectPropertiesAxiom(CollectionFactory.createSet(getRoot(),
-                                                                                                     editedObject));
+        return getOWLDataFactory().getOWLEquivalentObjectPropertiesAxiom(getRoot(), editedObject);
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.  These objects
-     * could be placed on the clip board during a copy operation,
-     * or navigated to etc.
-     */
-    public List<OWLObjectPropertyExpression> getManipulatableObjects() {
-        List<OWLObjectPropertyExpression> props = new ArrayList<>(getAxiom().getProperties());
-        props.remove(getRoot());
-        return props;
+    @Override
+    public Stream<OWLObjectPropertyExpression> manipulatableObjects() {
+        return withoutRoot(getAxiom().properties());
     }
 }

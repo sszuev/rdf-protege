@@ -6,8 +6,7 @@ import org.protege.editor.owl.ui.frame.AbstractOWLFrameSectionRow;
 import org.protege.editor.owl.ui.frame.OWLFrameSection;
 import org.semanticweb.owlapi.model.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
 
 /**
@@ -16,32 +15,29 @@ import java.util.List;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLObjectPropertyRangeFrameSectionRow extends AbstractOWLFrameSectionRow<OWLObjectProperty, OWLObjectPropertyRangeAxiom, OWLClassExpression> {
+public class OWLObjectPropertyRangeFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLObjectProperty, OWLObjectPropertyRangeAxiom, OWLClassExpression> {
 
-    public OWLObjectPropertyRangeFrameSectionRow(OWLEditorKit editorKit, 
-    											 OWLFrameSection<OWLObjectProperty, OWLObjectPropertyRangeAxiom, OWLClassExpression> section, 
-    											 OWLOntology ontology,
-                                                 OWLObjectProperty rootObject, OWLObjectPropertyRangeAxiom axiom) {
-        super(editorKit, section, ontology, rootObject, axiom);
+    public OWLObjectPropertyRangeFrameSectionRow(OWLEditorKit kit,
+                                                 OWLFrameSection<OWLObjectProperty, OWLObjectPropertyRangeAxiom, OWLClassExpression> section,
+                                                 OWLOntology ontology,
+                                                 OWLObjectProperty rootObject,
+                                                 OWLObjectPropertyRangeAxiom axiom) {
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLClassExpression> getObjectEditor() {
-        return getOWLEditorKit().getWorkspace().getOWLComponentFactory().getOWLClassDescriptionEditor(getAxiom().getRange(), AxiomType.OBJECT_PROPERTY_RANGE);
+        return getOWLComponentFactory().getOWLClassDescriptionEditor(getAxiom().getRange(), AxiomType.OBJECT_PROPERTY_RANGE);
     }
 
-
+    @Override
     protected OWLObjectPropertyRangeAxiom createAxiom(OWLClassExpression editedObject) {
         return getOWLDataFactory().getOWLObjectPropertyRangeAxiom(getRoot(), editedObject);
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.  These objects
-     * could be placed on the clip board during a copy operation,
-     * or navigated to etc.
-     */
-    public List<OWLClassExpression> getManipulatableObjects() {
-        return Arrays.asList(getAxiom().getRange());
+    @Override
+    public Stream<OWLClassExpression> manipulatableObjects() {
+        return Stream.of(getAxiom().getRange());
     }
 }

@@ -107,9 +107,7 @@ public class OWLEntityRenderingCacheImpl implements OWLEntityRenderingCache {
 
         // datatypes
         final OWLDataTypeUtils datatypeUtils = new OWLDataTypeUtils(owlModelManager.getOWLOntologyManager());
-        for (OWLDatatype dt : datatypeUtils.getKnownDatatypes(owlModelManager.getActiveOntologies())) {
-            addRendering(dt, owlDatatypeMap);
-        }
+        datatypeUtils.knownDatatypes(owlModelManager.getActiveOntologies()).forEach(dt -> addRendering(dt, owlDatatypeMap));
     }
 
 
@@ -188,10 +186,7 @@ public class OWLEntityRenderingCacheImpl implements OWLEntityRenderingCache {
             return entity;
         }
         entity = getOWLAnnotationProperty(rendering);
-        if (entity != null) {
-            return entity;
-        }
-        return null;
+        return entity;
     }
 
 

@@ -6,10 +6,9 @@ import org.protege.editor.owl.model.axiom.FreshAxiomLocationStrategyFactory;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.util.FilteringOWLOntologyChangeListener;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,26 +21,20 @@ import java.util.List;
  */
 public class OWLDataPropertyCharacteristicsViewComponent extends AbstractOWLDataPropertyViewComponent {
 
-//    private static final Logger logger = LoggerFactory.getLogger(OWLDataPropertyCharacteristicsViewComponent.class);
-
-
-
     private JCheckBox checkBox;
-
     private OWLDataProperty prop;
-
     private OWLOntologyChangeListener listener;
 
-
+    @Override
     protected OWLDataProperty updateView(OWLDataProperty property) {
         prop = property;
         checkBox.setEnabled(property != null);
         checkBox.setSelected(false);
         if (property == null) {
-        	return null;
+            return null;
         }
         for (OWLOntology ont : getOWLModelManager().getActiveOntologies()) {
-            if (!ont.getFunctionalDataPropertyAxioms(prop).isEmpty()) {
+            if (ont.functionalDataPropertyAxioms(prop).findFirst().isPresent()) {
                 checkBox.setSelected(true);
                 break;
             }
@@ -49,13 +42,13 @@ public class OWLDataPropertyCharacteristicsViewComponent extends AbstractOWLData
         return property;
     }
 
-
+    @Override
     public void disposeView() {
         super.disposeView();
         getOWLModelManager().removeOntologyChangeListener(listener);
     }
 
-
+    @Override
     public void initialiseView() throws Exception {
         setLayout(new BorderLayout());
         checkBox = new JCheckBox("Functional");
@@ -63,18 +56,15 @@ public class OWLDataPropertyCharacteristicsViewComponent extends AbstractOWLData
         box.setOpaque(false);
         box.add(checkBox);
         add(new JScrollPane(box));
-
         listener = new FilteringOWLOntologyChangeListener() {
-            public void visit(OWLFunctionalDataPropertyAxiom axiom) {
+            @Override
+            public void visit(@Nonnull OWLFunctionalDataPropertyAxiom axiom) {
                 updateView(prop);
             }
         };
         getOWLModelManager().addOntologyChangeListener(listener);
-        checkBox.addActionListener(e -> {
-            updateOntology();
-        });
+        checkBox.addActionListener(e -> updateOntology());
     }
-
 
     private void updateOntology() {
         if (prop == null) {
@@ -88,13 +78,12 @@ public class OWLDataPropertyCharacteristicsViewComponent extends AbstractOWLData
             FreshAxiomLocationStrategy strategy = strategyFactory.getStrategy(getOWLEditorKit());
             OWLOntology ont = strategy.getFreshAxiomLocation(ax, getOWLModelManager());
             getOWLModelManager().applyChange(new AddAxiom(ont, ax));
+            return;
         }
-        else {
-            List<OWLOntologyChange> changes = new ArrayList<>();
-            for (OWLOntology ont : getOWLModelManager().getActiveOntologies()) {
-                changes.add(new RemoveAxiom(ont, ax));
-            }
-            getOWLModelManager().applyChanges(changes);
+        List<OWLOntologyChange> changes = new ArrayList<>();
+        for (OWLOntology ont : getOWLModelManager().getActiveOntologies()) {
+            changes.add(new RemoveAxiom(ont, ax));
         }
+        getOWLModelManager().applyChanges(changes);
     }
 }

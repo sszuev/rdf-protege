@@ -6,12 +6,10 @@ import org.protege.editor.owl.ui.frame.AbstractOWLFrameSectionRow;
 import org.protege.editor.owl.ui.frame.OWLFrameSection;
 import org.protege.editor.owl.ui.util.OWLComponentFactory;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.util.CollectionFactory;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -23,12 +21,12 @@ import java.util.stream.Collectors;
 public class InheritedAnonymousClassesFrameSectionRow
         extends AbstractOWLFrameSectionRow<OWLClass, OWLClassAxiom, OWLClassExpression> {
 
-    public InheritedAnonymousClassesFrameSectionRow(OWLEditorKit owlEditorKit,
+    public InheritedAnonymousClassesFrameSectionRow(OWLEditorKit kit,
                                                     OWLFrameSection<OWLClass, OWLClassAxiom, OWLClassExpression> section,
                                                     OWLOntology ontology,
                                                     OWLClass rootObject,
                                                     OWLClassAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
     @Override
@@ -40,11 +38,11 @@ public class InheritedAnonymousClassesFrameSectionRow
             return factory.getOWLClassDescriptionEditor(superCls, AxiomType.SUBCLASS_OF);
         }
         Set<OWLClassExpression> res = ((OWLEquivalentClassesAxiom) axiom).classExpressions().collect(Collectors.toSet());
-        res.remove(getRootObject());
+        res.remove(getRoot());
         OWLClassExpression desc;
         if (res.isEmpty()) {
             // in the weird case that something is asserted equiv to itself
-            desc = getRootObject();
+            desc = getRoot();
         } else {
             desc = res.iterator().next();
         }
@@ -58,28 +56,27 @@ public class InheritedAnonymousClassesFrameSectionRow
         if (getAxiom() instanceof OWLSubClassOfAxiom) {
             return factory.getOWLSubClassOfAxiom(getRoot(), editedObject);
         }
-        return factory.getOWLEquivalentClassesAxiom(CollectionFactory.createSet(getRoot(), editedObject));
-
+        return factory.getOWLEquivalentClassesAxiom(getRoot(), editedObject);
     }
 
     @Override
-    public List<OWLClassExpression> getManipulatableObjects() {
+    public Stream<OWLClassExpression> manipulatableObjects() {
         OWLClassAxiom axiom = getAxiom();
         if (axiom instanceof OWLSubClassOfAxiom) {
-            return Collections.singletonList(((OWLSubClassOfAxiom) axiom).getSuperClass());
+            return Stream.of(((OWLSubClassOfAxiom) axiom).getSuperClass());
         }
+        OWLClass root = getRoot();
         Set<OWLClassExpression> res = ((OWLEquivalentClassesAxiom) axiom).classExpressions().collect(Collectors.toSet());
-        res.remove(getRootObject());
+        res.remove(root);
         if (res.isEmpty()) {
             // in the weird case that something is asserted equiv to itself
-            OWLClassExpression cls = getRootObject();
-            return Collections.singletonList(cls);
+            return Stream.of(root);
         }
-        return Collections.singletonList(res.iterator().next());
+        return Stream.of(res.iterator().next());
     }
 
     @Override
     public String getTooltip() {
-        return "Inherited from " + getOWLModelManager().getRendering(getRootObject());
+        return "Inherited from " + getOWLModelManager().getRendering(getRoot());
     }
 }

@@ -1,6 +1,5 @@
 package org.protege.editor.owl.ui.frame.cls;
 
-import com.google.common.collect.Lists;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.editor.OWLGeneralAxiomEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
@@ -11,16 +10,20 @@ import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author Matthew Horridge, Stanford University, Bio-Medical Informatics Research Group, Date: 09/06/2014
  */
 public class OWLClassGeneralClassAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLClass, OWLClassAxiom, OWLClassAxiom> {
 
-    public OWLClassGeneralClassAxiomFrameSectionRow(OWLEditorKit owlEditorKit, OWLFrameSection<OWLClass, OWLClassAxiom, OWLClassAxiom> section, OWLOntology ontology, OWLClass rootObject, OWLClassAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+    public OWLClassGeneralClassAxiomFrameSectionRow(OWLEditorKit kit,
+                                                    OWLFrameSection<OWLClass, OWLClassAxiom, OWLClassAxiom> section,
+                                                    OWLOntology ontology,
+                                                    OWLClass rootObject,
+                                                    OWLClassAxiom axiom) {
+        super(kit, section, ontology, rootObject, axiom);
     }
 
     @Override
@@ -32,7 +35,7 @@ public class OWLClassGeneralClassAxiomFrameSectionRow extends AbstractOWLFrameSe
 
     @Override
     public void handleEditingFinished(Set<OWLClassAxiom> editedObjects) {
-        OWLClassGeneralClassAxiomFrameSection.checkEditedAxiom(getOWLEditorKit(), editedObjects, getRootObject());
+        OWLClassGeneralClassAxiomFrameSection.checkEditedAxiom(getOWLEditorKit(), editedObjects, getRoot());
         super.handleEditingFinished(editedObjects);
     }
 
@@ -42,7 +45,7 @@ public class OWLClassGeneralClassAxiomFrameSectionRow extends AbstractOWLFrameSe
     }
 
     @Override
-    public List<? extends OWLObject> getManipulatableObjects() {
-        return Lists.newArrayList(getAxiom());
+    public Stream<? extends OWLObject> manipulatableObjects() {
+        return Stream.of(getAxiom());
     }
 }

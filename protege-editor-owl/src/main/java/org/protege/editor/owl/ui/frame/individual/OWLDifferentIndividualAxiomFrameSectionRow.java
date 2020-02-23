@@ -5,14 +5,11 @@ import org.protege.editor.owl.ui.editor.OWLIndividualSetEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.frame.AbstractOWLFrameSectionRow;
 import org.protege.editor.owl.ui.frame.OWLFrameSection;
-import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
-import org.semanticweb.owlapi.model.OWLIndividual;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 
 /**
@@ -21,47 +18,38 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLDifferentIndividualAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLNamedIndividual, OWLDifferentIndividualsAxiom, Set<OWLNamedIndividual>> {
+public class OWLDifferentIndividualAxiomFrameSectionRow
+        extends AbstractOWLFrameSectionRow<OWLNamedIndividual, OWLDifferentIndividualsAxiom, Set<OWLNamedIndividual>> {
 
-    public OWLDifferentIndividualAxiomFrameSectionRow(OWLEditorKit owlEditorKit, 
-    												  OWLFrameSection<OWLNamedIndividual, OWLDifferentIndividualsAxiom, Set<OWLNamedIndividual>> section,
-                                                      OWLOntology ontology, OWLNamedIndividual rootObject,
+    public OWLDifferentIndividualAxiomFrameSectionRow(OWLEditorKit kit,
+                                                      OWLFrameSection<OWLNamedIndividual, OWLDifferentIndividualsAxiom, Set<OWLNamedIndividual>> section,
+                                                      OWLOntology ontology, OWLNamedIndividual root,
                                                       OWLDifferentIndividualsAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, root, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<Set<OWLNamedIndividual>> getObjectEditor() {
         return new OWLIndividualSetEditor(getOWLEditorKit());
     }
-    
+
     @Override
-	public boolean checkEditorResults(OWLObjectEditor<Set<OWLNamedIndividual>> editor) {
-		Set<OWLNamedIndividual> equivalents = editor.getEditedObject();
-		return !equivalents.contains(getRootObject());
-	}
+    public boolean checkEditorResults(OWLObjectEditor<Set<OWLNamedIndividual>> editor) {
+        return !Objects.requireNonNull(editor.getEditedObject()).contains(getRoot());
+    }
 
-
+    @Override
     protected OWLDifferentIndividualsAxiom createAxiom(Set<OWLNamedIndividual> editedObject) {
-        editedObject.add(getRootObject());
+        editedObject.add(getRoot());
         return getOWLDataFactory().getOWLDifferentIndividualsAxiom(editedObject);
     }
 
-
-    /**
-     * Gets a list of objects contained in this row.  These objects
-     * could be placed on the clip board during a copy operation,
-     * or navigated to etc.
-     */
-    public List<OWLNamedIndividual> getManipulatableObjects() {
+    @Override
+    public Stream<OWLNamedIndividual> manipulatableObjects() {
         //@@TODO v3 port - what about anon indivs?
-        Set<OWLIndividual> individuals = getAxiom().getIndividuals();
-        List<OWLNamedIndividual> results = new ArrayList<>();
-        for (OWLIndividual ind : individuals){
-            if (!ind.isAnonymous() && !ind.equals(getRootObject())){
-                results.add(ind.asOWLNamedIndividual());
-            }
-        }
-        return results;
+        OWLIndividual root = getRoot();
+        return getAxiom().individuals()
+                .filter(i -> !i.isAnonymous() && !i.equals(root))
+                .map(AsOWLNamedIndividual::asOWLNamedIndividual);
     }
 }

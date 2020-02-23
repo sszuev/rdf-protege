@@ -5,15 +5,8 @@ import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
-/*
- * Copyright (C) 2007, University of Manchester
- *
- *
- */
-
+import java.util.stream.Stream;
 
 /**
  * Author: Matthew Horridge<br>
@@ -24,32 +17,35 @@ import java.util.Set;
 public class AxiomListFrameSectionRow extends AbstractOWLFrameSectionRow<Set<OWLAxiom>, OWLAxiom, OWLAxiom> {
 
 
-    public AxiomListFrameSectionRow(OWLEditorKit owlEditorKit, OWLFrameSection<Set<OWLAxiom>, OWLAxiom, OWLAxiom> section, OWLOntology ontology, Set<OWLAxiom> rootObject,
+    public AxiomListFrameSectionRow(OWLEditorKit kit,
+                                    OWLFrameSection<Set<OWLAxiom>, OWLAxiom, OWLAxiom> section,
+                                    OWLOntology ontology,
+                                    Set<OWLAxiom> root,
                                     OWLAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, root, axiom);
     }
 
-
+    @Override
     protected OWLObjectEditor<OWLAxiom> getObjectEditor() {
         return null;
     }
 
-
+    @Override
     protected OWLAxiom createAxiom(OWLAxiom editedObject) {
         return null;
     }
 
-
-    public List<OWLAxiom> getManipulatableObjects() {
-        return Arrays.asList(getAxiom());
+    @Override
+    public Stream<OWLAxiom> manipulatableObjects() {
+        return Stream.of(getAxiom());
     }
 
-
+    @Override
     public boolean isEditable() {
         return false;
     }
 
-
+    @Override
     public boolean isDeleteable() {
         return true;
     }

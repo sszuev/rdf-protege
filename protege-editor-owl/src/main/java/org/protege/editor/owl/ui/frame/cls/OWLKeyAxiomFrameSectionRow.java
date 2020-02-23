@@ -9,9 +9,9 @@ import org.semanticweb.owlapi.model.OWLHasKeyAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 /*
 * Copyright (C) 2007, University of Manchester
 *
@@ -28,32 +28,30 @@ import java.util.Set;
  */
 public class OWLKeyAxiomFrameSectionRow extends AbstractOWLFrameSectionRow<OWLClass, OWLHasKeyAxiom, Set<OWLPropertyExpression>> {
 
-    public OWLKeyAxiomFrameSectionRow(OWLEditorKit owlEditorKit, 
-    								  OWLFrameSection<OWLClass, OWLHasKeyAxiom, Set<OWLPropertyExpression>> section,
-                                      OWLOntology ontology, OWLClass rootObject,
+    public OWLKeyAxiomFrameSectionRow(OWLEditorKit kit,
+                                      OWLFrameSection<OWLClass, OWLHasKeyAxiom, Set<OWLPropertyExpression>> section,
+                                      OWLOntology ontology,
+                                      OWLClass rootObject,
                                       OWLHasKeyAxiom axiom) {
-        super(owlEditorKit, section, ontology, rootObject, axiom);
+        super(kit, section, ontology, rootObject, axiom);
     }
 
-
+    @Override
     protected OWLHasKeyAxiom createAxiom(Set<OWLPropertyExpression> properties) {
-    	/*
-    	 * Degenericized to be compatible with changing OWLAPI interfaces
-    	 */
-    	return getOWLDataFactory().getOWLHasKeyAxiom(getRootObject(), (Set) properties);
+        // Degenericized to be compatible with changing OWLAPI interfaces
+        return getOWLDataFactory().getOWLHasKeyAxiom(getRoot(), properties);
     }
 
-
+    @Override
     protected OWLPropertySetEditor getObjectEditor() {
-        final OWLPropertySetEditor editor = new OWLPropertySetEditor(getOWLEditorKit());
-    	/*
-    	 * Degenericized to be compatible with changing OWLAPI interfaces
-    	 */
-        editor.setEditedObject((Set) getAxiom().getPropertyExpressions());
+        OWLPropertySetEditor editor = new OWLPropertySetEditor(getOWLEditorKit());
+        // Degenericized to be compatible with changing OWLAPI interfaces
+        editor.setEditedObject(getAxiom().propertyExpressions().collect(Collectors.toSet()));
         return editor;
     }
 
-
-    public List<OWLPropertyExpression> getManipulatableObjects() {
-        return new ArrayList<>(getAxiom().getPropertyExpressions());
-    }}
+    @Override
+    public Stream<OWLPropertyExpression> manipulatableObjects() {
+        return getAxiom().propertyExpressions();
+    }
+}
