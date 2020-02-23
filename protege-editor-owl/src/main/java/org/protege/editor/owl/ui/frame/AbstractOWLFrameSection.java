@@ -10,6 +10,7 @@ import org.protege.editor.owl.model.axiom.FreshAxiomLocationStrategy;
 import org.protege.editor.owl.model.inference.VacuousAxiomVisitor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditorHandler;
+import org.protege.editor.owl.ui.util.OWLComponentFactory;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InconsistentOntologyException;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 
 /**
@@ -87,6 +89,14 @@ public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
         return false;
     }
 
+    protected boolean hasRoot(Stream<? extends OWLObject> stream) {
+        return stream.anyMatch(x -> getRootObject().equals(x));
+    }
+
+    protected OWLComponentFactory getOWLComponentFactory() {
+        return getOWLEditorKit().getWorkspace().getOWLComponentFactory();
+    }
+
     @Override
     public final void dispose() {
         getOWLModelManager().removeOntologyChangeListener(listener);
@@ -148,7 +158,7 @@ public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
         Set<A> axioms = new HashSet<>();
         List<OWLOntologyChange> changes = new ArrayList<>();
         for (E editedObject : editedObjects) {
-            final A ax = createAxiom(editedObject);
+            A ax = createAxiom(editedObject);
             FreshAxiomLocationPreferences prefs = FreshAxiomLocationPreferences.getPreferences();
             FreshActionStrategySelector strategySelector = new FreshActionStrategySelector(prefs, owlEditorKit);
             FreshAxiomLocationStrategy strategy = strategySelector.getFreshAxiomLocationStrategy();
@@ -157,11 +167,10 @@ public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
             axioms.add(ax);
         }
         getOWLModelManager().applyChanges(changes);
-        for (A axiom : axioms) {
-            if (!getOWLModelManager().getActiveOntology().containsAxiom(axiom)) {
-                LOGGER.warn("Editing of an axiom finished, but the axiom was not added to the active ontology. Axiom: {}.", axiom);
-            }
-        }
+        axioms.stream()
+                .filter(axiom -> !getOWLModelManager().getActiveOntology().containsAxiom(axiom))
+                .forEach(a -> LOGGER.warn("Editing of an axiom finished, " +
+                        "but the axiom was not added to the active ontology. Axiom: {}.", a));
     }
 
     protected abstract A createAxiom(E object);
@@ -240,7 +249,9 @@ public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
      */
     protected abstract void refill(OWLOntology ontology);
 
-    protected abstract void clear();
+    protected void clear() {
+        // Do nothing by default
+    }
 
     protected void refillInferred() {
         // Do nothing by default
@@ -266,7 +277,6 @@ public abstract class AbstractOWLFrameSection<R, A extends OWLAxiom, E>
     private void fireContentChanged() {
         getFrame().fireContentChanged();
     }
-
 
     /**
      * Gets the rows that this section contains.

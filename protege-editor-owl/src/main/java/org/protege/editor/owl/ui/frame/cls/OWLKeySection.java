@@ -5,10 +5,8 @@ import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.editor.OWLPropertySetEditor;
 import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 
-import java.util.Comparator;
 import java.util.Set;
 
 /**
@@ -23,54 +21,37 @@ public class OWLKeySection extends AbstractOWLFrameSection<OWLClass, OWLHasKeyAx
 
     public static final String LABEL = "Target for Key";
 
-
     public OWLKeySection(OWLEditorKit editorKit, OWLFrame<OWLClass> frame) {
         super(editorKit, LABEL, "Key", frame);
     }
 
-
-    protected void clear() {
-    }
-
-
+    @Override
     protected void refill(OWLOntology ontology) {
-        for (OWLHasKeyAxiom ax : ontology.getHasKeyAxioms(getRootObject())) {
-            addRow(new OWLKeyAxiomFrameSectionRow(getOWLEditorKit(),
-                                                  this,
-                                                  ontology,
-                                                  getRootObject(),
-                                                  ax));
-        }
+        OWLClass root = getRootObject();
+        ontology.hasKeyAxioms(root)
+                .forEach(ax -> addRow(new OWLKeyAxiomFrameSectionRow(getOWLEditorKit(), this, ontology, root, ax)));
     }
 
-
+    @Override
     protected OWLHasKeyAxiom createAxiom(Set<OWLPropertyExpression> properties) {
-    	/*
-    	 * Degenericized to be compatible with changing OWLAPI interfaces
-    	 */
-    	return getOWLDataFactory().getOWLHasKeyAxiom(getRootObject(), (Set) properties);
+        // Degenericized to be compatible with changing OWLAPI interfaces
+        return getOWLDataFactory().getOWLHasKeyAxiom(getRootObject(), properties);
     }
 
     @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
-    	if (!change.isAxiomChange()) {
-    		return false;
-    	}
-    	OWLAxiom axiom = change.getAxiom();
-    	if (axiom instanceof OWLHasKeyAxiom) {
-    		return ((OWLHasKeyAxiom) axiom).getClassExpression().equals(getRootObject());
-    	}
-    	return false;
+        if (!change.isAxiomChange()) {
+            return false;
+        }
+        OWLAxiom axiom = change.getAxiom();
+        if (axiom instanceof OWLHasKeyAxiom) {
+            return ((OWLHasKeyAxiom) axiom).getClassExpression().equals(getRootObject());
+        }
+        return false;
     }
 
-
-
+    @Override
     public OWLObjectEditor<Set<OWLPropertyExpression>> getObjectEditor() {
         return new OWLPropertySetEditor(getOWLEditorKit());
-    }
-
-
-    public Comparator<OWLFrameSectionRow<OWLClass, OWLHasKeyAxiom, Set<OWLPropertyExpression>>> getRowComparator() {
-        return null;
     }
 }

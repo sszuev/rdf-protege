@@ -4,12 +4,10 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectPropertyExpressionEditor;
-import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,66 +18,56 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLSubObjectPropertyAxiomSuperPropertyFrameSection extends AbstractOWLFrameSection<OWLObjectProperty, OWLSubObjectPropertyOfAxiom, OWLObjectPropertyExpression> {
+public class OWLSubObjectPropertyAxiomSuperPropertyFrameSection
+        extends AbstractInferFrameSection<OWLObjectProperty, OWLSubObjectPropertyOfAxiom, OWLObjectPropertyExpression> {
 
     public static final String LABEL = "SubProperty Of";
 
-    Set<OWLObjectPropertyExpression> added = new HashSet<>();
-
+    private final Set<OWLObjectPropertyExpression> added = new HashSet<>();
 
     public OWLSubObjectPropertyAxiomSuperPropertyFrameSection(OWLEditorKit editorKit,
                                                               OWLFrame<? extends OWLObjectProperty> frame) {
         super(editorKit, LABEL, "Super property", frame);
     }
 
-
+    @Override
     protected void clear() {
         added.clear();
     }
 
-
-    /**
-     * Refills the section with rows.  This method will be called
-     * by the system and should be directly called.
-     */
+    @Override
     protected void refill(OWLOntology ontology) {
-
-        for (OWLSubObjectPropertyOfAxiom ax : ontology.getObjectSubPropertyAxiomsForSubProperty(getRootObject())) {
-            addRow(new OWLSubObjectPropertyAxiomSuperPropertyFrameSectionRow(getOWLEditorKit(),
-                                                                             this,
-                                                                             ontology,
-                                                                             getRootObject(),
-                                                                             ax));
+        OWLObjectProperty root = getRootObject();
+        ontology.objectSubPropertyAxiomsForSubProperty(root).forEach(ax -> {
+            addRow(new OWLSubObjectPropertyAxiomSuperPropertyFrameSectionRow(getOWLEditorKit(), this, ontology, root, ax));
             added.add(ax.getSuperProperty());
+        });
+    }
+
+    @Override
+    protected void infer() {
+        if (!isConsistent()) {
+            return;
         }
+        OWLObjectProperty root = getRootObject();
+        getReasoner().getSuperObjectProperties(root, true).entities()
+                .filter(p -> !added.contains(p))
+                .map(p -> new OWLSubObjectPropertyAxiomSuperPropertyFrameSectionRow(getOWLEditorKit(), this, null, root,
+                        getOWLDataFactory().getOWLSubObjectPropertyOfAxiom(root, p)))
+                .forEach(this::addInferredRowIfNontrivial);
     }
 
-
-    protected void refillInferred() {
-        getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERRED_SUPER_OBJECT_PROPERTIES,
-                () -> {
-                    if (!getOWLModelManager().getReasoner().isConsistent()) {
-                        return;
-                    }
-                    for (OWLObjectPropertyExpression infSup : getOWLModelManager().getReasoner().getSuperObjectProperties(getRootObject(),true).getFlattened()) {
-                        if (!added.contains(infSup)) {
-                            addInferredRowIfNontrivial(new OWLSubObjectPropertyAxiomSuperPropertyFrameSectionRow(getOWLEditorKit(),
-                                                                                             OWLSubObjectPropertyAxiomSuperPropertyFrameSection.this,
-                                                                                             null,
-                                                                                             getRootObject(),
-                                                                                             getOWLDataFactory().getOWLSubObjectPropertyOfAxiom(getRootObject(),
-                                                                                                                                                infSup)));
-                        }
-                    }
-                });
+    @Override
+    protected OptionalInferenceTask getOptionalInferenceTask() {
+        return OptionalInferenceTask.SHOW_INFERRED_SUPER_OBJECT_PROPERTIES;
     }
 
-
+    @Override
     protected OWLSubObjectPropertyOfAxiom createAxiom(OWLObjectPropertyExpression object) {
         return getOWLDataFactory().getOWLSubObjectPropertyOfAxiom(getRootObject(), object);
     }
 
-
+    @Override
     public OWLObjectEditor<OWLObjectPropertyExpression> getObjectEditor() {
         return new OWLObjectPropertyExpressionEditor(getOWLEditorKit());
     }
@@ -94,16 +82,5 @@ public class OWLSubObjectPropertyAxiomSuperPropertyFrameSection extends Abstract
     		return ((OWLSubObjectPropertyOfAxiom) axiom).getSubProperty().equals(getRootObject());
     	}
     	return false;
-    }
-
-
-    /**
-     * Obtains a comparator which can be used to sort the rows
-     * in this section.
-     * @return A comparator if to sort the rows in this section,
-     *         or <code>null</code> if the rows shouldn't be sorted.
-     */
-    public Comparator<OWLFrameSectionRow<OWLObjectProperty, OWLSubObjectPropertyOfAxiom, OWLObjectPropertyExpression>> getRowComparator() {
-        return null;
     }
 }

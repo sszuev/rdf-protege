@@ -7,11 +7,9 @@ import org.protege.editor.owl.ui.editor.OWLGeneralAxiomEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 
 import javax.swing.*;
-import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -70,15 +68,6 @@ public class OWLClassGeneralClassAxiomFrameSection
                 .filter(ax -> ax.containsEntityInSignature(clazz))
                 .map(ax -> new OWLClassGeneralClassAxiomFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), ax))
                 .forEach(this::addRow);
-    }
-
-    @Override
-    protected void clear() {
-    }
-
-    @Override
-    public Comparator<OWLFrameSectionRow<OWLClass, OWLClassAxiom, OWLClassAxiom>> getRowComparator() {
-        return null;
     }
 
     @Override

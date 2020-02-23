@@ -7,10 +7,9 @@ import org.semanticweb.owlapi.util.IRIShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleIRIShortFormProvider;
 
 import javax.annotation.Nonnull;
-
+import java.util.Objects;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.stream.Collectors;
 
 /**
  * Matthew Horridge
@@ -25,20 +24,16 @@ public class OWLEditorKitIRIShortFormProvider implements IRIShortFormProvider {
 
     public OWLEditorKitIRIShortFormProvider(@Nonnull OWLEditorKit editorKit,
                                             @Nonnull SimpleIRIShortFormProvider delegateIRIShortFormProvider) {
-        this.editorKit = checkNotNull(editorKit);
-        this.delegateIRIShortFormProvider = checkNotNull(delegateIRIShortFormProvider);
+        this.editorKit = Objects.requireNonNull(editorKit);
+        this.delegateIRIShortFormProvider = Objects.requireNonNull(delegateIRIShortFormProvider);
     }
 
     @Nonnull
     @Override
     public String getShortForm(@Nonnull IRI iri) {
         OWLModelManager manager = editorKit.getOWLModelManager();
-        Set<OWLEntity> entityWithIri = manager.getActiveOntology().getEntitiesInSignature(iri);
-        if(entityWithIri.isEmpty()) {
-            return delegateIRIShortFormProvider.getShortForm(iri);
-        }
-        else {
-            return manager.getRendering(entityWithIri.iterator().next());
-        }
+        Set<OWLEntity> entities = manager.getActiveOntology().entitiesInSignature(iri).limit(2).collect(Collectors.toSet());
+        return entities.isEmpty() ? delegateIRIShortFormProvider.getShortForm(iri)
+                : manager.getRendering(entities.iterator().next());
     }
 }

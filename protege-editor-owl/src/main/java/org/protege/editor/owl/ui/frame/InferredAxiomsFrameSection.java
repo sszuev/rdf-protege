@@ -27,10 +27,6 @@ public class InferredAxiomsFrameSection extends AbstractOWLFrameSection<OWLOntol
     }
 
     @Override
-    protected void clear() {
-    }
-
-    @Override
     protected OWLAxiom createAxiom(OWLAxiom object) {
         return object;
     }

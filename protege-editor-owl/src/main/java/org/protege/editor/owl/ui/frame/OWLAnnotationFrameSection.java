@@ -34,10 +34,6 @@ public class OWLAnnotationFrameSection
     }
 
     @Override
-    protected void clear() {
-    }
-
-    @Override
     protected void refill(OWLOntology ontology) {
         boolean hidden = false;
         OWLAnnotationSubject subject = getRootObject();

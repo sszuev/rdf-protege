@@ -34,10 +34,6 @@ public class OWLDataPropertyRangeFrameSection
     }
 
     @Override
-    protected void clear() {
-    }
-
-    @Override
     protected void refill(OWLOntology ontology) {
         OWLDataProperty root = getRootObject();
         ontology.dataPropertyRangeAxioms(root)

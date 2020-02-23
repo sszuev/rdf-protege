@@ -5,11 +5,9 @@ import org.protege.editor.owl.ui.editor.OWLAnnotationPropertyDomainEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -76,24 +74,10 @@ public class OWLAnnotationPropertyDomainFrameSection
     }
 
     @Override
-    protected void clear() {
-    }
-
-    @Override
     protected final void refill(OWLOntology ontology) {
         axioms(ontology)
                 .map(ax -> new OWLAnnotationPropertyDomainFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), ax))
                 .forEach(this::addRow);
-    }
-
-    @Override
-    protected final void refillInferred() {
-        // Could do some trivial manual inference to aid the user
-    }
-
-    @Override
-    public Comparator<OWLFrameSectionRow<OWLAnnotationProperty, OWLAnnotationPropertyDomainAxiom, IRI>> getRowComparator() {
-        return null;
     }
 
     @Override

@@ -3,12 +3,14 @@ package org.protege.editor.owl.ui.frame.objectproperty;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -17,73 +19,64 @@ import java.util.*;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLObjectPropertyRangeFrameSection extends AbstractOWLFrameSection<OWLObjectProperty, OWLObjectPropertyRangeAxiom, OWLClassExpression> {
+public class OWLObjectPropertyRangeFrameSection
+        extends AbstractInferFrameSection<OWLObjectProperty, OWLObjectPropertyRangeAxiom, OWLClassExpression> {
 
     public static final String LABEL = "Ranges (intersection)";
 
-    Set<OWLClassExpression> addedRanges = new HashSet<>();
-
+    private final Set<OWLClassExpression> added = new HashSet<>();
 
     public OWLObjectPropertyRangeFrameSection(OWLEditorKit owlEditorKit, OWLFrame<? extends OWLObjectProperty> frame) {
         super(owlEditorKit, LABEL, "Range", frame);
     }
 
-
+    @Override
     protected void clear() {
-        addedRanges.clear();
+        added.clear();
     }
 
-
-    /**
-     * Refills the section with rows.  This method will be called
-     * by the system and should be directly called.
-     */
+    @Override
     protected void refill(OWLOntology ontology) {
-
-        for (OWLObjectPropertyRangeAxiom ax : ontology.getObjectPropertyRangeAxioms(getRootObject())) {
-            addRow(new OWLObjectPropertyRangeFrameSectionRow(getOWLEditorKit(), this, ontology, getRootObject(), ax));
-            addedRanges.add(ax.getRange());
-        }
+        OWLObjectProperty root = getRootObject();
+        ontology.objectPropertyRangeAxioms(root).forEach(ax -> {
+            addRow(new OWLObjectPropertyRangeFrameSectionRow(getOWLEditorKit(), this, ontology, root, ax));
+            added.add(ax.getRange());
+        });
     }
 
-
-    protected void refillInferred() {
-        getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERRED_OBJECT_PROPERTY_RANGES,
-                () -> {
-                    if (!getOWLModelManager().getReasoner().isConsistent()) {
-                        return;
+    @Override
+    protected void infer() {
+        if (!isConsistent()) {
+            return;
+        }
+        OWLObjectProperty root = getRootObject();
+        getReasoner().getObjectPropertyRanges(root, true)
+                .entities()
+                .forEach(range -> {
+                    if (!added.contains(range)) {
+                        OWLObjectPropertyRangeAxiom ax = getOWLDataFactory().getOWLObjectPropertyRangeAxiom(root, range);
+                        addInferredRowIfNontrivial(new OWLObjectPropertyRangeFrameSectionRow(getOWLEditorKit(), this, null, root, ax));
                     }
-                    for (OWLClassExpression inferredRange : getInferredRanges()) {
-                        if (!addedRanges.contains(inferredRange)) {
-                            OWLObjectPropertyRangeAxiom inferredAxiom = getOWLDataFactory().getOWLObjectPropertyRangeAxiom(getRootObject(),
-                                                                                                                           inferredRange);
-                            addInferredRowIfNontrivial(new OWLObjectPropertyRangeFrameSectionRow(getOWLEditorKit(),
-                                                                             OWLObjectPropertyRangeFrameSection.this,
-                                                                             null,
-                                                                             getRootObject(),
-                                                                             inferredAxiom));
-                        }
-                        addedRanges.add(inferredRange);
-                    }
+                    added.add(range);
                 });
     }
 
-
-    private Set<OWLClassExpression> getInferredRanges() {
-        return new HashSet<>(getOWLModelManager().getReasoner().getObjectPropertyRanges(getRootObject(), true).getFlattened());
+    @Override
+    protected OptionalInferenceTask getOptionalInferenceTask() {
+        return OptionalInferenceTask.SHOW_INFERRED_OBJECT_PROPERTY_RANGES;
     }
 
-
+    @Override
     protected OWLObjectPropertyRangeAxiom createAxiom(OWLClassExpression object) {
         return getOWLDataFactory().getOWLObjectPropertyRangeAxiom(getRootObject(), object);
     }
 
-
+    @Override
     public OWLObjectEditor<OWLClassExpression> getObjectEditor() {
-        return getOWLEditorKit().getWorkspace().getOWLComponentFactory().getOWLClassDescriptionEditor(null, AxiomType.OBJECT_PROPERTY_RANGE);
+        return getOWLComponentFactory().getOWLClassDescriptionEditor(null, AxiomType.OBJECT_PROPERTY_RANGE);
     }
 
-
+    @Override
     public boolean canAcceptDrop(List<OWLObject> objects) {
         for (OWLObject obj : objects) {
             if (!(obj instanceof OWLClassExpression)) {
@@ -93,18 +86,16 @@ public class OWLObjectPropertyRangeFrameSection extends AbstractOWLFrameSection<
         return true;
     }
 
-
+    @Override
     public boolean dropObjects(List<OWLObject> objects) {
         List<OWLOntologyChange> changes = new ArrayList<>();
         for (OWLObject obj : objects) {
-            if (obj instanceof OWLClassExpression) {
-                OWLClassExpression desc = (OWLClassExpression) obj;
-                OWLAxiom ax = getOWLDataFactory().getOWLObjectPropertyRangeAxiom(getRootObject(), desc);
-                changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
-            }
-            else {
+            if (!(obj instanceof OWLClassExpression)) {
                 return false;
             }
+            OWLClassExpression desc = (OWLClassExpression) obj;
+            OWLAxiom ax = getOWLDataFactory().getOWLObjectPropertyRangeAxiom(getRootObject(), desc);
+            changes.add(new AddAxiom(getOWLModelManager().getActiveOntology(), ax));
         }
         getOWLModelManager().applyChanges(changes);
         return true;
@@ -120,15 +111,5 @@ public class OWLObjectPropertyRangeFrameSection extends AbstractOWLFrameSection<
     		return ((OWLObjectPropertyRangeAxiom) axiom).getProperty().equals(getRootObject());
     	}
     	return false;
-    }
-
-    /**
-     * Obtains a comparator which can be used to sort the rows
-     * in this section.
-     * @return A comparator if to sort the rows in this section,
-     *         or <code>null</code> if the rows shouldn't be sorted.
-     */
-    public Comparator<OWLFrameSectionRow<OWLObjectProperty, OWLObjectPropertyRangeAxiom, OWLClassExpression>> getRowComparator() {
-        return null;
     }
 }

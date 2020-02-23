@@ -32,7 +32,7 @@ public class InheritedAnonymousClassesFrameSectionRow
     @Override
     protected OWLObjectEditor<OWLClassExpression> getObjectEditor() {
         OWLClassAxiom axiom = getAxiom();
-        OWLComponentFactory factory = getOWLEditorKit().getWorkspace().getOWLComponentFactory();
+        OWLComponentFactory factory = getOWLComponentFactory();
         if (axiom instanceof OWLSubClassOfAxiom) {
             OWLClassExpression superCls = ((OWLSubClassOfAxiom) axiom).getSuperClass();
             return factory.getOWLClassDescriptionEditor(superCls, AxiomType.SUBCLASS_OF);

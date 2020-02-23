@@ -2,7 +2,7 @@ package org.protege.editor.owl.ui.frame.cls;
 
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.classexpression.anonymouscls.AnonymousDefinedClassManager;
-import org.protege.editor.owl.ui.frame.AbstractInferOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * Date: Nov 28, 2008<br><br>
  */
 public abstract class AbstractOWLClassAxiomFrameSection<A extends OWLAxiom, E>
-        extends AbstractInferOWLFrameSection<OWLClassExpression, A, E> {
+        extends AbstractInferFrameSection<OWLClassExpression, A, E> {
 
     protected AbstractOWLClassAxiomFrameSection(OWLEditorKit kit,
                                                 String label,

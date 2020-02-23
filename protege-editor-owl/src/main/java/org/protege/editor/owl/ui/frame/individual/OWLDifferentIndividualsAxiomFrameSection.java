@@ -28,10 +28,6 @@ public class OWLDifferentIndividualsAxiomFrameSection extends AbstractOWLFrameSe
     }
 
     @Override
-    protected void clear() {
-    }
-
-    @Override
     protected void refill(OWLOntology ontology) {
         OWLNamedIndividual root = getRootObject();
         ontology.differentIndividualAxioms(root)

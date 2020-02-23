@@ -38,10 +38,6 @@ public class OWLDisjointDataPropertiesFrameSection
     }
 
     @Override
-    protected void clear() {
-    }
-
-    @Override
     protected void refill(OWLOntology ontology) {
         OWLDataProperty root = getRootObject();
         ontology.disjointDataPropertiesAxioms(root)

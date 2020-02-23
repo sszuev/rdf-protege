@@ -3,13 +3,11 @@ package org.protege.editor.owl.ui.frame.cls;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,11 +20,12 @@ import java.util.stream.Stream;
  * Bio-Health Informatics Group<br>
  * Date: 23-Feb-2007<br><br>
  */
-public class InheritedAnonymousClassesFrameSection extends AbstractOWLFrameSection<OWLClass, OWLClassAxiom, OWLClassExpression> {
+public class InheritedAnonymousClassesFrameSection
+        extends AbstractInferFrameSection<OWLClass, OWLClassAxiom, OWLClassExpression> {
 
     private static final String LABEL = "SubClass Of (Anonymous Ancestor)";
 
-    private final Set<OWLClass> processedClasses = new HashSet<>();
+    private final Set<OWLClass> added = new HashSet<>();
 
     public InheritedAnonymousClassesFrameSection(OWLEditorKit editorKit, OWLFrame<? extends OWLClass> frame) {
         super(editorKit, LABEL, "Anonymous Ancestor Class", frame);
@@ -52,18 +51,18 @@ public class InheritedAnonymousClassesFrameSection extends AbstractOWLFrameSecti
             Stream.concat(o.subClassAxiomsForSubClass(cls).filter(ax -> ax.getSuperClass().isAnonymous()),
                     o.equivalentClassesAxioms(cls))
                     .forEach(ax -> addRow(new InheritedAnonymousClassesFrameSectionRow(kit, this, o, cls, ax)));
-            processedClasses.add(cls);
+            added.add(cls);
         }
     }
 
     @Override
-    protected void refillInferred() {
-        getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERRED_SUPER_CLASSES,
-                this::refillInferredDoIt);
+    protected OptionalInferenceTask getOptionalInferenceTask() {
+        return OptionalInferenceTask.SHOW_INFERRED_SUPER_CLASSES;
     }
 
-    private void refillInferredDoIt() {
-        OWLReasoner reasoner = getOWLModelManager().getReasoner();
+    @Override
+    protected void infer() {
+        OWLReasoner reasoner = getReasoner();
         if (!reasoner.isConsistent()) {
             return;
         }
@@ -74,8 +73,8 @@ public class InheritedAnonymousClassesFrameSection extends AbstractOWLFrameSecti
         OWLDataFactory df = getOWLDataFactory();
         OWLOntology active = getOWLModelManager().getActiveOntology();
         OWLClass root = getRootObject();
-        getReasoner().getSuperClasses(getRootObject(), true).entities()
-                .filter(x -> !processedClasses.contains(x) && !x.equals(root))
+        reasoner.getSuperClasses(getRootObject(), true).entities()
+                .filter(x -> !added.contains(x) && !x.equals(root))
                 .forEach(c -> active.importsClosure().forEach(o -> {
                     o.subClassAxiomsForSubClass(c)
                             .filter(x -> x.getSuperClass().isAnonymous())
@@ -108,16 +107,12 @@ public class InheritedAnonymousClassesFrameSection extends AbstractOWLFrameSecti
 
     @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
-        return change.isAxiomChange() && (change.getAxiom() instanceof OWLSubClassOfAxiom || change.getAxiom() instanceof OWLEquivalentClassesAxiom);
+        return change.isAxiomChange() &&
+                (change.getAxiom() instanceof OWLSubClassOfAxiom || change.getAxiom() instanceof OWLEquivalentClassesAxiom);
     }
 
     @Override
     protected void clear() {
-        processedClasses.clear();
-    }
-
-    @Override
-    public Comparator<OWLFrameSectionRow<OWLClass, OWLClassAxiom, OWLClassExpression>> getRowComparator() {
-        return null;
+        added.clear();
     }
 }

@@ -4,7 +4,7 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLDataPropertyRelationshipEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.protege.editor.owl.ui.frame.AbstractInferOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLDataPropertyConstantPair;
 import org.protege.editor.owl.ui.frame.OWLFrame;
 import org.semanticweb.owlapi.model.*;
@@ -21,7 +21,7 @@ import java.util.Set;
  * Date: 30-Jan-2007<br><br>
  */
 public class OWLDataPropertyAssertionAxiomFrameSection
-        extends AbstractInferOWLFrameSection<OWLIndividual, OWLDataPropertyAssertionAxiom, OWLDataPropertyConstantPair> {
+        extends AbstractInferFrameSection<OWLIndividual, OWLDataPropertyAssertionAxiom, OWLDataPropertyConstantPair> {
 
     public static final String LABEL = "Data property assertions";
 
@@ -52,7 +52,7 @@ public class OWLDataPropertyAssertionAxiomFrameSection
 
     @Override
     protected void infer() {
-        if (!getOWLModelManager().getReasoner().isConsistent()) {
+        if (!isConsistent()) {
             return;
         }
         OWLIndividual root = getRootObject();

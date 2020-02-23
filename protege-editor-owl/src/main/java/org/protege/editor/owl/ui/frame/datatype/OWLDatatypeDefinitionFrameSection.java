@@ -42,10 +42,6 @@ public class OWLDatatypeDefinitionFrameSection extends AbstractOWLFrameSection<O
     }
 
     @Override
-    protected void clear() {
-    }
-
-    @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
         return change.isAxiomChange() && change.getAxiom() instanceof OWLDatatypeDefinitionAxiom
                 && ((OWLDatatypeDefinitionAxiom) change.getAxiom()).getDatatype().equals(getRootObject());

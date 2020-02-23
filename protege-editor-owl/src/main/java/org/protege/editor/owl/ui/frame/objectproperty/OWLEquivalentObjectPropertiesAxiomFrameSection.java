@@ -4,16 +4,15 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectPropertyExpressionEditor;
-import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.util.CollectionFactory;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -22,76 +21,68 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 29-Jan-2007<br><br>
  */
-public class OWLEquivalentObjectPropertiesAxiomFrameSection extends AbstractOWLFrameSection<OWLObjectProperty, OWLEquivalentObjectPropertiesAxiom, OWLObjectPropertyExpression> {
+public class OWLEquivalentObjectPropertiesAxiomFrameSection
+        extends AbstractInferFrameSection<OWLObjectProperty, OWLEquivalentObjectPropertiesAxiom, OWLObjectPropertyExpression> {
 
     public static final String LABEL = "Equivalent To";
+    private final Set<OWLEquivalentObjectPropertiesAxiom> added = new HashSet<>();
 
-    private Set<OWLEquivalentObjectPropertiesAxiom> added = new HashSet<>();
-
-
-    public OWLEquivalentObjectPropertiesAxiomFrameSection(OWLEditorKit editorKit,
-                                                          OWLFrame<? extends OWLObjectProperty> frame) {
+    public OWLEquivalentObjectPropertiesAxiomFrameSection(OWLEditorKit editorKit, OWLFrame<? extends OWLObjectProperty> frame) {
         super(editorKit, LABEL, "Equivalent object property", frame);
     }
 
-
+    @Override
     protected void clear() {
+        added.clear();
     }
 
-
-    /**
-     * Refills the section with rows.  This method will be called
-     * by the system and should be directly called.
-     */
+    @Override
     protected void refill(OWLOntology ontology) {
         added.clear();
-        for (OWLEquivalentObjectPropertiesAxiom ax : ontology.getEquivalentObjectPropertiesAxioms(getRootObject())) {
-            addRow(new OWLEquivalentObjectPropertiesAxiomFrameSectionRow(getOWLEditorKit(),
-                                                                         this,
-                                                                         ontology,
-                                                                         getRootObject(),
-                                                                         ax));
+        OWLObjectProperty root = getRootObject();
+        ontology.equivalentObjectPropertiesAxioms(root).forEach(ax -> {
+            addRow(new OWLEquivalentObjectPropertiesAxiomFrameSectionRow(getOWLEditorKit(), this, ontology, root, ax));
             added.add(ax);
+        });
+    }
+
+    @Override
+    protected void infer() {
+        if (!isConsistent()) {
+            return;
         }
+        OWLObjectProperty root = getRootObject();
+        Node<OWLObjectPropertyExpression> node = getReasoner().getEquivalentObjectProperties(root);
+        if (node.getEntitiesMinus(root).isEmpty()) {
+            return;
+        }
+        OWLEquivalentObjectPropertiesAxiom ax = getOWLDataFactory()
+                .getOWLEquivalentObjectPropertiesAxiom(node.entities().collect(Collectors.toSet()));
+        if (added.contains(ax)) {
+            return;
+        }
+        addInferredRowIfNontrivial(new OWLEquivalentObjectPropertiesAxiomFrameSectionRow(getOWLEditorKit(), this, null, root, ax));
     }
 
-    protected void refillInferred() {
-        getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERRED_EQUIVALENT_OBJECT_PROPERTIES,
-                () -> {
-                    if (!getOWLModelManager().getReasoner().isConsistent()) {
-                        return;
-                    }
-                    Node<OWLObjectPropertyExpression> equivalentObjectProperties = getReasoner().getEquivalentObjectProperties(getRootObject());
-                    if (!equivalentObjectProperties.getEntitiesMinus(getRootObject()).isEmpty()) {
-                        OWLEquivalentObjectPropertiesAxiom ax = getOWLDataFactory().getOWLEquivalentObjectPropertiesAxiom(equivalentObjectProperties.getEntities());
-                        if (!added.contains(ax)) {
-                            addInferredRowIfNontrivial(new OWLEquivalentObjectPropertiesAxiomFrameSectionRow(getOWLEditorKit(),
-                                                                                         OWLEquivalentObjectPropertiesAxiomFrameSection.this,
-                                                                                         null,
-                                                                                         getRootObject(),
-                                                                                         ax));
-                        }
-                    }
-                });
-
+    @Override
+    protected OptionalInferenceTask getOptionalInferenceTask() {
+        return OptionalInferenceTask.SHOW_INFERRED_EQUIVALENT_OBJECT_PROPERTIES;
     }
 
-
+    @Override
     protected OWLEquivalentObjectPropertiesAxiom createAxiom(OWLObjectPropertyExpression object) {
-        return getOWLDataFactory().getOWLEquivalentObjectPropertiesAxiom(CollectionFactory.createSet(getRootObject(),
-                                                                                                     object));
+        return getOWLDataFactory().getOWLEquivalentObjectPropertiesAxiom(CollectionFactory.createSet(getRootObject(), object));
     }
 
-
-
+    @Override
     public OWLObjectEditor<OWLObjectPropertyExpression> getObjectEditor() {
         return new OWLObjectPropertyExpressionEditor(getOWLEditorKit());
     }
-    
+
     @Override
     public boolean checkEditorResults(OWLObjectEditor<OWLObjectPropertyExpression> editor) {
-    	Set<OWLObjectPropertyExpression> equivalents = editor.getEditedObjects();
-    	return equivalents.size() != 1 || !equivalents.contains(getRootObject());
+        Set<OWLObjectPropertyExpression> equivalents = editor.getEditedObjects();
+        return equivalents.size() != 1 || !equivalents.contains(getRootObject());
     }
     
     @Override
@@ -100,23 +91,11 @@ public class OWLEquivalentObjectPropertiesAxiomFrameSection extends AbstractOWLF
     	editedObjects.remove(getRootObject());
     	super.handleEditingFinished(editedObjects);
     }
-
     
     @Override
     protected boolean isResettingChange(OWLOntologyChange change) {
-    	return change.isAxiomChange() &&
-    			change.getAxiom() instanceof OWLEquivalentObjectPropertiesAxiom &&
-    			((OWLEquivalentObjectPropertiesAxiom) change.getAxiom()).getProperties().contains(getRootObject());
+        return change.isAxiomChange() && change.getAxiom() instanceof OWLEquivalentObjectPropertiesAxiom
+                && hasRoot(((OWLEquivalentObjectPropertiesAxiom) change.getAxiom()).properties());
     }
 
-
-    /**
-     * Obtains a comparator which can be used to sort the rows
-     * in this section.
-     * @return A comparator if to sort the rows in this section,
-     *         or <code>null</code> if the rows shouldn't be sorted.
-     */
-    public Comparator<OWLFrameSectionRow<OWLObjectProperty, OWLEquivalentObjectPropertiesAxiom, OWLObjectPropertyExpression>> getRowComparator() {
-        return null;
-    }
 }

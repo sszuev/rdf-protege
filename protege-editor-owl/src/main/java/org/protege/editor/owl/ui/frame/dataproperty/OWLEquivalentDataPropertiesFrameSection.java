@@ -4,18 +4,17 @@ import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLDataPropertyEditor;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.protege.editor.owl.ui.frame.AbstractOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.util.CollectionFactory;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -24,28 +23,27 @@ import java.util.Set;
  * Bio-Health Informatics Group<br>
  * Date: 16-Feb-2007<br><br>
  */
-public class OWLEquivalentDataPropertiesFrameSection extends AbstractOWLFrameSection<OWLDataProperty, OWLEquivalentDataPropertiesAxiom, OWLDataProperty> {
+public class OWLEquivalentDataPropertiesFrameSection
+        extends AbstractInferFrameSection<OWLDataProperty, OWLEquivalentDataPropertiesAxiom, OWLDataProperty> {
 
     public static final String LABEL = "Equivalent To";
+    private final Set<OWLEquivalentDataPropertiesAxiom> added = new HashSet<>();
 
-    private Set<OWLEquivalentDataPropertiesAxiom> added = new HashSet<>();
-
-
+    @Override
     protected void clear() {
+        added.clear();
     }
-
 
     public OWLEquivalentDataPropertiesFrameSection(OWLEditorKit editorKit, OWLFrame<? extends OWLDataProperty> frame) {
         super(editorKit, LABEL, "Equivalent property", frame);
     }
 
-
+    @Override
     protected OWLEquivalentDataPropertiesAxiom createAxiom(OWLDataProperty object) {
-        return getOWLDataFactory().getOWLEquivalentDataPropertiesAxiom(CollectionFactory.createSet(getRootObject(),
-                                                                                                   object));
+        return getOWLDataFactory().getOWLEquivalentDataPropertiesAxiom(CollectionFactory.createSet(getRootObject(), object));
     }
 
-
+    @Override
     public OWLObjectEditor<OWLDataProperty> getObjectEditor() {
         return new OWLDataPropertyEditor(getOWLEditorKit());
     }
@@ -63,50 +61,41 @@ public class OWLEquivalentDataPropertiesFrameSection extends AbstractOWLFrameSec
     	super.handleEditingFinished(editedObjects);
     }
 
-
+    @Override
     protected void refill(OWLOntology ontology) {
         added.clear();
-        for (OWLEquivalentDataPropertiesAxiom ax : ontology.getEquivalentDataPropertiesAxioms(getRootObject())) {
-            addRow(new OWLEquivalentDataPropertiesFrameSectionRow(getOWLEditorKit(),
-                                                                  this,
-                                                                  ontology,
-                                                                  getRootObject(),
-                                                                  ax));
+        OWLDataProperty root = getRootObject();
+        ontology.equivalentDataPropertiesAxioms(root).forEach(ax -> {
+            addRow(new OWLEquivalentDataPropertiesFrameSectionRow(getOWLEditorKit(), this, ontology, root, ax));
             added.add(ax);
-        }
-    }
-
-
-    protected void refillInferred() {
-        getOWLModelManager().getReasonerPreferences().executeTask(OptionalInferenceTask.SHOW_INFERRED_EQUIVALENT_DATATYPE_PROPERTIES, () -> {
-            if (!getOWLModelManager().getReasoner().isConsistent()) {
-                return;
-            }
-            Set<OWLDataProperty> equivs = new HashSet<>(getReasoner().getEquivalentDataProperties(getRootObject()).getEntities());
-            equivs.remove(getRootObject());
-            if (!equivs.isEmpty()){
-                OWLEquivalentDataPropertiesAxiom ax = getOWLDataFactory().getOWLEquivalentDataPropertiesAxiom(equivs);
-                if (!added.contains(ax)) {
-                    addRow(new OWLEquivalentDataPropertiesFrameSectionRow(getOWLEditorKit(),
-                                                                          OWLEquivalentDataPropertiesFrameSection.this,
-                                                                          null,
-                                                                          getRootObject(),
-                                                                          ax));
-                }
-            }
         });
     }
 
     @Override
-    protected boolean isResettingChange(OWLOntologyChange change) {
-    	return change.isAxiomChange() &&
-    			change.getAxiom() instanceof OWLEquivalentDataPropertiesAxiom &&
-    			((OWLEquivalentDataPropertiesAxiom) change.getAxiom()).getProperties().contains(getRootObject());
+    protected void infer() {
+        if (!isConsistent()) {
+            return;
+        }
+        OWLDataProperty root = getRootObject();
+        Set<OWLDataProperty> res = getReasoner().getEquivalentDataProperties(root).entities().collect(Collectors.toSet());
+        res.remove(root);
+        if (res.isEmpty()) {
+            return;
+        }
+        OWLEquivalentDataPropertiesAxiom ax = getOWLDataFactory().getOWLEquivalentDataPropertiesAxiom(res);
+        if (!added.contains(ax)) {
+            addRow(new OWLEquivalentDataPropertiesFrameSectionRow(getOWLEditorKit(), this, null, root, ax));
+        }
     }
 
+    @Override
+    protected OptionalInferenceTask getOptionalInferenceTask() {
+        return OptionalInferenceTask.SHOW_INFERRED_EQUIVALENT_DATATYPE_PROPERTIES;
+    }
 
-
-    public Comparator<OWLFrameSectionRow<OWLDataProperty, OWLEquivalentDataPropertiesAxiom, OWLDataProperty>> getRowComparator() {
-        return null;
+    @Override
+    protected boolean isResettingChange(OWLOntologyChange change) {
+        return change.isAxiomChange() && change.getAxiom() instanceof OWLEquivalentDataPropertiesAxiom
+                && hasRoot(((OWLEquivalentDataPropertiesAxiom) change.getAxiom()).properties());
     }
 }

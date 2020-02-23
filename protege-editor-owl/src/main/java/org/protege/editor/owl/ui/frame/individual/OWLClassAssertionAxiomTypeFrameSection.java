@@ -3,7 +3,7 @@ package org.protege.editor.owl.ui.frame.individual;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.inference.ReasonerPreferences.OptionalInferenceTask;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.protege.editor.owl.ui.frame.AbstractInferOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
 import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
@@ -18,7 +18,7 @@ import java.util.*;
  * Date: 29-Jan-2007<br><br>
  */
 public class OWLClassAssertionAxiomTypeFrameSection
-        extends AbstractInferOWLFrameSection<OWLIndividual, OWLClassAssertionAxiom, OWLClassExpression> {
+        extends AbstractInferFrameSection<OWLIndividual, OWLClassAssertionAxiom, OWLClassExpression> {
 
     public static final String LABEL = "Types";
 
@@ -54,7 +54,7 @@ public class OWLClassAssertionAxiomTypeFrameSection
 
     @Override
     protected void infer() {
-        if (!getOWLModelManager().getReasoner().isConsistent()) {
+        if (!isConsistent()) {
             return;
         }
         if (getRootObject().isAnonymous()) {

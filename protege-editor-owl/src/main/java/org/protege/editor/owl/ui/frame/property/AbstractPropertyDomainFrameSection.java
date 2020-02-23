@@ -2,14 +2,16 @@ package org.protege.editor.owl.ui.frame.property;
 
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.ui.editor.OWLObjectEditor;
-import org.protege.editor.owl.ui.frame.AbstractInferOWLFrameSection;
+import org.protege.editor.owl.ui.frame.AbstractInferFrameSection;
 import org.protege.editor.owl.ui.frame.OWLFrame;
-import org.protege.editor.owl.ui.frame.OWLFrameSectionRow;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /*
@@ -27,7 +29,7 @@ import java.util.stream.Stream;
  * Date: Oct 16, 2008<br><br>
  */
 public abstract class AbstractPropertyDomainFrameSection<P extends OWLProperty, A extends OWLPropertyDomainAxiom<?>>
-        extends AbstractInferOWLFrameSection<P, A, OWLClassExpression> {
+        extends AbstractInferFrameSection<P, A, OWLClassExpression> {
 
     public static final String LABEL = "Domains (intersection)";
 
@@ -39,7 +41,7 @@ public abstract class AbstractPropertyDomainFrameSection<P extends OWLProperty, 
 
     @Override
     public OWLObjectEditor<OWLClassExpression> getObjectEditor() {
-        return getOWLEditorKit().getWorkspace().getOWLComponentFactory().getOWLClassDescriptionEditor(null, getAxiomType());
+        return getOWLComponentFactory().getOWLClassDescriptionEditor(null, getAxiomType());
     }
 
     protected AxiomType<?> getAxiomType() {
@@ -102,10 +104,5 @@ public abstract class AbstractPropertyDomainFrameSection<P extends OWLProperty, 
                 added.add(domain);
             }
         }
-    }
-
-    @Override
-    public Comparator<OWLFrameSectionRow<P, A, OWLClassExpression>> getRowComparator() {
-        return null;
     }
 }

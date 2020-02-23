@@ -65,7 +65,7 @@ public class OWLObjectPropertyDomainFrameSection
 
     @Override
     protected void infer() {
-        if (!getOWLModelManager().getReasoner().isConsistent()) {
+        if (!isConsistent()) {
             return;
         }
         super.infer();

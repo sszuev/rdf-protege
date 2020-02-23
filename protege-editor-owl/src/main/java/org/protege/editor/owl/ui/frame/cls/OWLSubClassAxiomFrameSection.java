@@ -56,7 +56,7 @@ public class OWLSubClassAxiomFrameSection extends AbstractOWLClassAxiomFrameSect
 
     @Override
     protected void refillInferred() {
-        OWLReasoner reasoner = getOWLModelManager().getReasoner();
+        OWLReasoner reasoner = getReasoner();
         if (!reasoner.isConsistent()) {
             return;
         }

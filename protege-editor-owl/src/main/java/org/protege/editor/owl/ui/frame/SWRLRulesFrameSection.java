@@ -8,8 +8,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.SWRLRule;
 
-import java.util.Comparator;
-
 
 /**
  * Author: Matthew Horridge<br>
@@ -42,15 +40,6 @@ public class SWRLRulesFrameSection extends AbstractOWLFrameSection<OWLOntology, 
     protected void refill(OWLOntology ontology) {
         ontology.axioms(AxiomType.SWRL_RULE)
                 .forEach(r -> addRow(new SWRLRuleFrameSectionRow(getOWLEditorKit(), this, ontology, ontology, r)));
-    }
-
-    @Override
-    protected void clear() {
-    }
-
-    @Override
-    public Comparator<OWLFrameSectionRow<OWLOntology, SWRLRule, SWRLRule>> getRowComparator() {
-        return null;
     }
 
     @Override
