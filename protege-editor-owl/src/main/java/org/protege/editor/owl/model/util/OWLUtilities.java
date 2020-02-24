@@ -20,12 +20,32 @@ public class OWLUtilities {
     }
 
 	private static boolean isDeprecated(OWLEntity o, Collection<OWLOntology> ontologies) {
-		return ontologies.stream().flatMap(x -> x.annotationAssertionAxioms(o.getIRI()))
+		return ontologies.stream()
+				.filter(OWLUtilities::process) // for speedup - a temporary solution (todo: need to fix ONT=API)
+				.flatMap(x -> x.annotationAssertionAxioms(o.getIRI()))
 				.filter(a -> a.getProperty().isDeprecated())
 				.map(OWLAnnotationAssertionAxiom::getValue)
 				.filter(v -> v instanceof OWLLiteral)
 				.map(v -> (OWLLiteral) v)
 				.filter(OWLLiteral::isBoolean)
 				.anyMatch(OWLLiteral::parseBoolean);
+	}
+
+	private static boolean process(OWLOntology o) {
+		Boolean res = hasDeprecated(o);
+		return res == null || res;
+	}
+
+	private static boolean hasDeprecated(com.github.owlcs.ontapi.Ontology ont) {
+		return ont.asGraphModel().getBaseGraph()
+				.contains(org.apache.jena.graph.Node.ANY,
+						com.github.owlcs.ontapi.jena.vocabulary.OWL.deprecated.asNode(), org.apache.jena.graph.Node.ANY);
+	}
+
+	private static Boolean hasDeprecated(OWLOntology ont) {
+		if (!(ont instanceof com.github.owlcs.ontapi.Ontology)) {
+			return null;
+		}
+		return hasDeprecated((com.github.owlcs.ontapi.Ontology) ont);
 	}
 }
