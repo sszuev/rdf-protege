@@ -14,9 +14,9 @@ import org.protege.editor.owl.ui.tree.OWLTreePreferences;
 import org.protege.editor.owl.ui.tree.ObjectTree;
 import org.protege.editor.owl.ui.tree.ObjectTreeNode;
 
+import javax.swing.*;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -29,7 +29,7 @@ import java.util.Map;
 
 /**
  * Represents a {@link javax.swing.JTree}-component for rendering {@link Triple}s-tree.
- * TODO: currently it is not fully ready: it is read-only and ugly.
+ * TODO: currently it is not fu`lly ready: it is read-only and ugly.
  * <p>
  * Created by @ssz on 23.11.2019.
  *
@@ -37,10 +37,6 @@ import java.util.Map;
  */
 @SuppressWarnings("WeakerAccess")
 public class RDFTripleTree extends ObjectTree<Triple> {
-
-    //    private OWLModelManagerListener listener;
-//    private OWLEntityRendererListener rendererListener;
-//    public OWLModelManagerEntityRenderer currentRenderer = null; // only use to clean up old listeners
 
     public RDFTripleTree(OWLEditorKit kit, RDFHierarchyProvider provider) {
         super(kit, provider);
@@ -119,30 +115,11 @@ public class RDFTripleTree extends ObjectTree<Triple> {
     }
 
     private void setupListener() {
-//        listener = event -> {
-//            if (event.isType(EventType.ENTITY_RENDERER_CHANGED)) {
-//                refreshEntityRenderer();
-//            }
-//        };
-//        getOWLModelManager().addListener(listener);
-        // rendererListener = (entity, renderer) -> handleRenderingChanged(entity);
         refreshEntityRenderer();
-    }
-
-    private void handleRenderingChanged(Triple entity) {
-        for (ObjectTreeNode<Triple> node : getNodes(entity)) {
-            DefaultTreeModel model = (DefaultTreeModel) getModel();
-            model.nodeStructureChanged(node);
-        }
     }
 
     private void refreshEntityRenderer() {
         invalidate();
-//        if (currentRenderer != null){
-//            currentRenderer.removeListener(rendererListener);
-//        }
-//        currentRenderer = getOWLModelManager().getOWLEntityRenderer();
-//        currentRenderer.addListener(rendererListener);
     }
 
     private void installPopupMenu() {
@@ -159,30 +136,41 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         });
     }
 
+    @SuppressWarnings("unused")
     protected void handleMouseEvent(MouseEvent e) {
-        if (!e.isPopupTrigger()) {
+        /*if (!e.isPopupTrigger()) {
             return;
         }
         TreePath treePath = getPathForLocation(e.getX(), e.getY());
         if (treePath != null) {
             handlePopupMenuInvoked(treePath, e.getPoint());
-        }
-    }
-
-    protected void handlePopupMenuInvoked(TreePath path, Point pt) {
+        }*/
     }
 
     @Override
     public void dispose() {
         super.dispose();
-//        getOWLModelManager().removeListener(listener);
-//        getOWLModelManager().getOWLEntityRenderer().removeListener(rendererListener);
     }
 
     protected class CellRenderer extends OWLObjectTreeCellRenderer {
 
         protected CellRenderer(OWLEditorKit kit) {
             super(kit);
+        }
+
+        @Override
+        protected void setToolTipText(JTree tree, Object value) {
+            String txt;
+            if (value instanceof Triple) {
+                Triple t = (Triple) value;
+                String s = toString(t.getSubject());
+                String p = t.getPredicate().toString();
+                String o = toString(t.getObject());
+                txt = String.format("<html>%s<br/>%s<br/>%s</html>", s, p, o);
+            } else {
+                txt = value != null ? value.toString() : "";
+            }
+            tree.setToolTipText(txt);
         }
 
         @Override
@@ -278,6 +266,16 @@ public class RDFTripleTree extends ObjectTree<Triple> {
                 return "<" + uri + ">";
             }
             return res;
+        }
+
+        private String toString(Node n) {
+            if (n.isURI()) {
+                return n.getURI();
+            }
+            if (n.isBlank()) {
+                return toString(n.getBlankNodeId());
+            }
+            return n.toString();
         }
 
         private String toString(BlankNodeId id) {

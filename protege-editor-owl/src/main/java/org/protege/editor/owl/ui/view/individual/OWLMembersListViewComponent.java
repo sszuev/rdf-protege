@@ -9,7 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Only shows the members of the currently selected class
@@ -31,7 +31,7 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
 
     private final JLabel typeLabel = new JLabel();
 
-    private final OWLSelectionModelListener l = () -> {
+    private final OWLSelectionModelListener listener = () -> {
         if (getOWLWorkspace().getOWLSelectionModel().getSelectedObject() instanceof OWLClass) {
             refill();
         }
@@ -40,7 +40,7 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
     @Override
     public void initialiseIndividualsView() throws Exception {
         super.initialiseIndividualsView();
-        getOWLWorkspace().getOWLSelectionModel().addListener(l);
+        getOWLWorkspace().getOWLSelectionModel().addListener(listener);
         JComponent typePanel = new Box(BoxLayout.X_AXIS);
         typePanel.add(new JLabel("For: "));
         typePanel.add(typeLabel);
@@ -50,34 +50,31 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
 
     @Override
     protected void refill() {
-        individualsInList.clear();
-        OWLClass cls = getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass();
-        if (cls != null) {
-            typeLabel.setText(getOWLModelManager().getRendering(cls));
-            typeLabel.setIcon(getOWLWorkspace().getOWLIconProvider().getIcon(cls));
-            Collection<OWLIndividual> individuals = EntitySearcher.getIndividuals(cls, getOntologies().stream()).collect(Collectors.toList());
-            for (OWLIndividual ind : individuals) {
-                if (!ind.isAnonymous()) {
-                    individualsInList.add(ind.asOWLNamedIndividual());
-                }
-            }
-            if (cls.equals(getOWLModelManager().getOWLDataFactory().getOWLThing())) {
-                individualsInList.addAll(getUntypedIndividuals());
+        Set<OWLNamedIndividual> individuals = new HashSet<>();
+        OWLClass clazz = getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass();
+        if (clazz != null) {
+            typeLabel.setText(getRendering(clazz));
+            typeLabel.setIcon(getOWLWorkspace().getOWLIconProvider().getIcon(clazz));
+            EntitySearcher.getIndividuals(clazz, getOntologies().stream())
+                    .filter(i -> !i.isAnonymous())
+                    .forEach(i -> individuals.add(i.asOWLNamedIndividual()));
+            if (clazz.isOWLThing()) {
+                untypedIndividuals().forEach(individuals::add);
             }
         } else {
             typeLabel.setIcon(null);
             typeLabel.setText("Nothing selected");
-            individualsInList.addAll(getUntypedIndividuals());
+            untypedIndividuals().forEach(individuals::add);
         }
+        this.individualsInList = individuals;
         reset();
     }
 
     //TODO: do we want to cache this?
-    protected Set<OWLNamedIndividual> getUntypedIndividuals() {
+    protected Stream<OWLNamedIndividual> untypedIndividuals() {
         OWLOntology ont = getOWLModelManager().getActiveOntology();
         return ont.individualsInSignature(Imports.INCLUDED)
-                .filter(i -> !EntitySearcher.getTypes(i, ont.importsClosure()).findFirst().isPresent())
-                .collect(Collectors.toSet());
+                .filter(i -> !EntitySearcher.getTypes(i, ont.importsClosure()).findFirst().isPresent());
     }
 
     @Override
@@ -98,7 +95,7 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
 
     @Override
     public void disposeView() {
-        getOWLWorkspace().getOWLSelectionModel().removeListener(l);
+        getOWLWorkspace().getOWLSelectionModel().removeListener(listener);
         super.disposeView();
     }
 }

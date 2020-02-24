@@ -11,15 +11,15 @@ public class OWLUtilities {
 	private OWLUtilities() {
 	}
 	
-    public static boolean isDeprecated(OWLModelManager p4Manager, OWLObject o) {
+    public static boolean isDeprecated(OWLModelManager manager, OWLObject o) {
     	if (!(o instanceof OWLEntity)) {
     		return false;
     	}
-		Set<OWLOntology> activeOntologies = p4Manager.getActiveOntologies();
+		Set<OWLOntology> activeOntologies = manager.getActiveOntologies();
 		return isDeprecated((OWLEntity) o, activeOntologies);
     }
 
-	public static boolean isDeprecated(OWLEntity o, Collection<OWLOntology> ontologies) {
+	private static boolean isDeprecated(OWLEntity o, Collection<OWLOntology> ontologies) {
 		return ontologies.stream().flatMap(x -> x.annotationAssertionAxioms(o.getIRI()))
 				.filter(a -> a.getProperty().isDeprecated())
 				.map(OWLAnnotationAssertionAxiom::getValue)

@@ -111,4 +111,14 @@ public abstract class AbstractOWLViewComponent extends ViewComponent {
 
     protected void handlePaste(List<OWLObject> objects) {
     }
+
+    /**
+     * Returns a string representation of the given object.
+     * The purpose - turn off calling this method if needed.
+     * @param object - value ({@link OWLObject} or {@code org.apache.jena.graph.Triple})
+     * @return {@code String}
+     */
+    protected String getRendering(Object object) {
+        return getOWLModelManager().getRendering(object);
+    }
 }

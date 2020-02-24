@@ -188,7 +188,7 @@ public abstract class AbstractOWLSelectionViewComponent extends AbstractOWLViewC
         // is displaying
         if (object != null) {
             updateRegisteredActions();
-            getView().setHeaderText(getOWLModelManager().getRendering(object));
+            getView().setHeaderText(getRendering(object));
         } else {
             // Not displaying an entity, so disable all actions
             disableRegisteredActions();

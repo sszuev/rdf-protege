@@ -336,8 +336,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
                 .setNsPrefixes(RDFHierarchyProvider.STANDARD_PREFIXES)
                 .setNsPrefixes(model);
         Function<Object, String> map = getOWLModelManager().getBlankNodeMapper();
-        return new ObjectHierarchyDeleter<Triple>(getOWLEditorKit(),
-                provider, () -> tree.getSelectedObjects(), "Triples") {
+        return new ObjectHierarchyDeleter<Triple>(getOWLEditorKit(), provider, () -> tree.getSelectedObjects(), "Triples") {
             @Override
             protected String getRendering(Triple st) {
                 String res = String.format("[%s, %s, %s]",
@@ -416,11 +415,11 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
             View view = getView();
             if (view != null && !view.isPinned()) {
                 view.setPinned(true); // so that we don't follow the selection
-                // todo:
+                // todo: ?
                 //setGlobalSelection(selEntity);
                 view.setPinned(false);
             }
-            // todo:
+            // todo: ?
             /*else {
                 setGlobalSelection(selEntity);
             }*/
@@ -430,17 +429,10 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         updateHeader(triple);
     }
 
-    protected Triple updateView(Triple selEntity) {
-        if (getTree().getSelectedObject() == null) {
-            if (selEntity != null) {
-                getTree().setSelectedObject(selEntity);
-            }
-        } else {
-            if (!getTree().getSelectedObject().equals(selEntity)) {
-                getTree().setSelectedObject(selEntity);
-            }
-        }
-        return selEntity;
+    @Override
+    protected String getRendering(Object object) {
+        // disable header triple toString (do not see any sense + it can be a very long string):
+        return "";
     }
 
     @Override

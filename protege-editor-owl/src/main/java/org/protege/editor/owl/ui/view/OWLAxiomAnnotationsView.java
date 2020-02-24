@@ -10,11 +10,6 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
-/*
-* Copyright (C) 2007, University of Manchester
-*
-*
-*/
 
 /**
  * Author: drummond<br>
@@ -26,17 +21,19 @@ import java.awt.event.HierarchyListener;
  */
 public class OWLAxiomAnnotationsView extends AbstractOWLViewComponent {
 
-    private OWLSelectionModelListener selListener = new OWLSelectionModelAdapter(){
-        public void selectionChanged() throws Exception {
-            final OWLSelectionModel selModel = getOWLWorkspace().getOWLSelectionModel();
-            if (selModel.getLastSelectedAxiomInstance() == null || 
-                !selModel.getLastSelectedAxiomInstance().equals(axiomAnnotationPanel.getAxiom())){
+    private final OWLSelectionModelListener selListener = new OWLSelectionModelAdapter(){
+        @Override
+        public void selectionChanged() {
+            OWLSelectionModel m = getOWLWorkspace().getOWLSelectionModel();
+            if (m.getLastSelectedAxiomInstance() == null ||
+                !m.getLastSelectedAxiomInstance().equals(axiomAnnotationPanel.getAxiom())){
                 updateViewContentAndHeader();
             }
         }
     };
 
-    private HierarchyListener hierarchyListener = new HierarchyListener() {
+    private final HierarchyListener hierarchyListener = new HierarchyListener() {
+        @Override
         public void hierarchyChanged(HierarchyEvent e) {
             if (needsRefresh && isShowing()) {
                 updateViewContentAndHeader();
@@ -45,15 +42,11 @@ public class OWLAxiomAnnotationsView extends AbstractOWLViewComponent {
     };
 
     private boolean needsRefresh = true;
-
     private boolean initialUpdatePerformed = false;
-
-    private OWLAxiom lastDisplayedObject;
-
     private AxiomAnnotationPanel axiomAnnotationPanel;
 
-
-    protected void initialiseOWLView() throws Exception {
+    @Override
+    protected void initialiseOWLView() {
         setLayout(new BorderLayout(6, 6));
 
         axiomAnnotationPanel = new AxiomAnnotationPanel(getOWLEditorKit());
@@ -62,7 +55,6 @@ public class OWLAxiomAnnotationsView extends AbstractOWLViewComponent {
         getOWLWorkspace().getOWLSelectionModel().addListener(selListener);
         addHierarchyListener(hierarchyListener);
     }
-
     
     protected void updateViewContentAndHeader() {
         if (!isShowing()) {
@@ -75,23 +67,21 @@ public class OWLAxiomAnnotationsView extends AbstractOWLViewComponent {
         }
         initialUpdatePerformed = true;
         if (isSynchronizing()){
-            lastDisplayedObject = updateView();
+            OWLAxiom lastDisplayedObject = updateView();
             updateHeader(lastDisplayedObject);
         }
     }
 
-
     private void updateHeader(OWLAxiom axiom) {
         String title = "";
         if (axiom != null){
-            title = getOWLModelManager().getRendering(axiom).replace('\n', ' ');
+            title = getRendering(axiom).replace('\n', ' ');
             if (title.length() > 53){
                 title = title.substring(0, 50) + "...";
             }
         }
         getView().setHeaderText(title);
     }
-
 
     private OWLAxiom updateView() {
         OWLAxiomInstance axiomInstance = getOWLWorkspace().getOWLSelectionModel().getLastSelectedAxiomInstance();
@@ -101,7 +91,7 @@ public class OWLAxiomAnnotationsView extends AbstractOWLViewComponent {
         return axiomInstance != null ? axiomInstance.getAxiom() : null;
     }
 
-
+    @Override
     protected void disposeOWLView() {
         getOWLWorkspace().getOWLSelectionModel().removeListener(selListener);
         removeHierarchyListener(hierarchyListener);
