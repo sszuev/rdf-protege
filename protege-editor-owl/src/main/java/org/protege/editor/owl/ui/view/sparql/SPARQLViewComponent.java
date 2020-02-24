@@ -98,9 +98,7 @@ public class SPARQLViewComponent extends AbstractOWLViewComponent {
                     getOWLModelManager().fireEvent(EventType.ONTOLOGY_RELOADED);
                 }
             } catch (SPARQLEngine.Error ex) {
-                ErrorLogPanel.showErrorDialog(ex);
-                JOptionPane.showMessageDialog(getOWLWorkspace(),
-                        ex.getMessage() + "\nSee the logs for more information.");
+                ErrorLogPanel.showWarnDialog(ex);
             }
         });
         panel.add(executeQuery);
