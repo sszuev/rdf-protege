@@ -2,12 +2,14 @@ package org.protege.editor.owl.ui.view.rdf;
 
 import com.github.owlcs.ontapi.OWLAdapter;
 import com.github.owlcs.ontapi.jena.model.OntModel;
+import org.apache.jena.graph.BlankNodeId;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.protege.editor.core.ui.menu.PopupMenuId;
 import org.protege.editor.core.ui.view.DisposableAction;
 import org.protege.editor.core.ui.view.View;
@@ -230,7 +232,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
     @Override
     public void createNewObject() {
         OntModel ont = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
-        AddTriplePanel panel = new AddTriplePanel(createAddTripleModel(ont));
+        AddTriplePanel panel = new AddTriplePanel(createAddTripleModel(ont, null));
         createTriple("Create Root Triple", panel, ont.getGraph());
     }
 
@@ -240,7 +242,6 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         if (parent == null)
             return;
         OntModel ont = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
-        AddTripleModel model = createAddTripleModel(ont);
         Node subject;
         if (parent instanceof RDFHierarchyProvider.RootTriple) {
             subject = parent.getSubject();
@@ -249,11 +250,12 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         } else {
             return;
         }
+        TripleModel model = createAddTripleModel(ont, subject);
         AddTriplePanel panel = createPanelForSubject(subject, model);
         createTriple("Create Triple", panel, ont.getGraph());
     }
 
-    protected AddTriplePanel createPanelForSubject(Node subject, AddTripleModel model) {
+    protected AddTriplePanel createPanelForSubject(Node subject, TripleModel model) {
         return new AddTriplePanel(model) {
             @Override
             protected void initSubjectConfiguration() {
@@ -301,8 +303,8 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         getOWLModelManager().fireEvent(EventType.ONTOLOGY_RELOADED);
     }
 
-    protected AddTripleModel createAddTripleModel(OntModel ont) {
-        return new AddTripleModel() {
+    protected TripleModel createAddTripleModel(OntModel ont, Node subject) {
+        return new TripleModel() {
             private final PrefixMapping pm = PrefixMapping.Factory.create()
                     .setNsPrefixes(RDFHierarchyProvider.STANDARD_PREFIXES)
                     .setNsPrefixes(ont)
@@ -326,6 +328,25 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
             @Override
             public Set<Resource> getDatatypes() {
                 return RDFHierarchyProvider.STANDARD_DATATYPES;
+            }
+
+            @Override
+            public Set<BNode> getBlankNodes() {
+                Set<BNode> res = new TreeSet<>(Comparator.comparing(BNode::getLabel));
+                Graph g = ont.getBaseGraph();
+                Function<Object, String> map = getOWLModelManager().getBlankNodeMapper();
+
+                ExtendedIterator<Node> blanks = g.find()
+                        .mapWith(Triple::getSubject)
+                        .filterKeep(x -> x.isBlank() && !g.contains(Node.ANY, Node.ANY, x));
+                if (subject != null && subject.isBlank()) {
+                    blanks = blanks.filterDrop(subject::equals);
+                }
+                blanks.mapWith(x -> {
+                    BlankNodeId id = x.getBlankNodeId();
+                    return new BNode(id, map.apply(id));
+                }).forEachRemaining(res::add);
+                return res;
             }
         };
     }

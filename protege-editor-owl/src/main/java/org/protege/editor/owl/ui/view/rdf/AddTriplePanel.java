@@ -15,8 +15,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URI;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -36,11 +35,15 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
     protected static final String BLANK_NODE_PLACEHOLDER = "<anonymous>";
     protected static final String IRI_CONTROL_OPTION = "IRI";
     protected static final String BLANK_NODE_CONTROL_OPTION = "Blank Node";
+    protected static final String FRESH_BLANK_NODE_CONTROL_OPTION = "Fresh Blank Node";
+    protected static final String MODEL_BLANK_NODE_CONTROL_OPTION = "Model Blank Node";
+    protected static final String PLAIN_LITERAL_CONTROL_OPTION = "Plain Literal";
+    protected static final String TYPED_LITERAL_CONTROL_OPTION = "Typed Literal";
+    protected static final String LANG_LITERAL_CONTROL_OPTION = "Lang Literal";
 
     protected static final Insets CELL_INSETS = new Insets(0, 0, 2, 2);
     protected static final Insets LINE_INSETS = new Insets(10, 2, 10, 2);
-    protected final JComboBox<String> objectController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, BLANK_NODE_CONTROL_OPTION,
-            "Plain Literal", "Typed Literal", "Lang Literal"});
+
     protected final JTextField subjectIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
     protected final JTextField predicateIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
     protected final JTextField objectIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
@@ -49,10 +52,12 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
     protected final JTextField objectField = new AugmentedJTextField(FIELD_WIDTH, "IRI, Blank Node or Literal");
     protected final JComboBox<String> subjectController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, BLANK_NODE_CONTROL_OPTION});
     protected final JComboBox<String> predicateController = new JComboBox<>(new String[]{IRI_CONTROL_OPTION, "Built-in IRI"});
+    protected final ObjectController objectController;
     protected final JPanel literalForm = new JPanel();
     protected final JTextComponent literalText = new JTextArea(1, FIELD_WIDTH - 18);
     protected final JComboBox<String> literalLangs;
     protected final JComboBox<String> literalDatatypes;
+    protected final JComboBox<TripleModel.BNode> objectBlanks;
     protected final JComboBox<String> predicateSystemPropertySelector;
 
     protected final PrefixMapping pm;
@@ -60,13 +65,16 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
     protected final UnaryOperator<String> toIRI;
     protected final Supplier<String> toLiteral;
 
-    public AddTriplePanel(AddTripleModel m) {
+    public AddTriplePanel(TripleModel m) {
         super();
         String base = Objects.requireNonNull(m).getBaseURI();
         this.pm = m.getPrefixMapping();
-        this.predicateSystemPropertySelector = new JComboBox<>(AddTripleModel.toArray(m.getProperties(), pm));
+        this.predicateSystemPropertySelector = new JComboBox<>(TripleModel.toArray(m.getProperties(), pm));
         this.literalLangs = new JComboBox<>(m.getLanguageTags());
-        this.literalDatatypes = new JComboBox<>(AddTripleModel.toArray(m.getDatatypes(), pm));
+        this.literalDatatypes = new JComboBox<>(TripleModel.toArray(m.getDatatypes(), pm));
+        TripleModel.BNode[] bnodes = m.getBlankNodes().toArray(new TripleModel.BNode[0]);
+        this.objectBlanks = new JComboBox<>(bnodes);
+        this.objectController = ObjectController.createObjectController(bnodes.length != 0);
         this.toIRI = x -> toIRI(base, x);
         this.toLiteral = this::getLiteralString;
 
@@ -225,6 +233,7 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         addLabelCell(res, OBJECT, 2);
         addControlCell(res, objectController, 2);
         addIRICell(res, objectIRI, 2);
+        addIRICell(res, objectBlanks, 2);
         addIRICell(res, literalForm, 2);
     }
 
@@ -272,43 +281,48 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         literalForm.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         literalForm.add(literalText, BorderLayout.WEST);
         JPanel literalDataPanel = new JPanel();
+        literalDataPanel.setLayout(new CardLayout());
         literalForm.add(literalDataPanel, BorderLayout.EAST);
         literalDataPanel.add(literalDatatypes);
         literalDataPanel.add(literalLangs);
+
         changeState(literalDatatypes, false);
         changeState(literalLangs, false);
         changeState(literalForm, false);
+        changeState(objectBlanks, false);
+
         literalLangs.setSelectedIndex(0);
         literalDatatypes.setSelectedIndex(0);
+        if (objectBlanks.getItemCount() != 0) {
+            objectBlanks.setSelectedIndex(0);
+        }
+
         Runnable onEvent = () -> setText(objectField, toLiteral.get());
         literalLangs.addActionListener(createActionListener(onEvent));
         literalDatatypes.addActionListener(createActionListener(onEvent));
         literalText.getDocument().addDocumentListener(createTextFieldListener(onEvent));
 
+        objectBlanks.addActionListener(createActionListener(() -> setText(objectField, getSelectedBlankNode().toString())));
         objectIRI.getDocument().addDocumentListener(createIRITextAreaListener(objectIRI, objectField));
 
         objectController.setSelectedIndex(0);
         objectController.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int index = objectController.getSelectedIndex();
-                boolean isIRI = index == 0;
-                boolean isBlank = index == 1;
-                boolean isLiteral = index > 1;
-                boolean isLang = index == 4;
-                boolean isTyped = index == 3;
-
-                changeState(objectIRI, isIRI);
-                changeState(literalForm, isLiteral);
-                changeState(literalDatatypes, isTyped);
-                changeState(literalLangs, isLang);
+                changeState(objectIRI, objectController.isIRI());
+                changeState(objectBlanks, objectController.isModelBlank());
+                changeState(literalForm, objectController.isLiteral());
+                changeState(literalDatatypes, objectController.isTypedLiteral());
+                changeState(literalLangs, objectController.isLangLiteral());
 
                 // return back text
                 String txt;
-                if (isLiteral) {
+                if (objectController.isLiteral()) {
                     txt = toLiteral.get();
-                } else if (isBlank) {
+                } else if (objectController.isFreshBlank()) {
                     txt = BLANK_NODE_PLACEHOLDER;
+                } else if (objectController.isModelBlank()) {
+                    txt = getSelectedBlankNode().toString();
                 } else {
                     txt = toIRI.apply(objectIRI.getText());
                 }
@@ -363,6 +377,10 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         testValid();
     }
 
+    private TripleModel.BNode getSelectedBlankNode() {
+        return (TripleModel.BNode) Objects.requireNonNull(objectBlanks.getSelectedItem());
+    }
+
     @Override
     protected boolean isOK() {
         return hasText(subjectField) && hasText(predicateField) && hasText(objectField);
@@ -392,26 +410,23 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         if (isEmpty(txt)) {
             throw new IllegalStateException();
         }
-
-        int index = objectController.getSelectedIndex();
-        boolean isBlank = index == 1;
-        boolean isLiteral = index > 1;
-        boolean isLang = index == 4;
-        boolean isTyped = index == 3;
-        if (isLiteral) {
+        if (objectController.isLiteral()) {
             txt = literalText.getText();
-            if (isLang) {
+            if (objectController.isLangLiteral()) {
                 String lang = (String) literalLangs.getSelectedItem();
                 return NodeFactory.createLiteral(txt, lang);
             }
-            if (isTyped) {
+            if (objectController.isTypedLiteral()) {
                 String dt = (String) literalDatatypes.getSelectedItem();
                 return NodeFactory.createLiteral(txt, types.getSafeTypeByName(pm.expandPrefix(dt)));
             }
             return NodeFactory.createLiteral(txt);
         }
-        if (isBlank) {
+        if (objectController.isFreshBlank()) {
             return NodeFactory.createBlankNode();
+        }
+        if (objectController.isModelBlank()) {
+            return NodeFactory.createBlankNode(getSelectedBlankNode().getId());
         }
         return NodeFactory.createURI(txt);
     }
@@ -420,4 +435,54 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         return new Triple(getSubjectNode(), getPredicateNode(), getObjectNode());
     }
 
+    protected static class ObjectController extends JComboBox<String> {
+        private static final long serialVersionUID = -9198960251639503015L;
+
+        protected ObjectController(Collection<String> items) {
+            super(items.toArray(new String[0]));
+        }
+
+        public static ObjectController createObjectController(boolean withBNodes) {
+            ArrayList<String> list = new ArrayList<>(Arrays.asList(IRI_CONTROL_OPTION
+                    , FRESH_BLANK_NODE_CONTROL_OPTION
+                    , MODEL_BLANK_NODE_CONTROL_OPTION
+                    , PLAIN_LITERAL_CONTROL_OPTION
+                    , TYPED_LITERAL_CONTROL_OPTION
+                    , LANG_LITERAL_CONTROL_OPTION));
+            if (!withBNodes) {
+                list.remove(2);
+            }
+            return new ObjectController(list);
+        }
+
+        public boolean hasModelBlanks() {
+            return getItemCount() == 6;
+        }
+
+        public boolean isIRI() {
+            return getSelectedIndex() == 0;
+        }
+
+        public boolean isFreshBlank() {
+            return getSelectedIndex() == 1;
+        }
+
+        public boolean isModelBlank() {
+            return hasModelBlanks() && getSelectedIndex() == 2;
+        }
+
+        public boolean isLiteral() {
+            return getSelectedIndex() > (hasModelBlanks() ? 2 : 1);
+        }
+
+        public boolean isTypedLiteral() {
+            return getSelectedIndex() == (hasModelBlanks() ? 4 : 3);
+        }
+
+        public boolean isLangLiteral() {
+            return getSelectedIndex() == (hasModelBlanks() ? 5 : 4);
+        }
+
+
+    }
 }
