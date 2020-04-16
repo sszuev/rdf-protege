@@ -54,7 +54,6 @@ public class UsageByEntityTreeModel extends DefaultTreeModel implements UsageTre
         usageCount = 0;
 
         for (OWLOntology ont : owlModelManager.getActiveOntologies()) {
-            ont.referencingAxioms(owlEntity).forEach(this::addUsage);
             ont.referencingAxioms(owlEntity.getIRI()).forEach(this::addUsage);
             // This is terribly inefficient but there are no indexes in the OWL API to do this.
             ont.axioms(AxiomType.ANNOTATION_ASSERTION).forEach(ax -> {
