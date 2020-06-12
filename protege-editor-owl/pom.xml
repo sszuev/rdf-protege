@@ -5,7 +5,7 @@
     <parent>
         <groupId>edu.stanford.protege</groupId>
         <artifactId>protege-parent</artifactId>
-        <version>1.0.0-RDF-SNAPSHOT</version>
+        <version>1.0.1-RDF-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
