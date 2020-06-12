@@ -1,4 +1,4 @@
-# RDF Protege Desktop (v1.0.0-RDF-SNAPSHOT)
+# RDF Protege Desktop (v1.0.1-RDF-SNAPSHOT)
 
 ## This is a modified fork of [Protege Desktop](https://github.com/protegeproject/protege).
  
@@ -12,6 +12,7 @@ The approximate roadmap is as follows:
 
     * RDF view & editor
     * SPARQL tab (SELECT, ASK, DESCRIBE, CONSTRUCT, JSON + UPDATE)
+    * More input & output formats
     * Jena TDB support (not yet implemented)
     * RDB through [ONT-D2RQ](https://github.com/owlcs/ont-d2rq) (discussable) 
     * SPIN mapping through [ONT-MAP](https://github.com/owlcs/ont-map) (discussable)
@@ -51,3 +52,7 @@ $ cd .\protege-desktop\target\protege-${ver}-platform-independent\Protege-${ver}
 $ run.bat
 ```
 Notice that these ways may not work correctly in case there is no java8 in the environment PATH variable
+
+## Downloads
+ 
+Please visit [releases](https://github.com/sszuev/rdf-protege/releases) page.
