@@ -31,7 +31,7 @@ public class OWLManager {
     }
 
     public static OntologyManager createOWLOntologyManager() {
-        OntologyManager res = OntManagers.createONT();
+        OntologyManager res = OntManagers.createManager();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("OWLOntologyManager: {}", res);
         }
@@ -39,7 +39,7 @@ public class OWLManager {
     }
 
     public static OntologyManager createConcurrentOWLOntologyManager() {
-        OntologyManager res = OntManagers.createConcurrentONT();
+        OntologyManager res = OntManagers.createConcurrentManager();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("ConcurrentOWLOntologyManager: {}", res);
         }
