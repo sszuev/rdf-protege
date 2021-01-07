@@ -1674,6 +1674,15 @@
         <navigates value="@org.protege.rdfcategory"/>
         <help value="https://www.w3.org/TR/rdf11-concepts/"/>
     </extension>
+    <extension id="RDFTriple"
+               point="org.protege.editor.core.application.ViewComponent">
+        <label value="RDF Triple Description"/>
+        <class value="org.protege.editor.owl.ui.view.rdf.TripleViewComponent"/>
+        <headerColor value="@org.protege.rdfcolor"/>
+        <category value="@org.protege.rdfcategory"/>
+        <navigates value="@org.protege.rdfcategory"/>
+        <help value="https://www.w3.org/TR/rdf11-concepts/"/>
+    </extension>
 
     <extension id="SPARQLTab"
                point="org.protege.editor.core.application.WorkspaceTab">
