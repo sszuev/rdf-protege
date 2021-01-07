@@ -12,7 +12,7 @@ import org.semanticweb.owlapi.model.*;
  */
 public class FilteringOWLSelectionModelListener implements OWLSelectionModelListener, OWLEntityVisitor {
 
-    private OWLEditorKit owlEditorKit;
+    private final OWLEditorKit owlEditorKit;
 
 
     public FilteringOWLSelectionModelListener(OWLEditorKit owlEditorKit) {
@@ -21,7 +21,7 @@ public class FilteringOWLSelectionModelListener implements OWLSelectionModelList
 
 
     public void selectionChanged() {
-        OWLObject owlObject = owlEditorKit.getWorkspace().getOWLSelectionModel().getSelectedObject();
+        OWLObject owlObject = owlEditorKit.getWorkspace().getOWLSelectionModel().getSelectedOWLObject();
         if (owlObject != null && owlObject instanceof OWLEntity) {
             ((OWLEntity)owlObject).accept(this);
         }

@@ -41,8 +41,8 @@ public abstract class SelectedOWLEntityAction extends ProtegeOWLAction {
 
     private void updateState() {
         OWLSelectionModel selectionModel = getOWLWorkspace().getOWLSelectionModel();
-        setEnabled(selectionModel.getSelectedObject() instanceof OWLEntity
-                           || (selectionModel.getSelectedObject() != null && selectionModel.getSelectedEntity() != null));
+        setEnabled(selectionModel.getSelectedOWLObject() instanceof OWLEntity
+                || (selectionModel.getSelectedOWLObject() != null && selectionModel.getSelectedEntity() != null));
     }
 
 

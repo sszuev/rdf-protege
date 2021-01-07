@@ -35,13 +35,13 @@ import java.util.Set;
 /**
  * Author: drummond<br>
  * http://www.cs.man.ac.uk/~drummond/<br><br>
-
+ * <p>
  * The University Of Manchester<br>
  * Bio Health Informatics Group<br>
  * Date: Apr 23, 2009<br><br>
  */
-public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntity> extends AbstractOWLSelectionViewComponent
- implements Findable<E>, Deleteable, HasDisplayDeprecatedEntities {
+public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntity>
+        extends AbstractHierarchyViewComponent<E> implements Findable<E>, Deleteable, HasDisplayDeprecatedEntities {
 
     private ObjectTree<E> assertedTree;
 
@@ -191,11 +191,9 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     protected abstract void performExtraInitialisation() throws Exception;
 
-
     protected abstract OWLHierarchyProvider<E> getHierarchyProvider();
 
     protected abstract Optional<OWLHierarchyProvider<E>> getInferredHierarchyProvider();
-
 
     /**
      * Override with the name of the entities to be used in the Edit | Delete menu - eg "classes"
@@ -249,6 +247,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         return viewModeComponent.getComponentForViewMode(viewMode);
     }
 
+    @Override
     protected void transmitSelection() {
         deletableChangeListenerMediator.fireStateChanged(this);
 
@@ -259,12 +258,10 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
                 view.setPinned(true); // so that we don't follow the selection
                 setGlobalSelection(selEntity);
                 view.setPinned(false);
-            }
-            else{
+            } else{
                 setGlobalSelection(selEntity);
             }
-        }
-        else {
+        } else {
             setGlobalSelection(null);
         }
 
@@ -308,7 +305,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
     //
     /////////////////////////////////////////////////////////////////////////////////////
 
-    private ChangeListenerMediator deletableChangeListenerMediator = new ChangeListenerMediator();
+    private final ChangeListenerMediator deletableChangeListenerMediator = new ChangeListenerMediator();
 
     @Override
     public void addChangeListener(ChangeListener listener) {

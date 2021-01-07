@@ -21,17 +21,17 @@ import java.util.Stack;
  */
 public class OWLSelectionHistoryManagerImpl implements OWLSelectionHistoryManager {
 
-    private OWLSelectionModel selectionModel;
+    private final OWLSelectionModel selectionModel;
 
-    private OWLSelectionModelListener listener;
+    private final OWLSelectionModelListener listener;
 
-    private List<ChangeListener> changeListeners;
+    private final List<ChangeListener> changeListeners;
 
     private boolean initiatedSelection;
 
-    private Stack<OWLEntity> prevSelections;
+    private final Stack<OWLEntity> prevSelections;
 
-    private Stack<OWLEntity> forwardSelections;
+    private final Stack<OWLEntity> forwardSelections;
 
 
     private OWLEntity curSel;
@@ -50,7 +50,7 @@ public class OWLSelectionHistoryManagerImpl implements OWLSelectionHistoryManage
 
 
     private void handleSelection() {
-        OWLObject obj = selectionModel.getSelectedObject();
+        OWLObject obj = selectionModel.getSelectedOWLObject();
         if (obj instanceof OWLEntity) {
             if (!initiatedSelection) {
                 // Record selection

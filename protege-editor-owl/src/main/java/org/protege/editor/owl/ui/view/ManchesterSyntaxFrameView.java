@@ -48,6 +48,7 @@ public class ManchesterSyntaxFrameView extends AbstractOWLSelectionViewComponent
         updateView();
     }
 
+    @Override
     protected OWLObject updateView() {
         final OWLEntity owlEntity = getOWLWorkspace().getOWLSelectionModel().getSelectedEntity();
         if (owlEntity != null){
@@ -58,11 +59,8 @@ public class ManchesterSyntaxFrameView extends AbstractOWLSelectionViewComponent
                 bw.close();
                 textArea.setText(w.getBuffer().toString());
 
-                SwingUtilities.invokeLater(() -> {
-                    scroller.getViewport().setViewPosition(new Point(0, 0));
-                });
-            }
-            catch (Exception e) {
+                SwingUtilities.invokeLater(() -> scroller.getViewport().setViewPosition(new Point(0, 0)));
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
@@ -84,7 +82,7 @@ public class ManchesterSyntaxFrameView extends AbstractOWLSelectionViewComponent
 
     class OWLEntityFrameRendererAdapter implements OWLEntityVisitor {
 
-        private ManchesterOWLSyntaxFrameRenderer ren;
+        private final ManchesterOWLSyntaxFrameRenderer ren;
 
         OWLEntityFrameRendererAdapter(OWLModelManager mngr, Writer writer) {
             ren = new ManchesterOWLSyntaxFrameRenderer(mngr.getActiveOntology(),

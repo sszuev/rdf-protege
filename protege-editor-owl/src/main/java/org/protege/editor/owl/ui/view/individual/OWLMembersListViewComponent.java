@@ -32,7 +32,7 @@ public class OWLMembersListViewComponent extends OWLIndividualListViewComponent 
     private final JLabel typeLabel = new JLabel();
 
     private final OWLSelectionModelListener listener = () -> {
-        if (getOWLWorkspace().getOWLSelectionModel().getSelectedObject() instanceof OWLClass) {
+        if (getOWLWorkspace().getOWLSelectionModel().getSelectedOWLObject() instanceof OWLClass) {
             refill();
         }
     };

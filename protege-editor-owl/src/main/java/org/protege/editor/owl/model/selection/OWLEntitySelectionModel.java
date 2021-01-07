@@ -3,7 +3,6 @@ package org.protege.editor.owl.model.selection;
 import org.semanticweb.owlapi.model.*;
 
 import javax.annotation.Nonnull;
-
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -47,25 +46,23 @@ public class OWLEntitySelectionModel {
         return getSelection(OWLNamedIndividual.class);
     }
 
-
     @Nonnull
     public Optional<OWLDatatype> getSelectedDatatype() {
         return getSelection(OWLDatatype.class);
     }
 
-
     @SuppressWarnings("unchecked")
     private <T extends OWLEntity> Optional<T> getSelection(Class<T> theClass) {
-        OWLObject selObject = selectionModel.getSelectedObject();
+        OWLObject selObject = selectionModel.getSelectedOWLObject();
         if(selObject == null) {
             // The current selected object is not of the required type
             return Optional.empty();
         }
-        if(theClass.isInstance(selObject)) {
+        if (theClass.isInstance(selObject)) {
             // The entity is the current selected object
             return Optional.of((T) selObject);
         }
-        if(OWLEntity.class.isInstance(selObject)) {
+        if (selObject instanceof OWLEntity) {
             // The current selected object is an entity but not of the required type
             return Optional.empty();
         }

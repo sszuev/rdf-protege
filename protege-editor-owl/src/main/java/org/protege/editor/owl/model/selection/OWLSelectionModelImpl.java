@@ -26,12 +26,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class OWLSelectionModelImpl implements OWLSelectionModel {
 
-    private final Logger logger = LoggerFactory.getLogger(OWLSelectionModelImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(OWLSelectionModelImpl.class);
 
 
     private final List<OWLSelectionModelListener> listeners = new ArrayList<>();
 
-    private OWLObject selectedObject;
+    private Object selectedObject;
 
     private OWLEntity lastSelectedEntity;
 
@@ -49,39 +49,40 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
 
     private OWLAxiomInstance lastSelectedAxiomInstance;
 
-
     private final OWLEntityVisitor updateVisitor = new OWLEntityVisitor() {
+        @Override
         public void visit(@Nonnull OWLClass cls) {
             lastSelectedClass = cls;
         }
 
-
+        @Override
         public void visit(@Nonnull OWLObjectProperty property) {
             lastSelectedObjectProperty = property;
         }
 
-
+        @Override
         public void visit(@Nonnull OWLDataProperty property) {
             lastSelectedDataProperty = property;
         }
 
-
+        @Override
         public void visit(@Nonnull OWLAnnotationProperty owlAnnotationProperty) {
             lastSelectedAnnotationProperty = owlAnnotationProperty;
         }
 
-
+        @Override
         public void visit(@Nonnull OWLNamedIndividual individual) {
             lastSelectedIndividual = individual;
         }
 
-
+        @Override
         public void visit(@Nonnull OWLDatatype dataType) {
             lastSelectedDatatype = dataType;
         }
     };
 
     private final OWLEntityVisitor clearVisitor = new OWLEntityVisitor() {
+        @Override
         public void visit(@Nonnull OWLClass cls) {
             if (lastSelectedClass != null) {
                 if (lastSelectedClass.equals(cls)) {
@@ -91,6 +92,7 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
             }
         }
 
+        @Override
         public void visit(@Nonnull OWLObjectProperty property) {
             if (lastSelectedObjectProperty != null) {
                 if (lastSelectedObjectProperty.equals(property)) {
@@ -100,6 +102,7 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
             }
         }
 
+        @Override
         public void visit(@Nonnull OWLDataProperty property) {
             if (lastSelectedDataProperty != null) {
                 if (lastSelectedDataProperty.equals(property)) {
@@ -109,6 +112,7 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
             }
         }
 
+        @Override
         public void visit(@Nonnull OWLAnnotationProperty property) {
             if (lastSelectedAnnotationProperty != null) {
                 if (lastSelectedAnnotationProperty.equals(property)) {
@@ -118,6 +122,7 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
             }
         }
 
+        @Override
         public void visit(@Nonnull OWLNamedIndividual individual) {
             if (lastSelectedIndividual != null) {
                 if (lastSelectedIndividual.equals(individual)) {
@@ -127,6 +132,7 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
             }
         }
 
+        @Override
         public void visit(@Nonnull OWLDatatype dataType) {
             if (lastSelectedDatatype != null) {
                 if (lastSelectedDatatype.equals(dataType)) {
@@ -140,7 +146,6 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
     public OWLSelectionModelImpl() {
     }
 
-
     @Override
     public void addListener(@Nonnull OWLSelectionModelListener listener) {
         listeners.add(checkNotNull(listener));
@@ -151,44 +156,41 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
         listeners.remove(checkNotNull(listener));
     }
 
-
     @Nullable
-    public OWLObject getSelectedObject() {
+    public OWLObject getSelectedOWLObject() {
+        return selectedObject instanceof OWLObject ? (OWLObject) selectedObject : null;
+    }
+
+    public Object getSelectedObject() {
         return selectedObject;
     }
 
-
     @Override
-    public void setSelectedObject(@Nullable OWLObject object) {
+    public void setSelectedObject(@Nullable Object object) {
         if (object == null) {
             if (selectedObject != null) {
                 updateSelectedObject(null);
             }
-        }
-        else {
+        } else {
             if (selectedObject == null) {
                 updateSelectedObject(object);
-            }
-            else if (!selectedObject.equals(object)) {
+            } else if (!selectedObject.equals(object)) {
                 updateSelectedObject(object);
             }
         }
     }
 
-
-    private void updateSelectedObject(OWLObject selObj) {
+    private void updateSelectedObject(Object selObj) {
         selectedObject = selObj;
         updateLastSelection();
         logger.debug("Set the selected object to: {}", selObj);
         fireSelectionChanged();
     }
 
-
     @Override
     public OWLEntity getSelectedEntity() {
         return lastSelectedEntity;
     }
-
 
     private void fireSelectionChanged() {
         for (OWLSelectionModelListener listener : new ArrayList<>(listeners)) {
@@ -212,19 +214,17 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
         setSelectedObject(axiomInstance.getAxiom());
     }
 
-
     @Override
     public void clearLastSelectedEntity(@Nonnull OWLEntity entity) {
         entity.accept(clearVisitor);
+        //noinspection PointlessNullCheck
         if (lastSelectedEntity != null && entity.equals(lastSelectedEntity)) {
             lastSelectedEntity = null;
             fireSelectionChanged();
         }
     }
 
-
     private void updateLastSelection() {
-
         if (selectedObject == null) {
             return;
         }
@@ -272,7 +272,6 @@ public class OWLSelectionModelImpl implements OWLSelectionModel {
     public OWLAxiomInstance getLastSelectedAxiomInstance() {
         return lastSelectedAxiomInstance;
     }
-
 
     @Override
     public String toString() {

@@ -14,5 +14,5 @@ import org.semanticweb.owlapi.model.OWLEntity;
  */
 public interface OWLEntityRendererListener {
 
-    public void renderingChanged(OWLEntity entity, OWLModelManagerEntityRenderer renderer);
+    void renderingChanged(OWLEntity entity, OWLModelManagerEntityRenderer renderer);
 }

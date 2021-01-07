@@ -12,7 +12,7 @@ import java.util.List;
 
 public class OWLInferredMemberListViewComponent extends OWLIndividualListViewComponent {
     private final OWLSelectionModelListener refillOnClassSelectionListener = () -> {
-        if (getOWLWorkspace().getOWLSelectionModel().getSelectedObject() instanceof OWLClass) {
+        if (getOWLWorkspace().getOWLSelectionModel().getSelectedOWLObject() instanceof OWLClass) {
             refill();
         }
     };

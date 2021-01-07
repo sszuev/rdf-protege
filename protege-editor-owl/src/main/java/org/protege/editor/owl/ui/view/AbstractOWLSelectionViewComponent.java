@@ -38,7 +38,7 @@ public abstract class AbstractOWLSelectionViewComponent extends AbstractOWLViewC
     private Set<OWLSelectionViewAction> registeredActions;
     private boolean initialUpdatePerformed;
     private OWLModelManagerListener modelManagerListener;
-    private OWLObject lastDisplayedObject;
+    private Object lastDisplayedObject;
     private OWLEntityRendererListener entityRendererListener;
     private HierarchyListener hierarchyListener;
     private boolean needsRefresh;
@@ -54,7 +54,7 @@ public abstract class AbstractOWLSelectionViewComponent extends AbstractOWLViewC
     public final void initialiseOWLView() throws Exception {
         registeredActions = new HashSet<>();
         listener = () -> {
-            final OWLObject owlObject = getOWLWorkspace().getOWLSelectionModel().getSelectedObject();
+            final OWLObject owlObject = getOWLWorkspace().getOWLSelectionModel().getSelectedOWLObject();
             if (owlObject instanceof OWLEntity) {
                 if (canShowEntity((OWLEntity) owlObject)) {
                     updateViewContentAndHeader();
@@ -203,7 +203,7 @@ public abstract class AbstractOWLSelectionViewComponent extends AbstractOWLViewC
      * This list is typically used to generate the view header text
      * to give the user an indication of what the view is displaying.
      */
-    protected abstract OWLObject updateView();
+    protected abstract Object updateView();
 
     protected boolean isOWLClassView() {
         return canNavigate(ProtegeProperties.CLASS_VIEW_CATEGORY);

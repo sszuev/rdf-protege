@@ -112,16 +112,16 @@ public class OWLModelManagerImpl extends AbstractModelManager
     private final ListenerManager<OWLOntologyChangeListener> changeListenerManager = new ListenerManager<>();
     private final List<IOListener> ioListeners = new ArrayList<>();
     private OWLModelManagerEntityRenderer entityRenderer;
-    private OWLObjectRenderer<?> objectRenderer;
+    private final OWLObjectRenderer<?> objectRenderer;
     private OWLOntology activeOntology;
-    private OWLEntityRenderingCache owlEntityRenderingCache;
+    private final OWLEntityRenderingCache owlEntityRenderingCache;
 
     /**
      * P4 repeatedly asks for the same rendering multiple times in a row
      * because of the components listening to mouse events etc so cache a
      * small number of objects we have just rendered
      */
-    private OWLObjectRenderingCache owlObjectRenderingCache;
+    private final OWLObjectRenderingCache owlObjectRenderingCache;
 
     // error handlers
     //    private SaveErrorHandler saveErrorHandler;
@@ -131,7 +131,7 @@ public class OWLModelManagerImpl extends AbstractModelManager
     // listeners
     private OWLEntityFactory entityFactory;
     private OntologySelectionStrategy activeOntologiesStrategy;
-    private OWLExpressionCheckerFactory owlExpressionCheckerFactory;
+    private final OWLExpressionCheckerFactory owlExpressionCheckerFactory;
     private OntologyLoadErrorHandler loadErrorHandler;
 
     public OWLModelManagerImpl() {
@@ -824,7 +824,6 @@ public class OWLModelManagerImpl extends AbstractModelManager
         if (adcManager != null && object instanceof OWLClass && adcManager.isAnonymous((OWLClass) object)) {
             return owlObjectRenderingCache.getRendering(adcManager.getExpression((OWLClass) object), getOWLObjectRenderer());
         }
-        getOWLEntityRenderer();
         String res = owlEntityRenderingCache.getRendering((OWLEntity) object);
         if (res != null) {
             return res;

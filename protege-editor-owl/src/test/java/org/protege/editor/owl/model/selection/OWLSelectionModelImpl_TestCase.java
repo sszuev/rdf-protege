@@ -147,12 +147,12 @@ public class OWLSelectionModelImpl_TestCase {
     @Test
     public void shouldGetSelectedObject() {
         selectionModel.setSelectedObject(cls);
-        assertThat(selectionModel.getSelectedObject(), is(cls));
+        assertThat(selectionModel.getSelectedOWLObject(), is(cls));
     }
 
     @Test
     public void shouldNotGetSelectedObject() {
-        assertThat(selectionModel.getSelectedObject(), is(nullValue()));
+        assertThat(selectionModel.getSelectedOWLObject(), is(nullValue()));
     }
 
     @Test

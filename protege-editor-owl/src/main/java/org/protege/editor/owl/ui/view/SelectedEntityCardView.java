@@ -6,7 +6,6 @@ import org.protege.editor.core.ui.view.ViewsPaneMemento;
 import org.protege.editor.core.util.HandlerRegistration;
 import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.model.selection.SelectionPlane;
-import org.protege.editor.owl.ui.renderer.OWLSystemColors;
 import org.protege.editor.owl.ui.util.NothingSelectedPanel;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
@@ -18,8 +17,6 @@ import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -139,7 +136,7 @@ public class SelectedEntityCardView extends AbstractOWLViewComponent implements 
 
 
     private void processSelection() {
-        OWLObject selectedObject = getOWLWorkspace().getOWLSelectionModel().getSelectedObject();
+        OWLObject selectedObject = getOWLWorkspace().getOWLSelectionModel().getSelectedOWLObject();
         if(selectedObject == null) {
             entityIRILabel.setIcon(null);
             entityIRILabel.setText("");

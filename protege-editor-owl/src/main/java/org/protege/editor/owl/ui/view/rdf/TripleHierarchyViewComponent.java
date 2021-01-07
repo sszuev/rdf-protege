@@ -53,7 +53,7 @@ import java.util.function.Predicate;
  *
  * @see RDFTripleTree
  */
-public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewComponent
+public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent<Triple>
         implements Findable<Triple>, SelectionDriver,
         CreateNewTarget, CreateNewChildTarget, Deleteable, HasDisplayDeprecatedEntities {
 
@@ -73,7 +73,7 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
     private final ViewModeComponent<ObjectTree<Triple>> viewModeComponent = new ViewModeComponent<>();
     private ObjectTree<Triple> tree;
     private TreeSelectionListener listener;
-    private ChangeListenerMediator deletableChangeListenerMediator = new ChangeListenerMediator();
+    private final ChangeListenerMediator deletableChangeListenerMediator = new ChangeListenerMediator();
 
     @Override
     protected OWLObject updateView() {
@@ -429,25 +429,28 @@ public class TripleHierarchyViewComponent extends AbstractOWLSelectionViewCompon
         return viewModeComponent.getComponentForViewMode(viewMode);
     }
 
+    @Override
     protected void transmitSelection() {
         deletableChangeListenerMediator.fireStateChanged(this);
         Triple triple = getSelectedNode();
         if (triple != null) {
             View view = getView();
             if (view != null && !view.isPinned()) {
-                view.setPinned(true); // so that we don't follow the selection
-                // todo: ?
-                //setGlobalSelection(selEntity);
+                view.setPinned(true);
+                select(triple);
                 view.setPinned(false);
+            } else {
+                select(triple);
             }
-            // todo: ?
-            /*else {
-                setGlobalSelection(selEntity);
-            }*/
         } else {
-            setGlobalSelection(null);
+            select(null);
         }
         updateHeader(triple);
+    }
+
+    protected void select(Triple triple) {
+        getOWLWorkspace().getOWLSelectionModel().setSelectedObject(triple);
+        setGlobalSelection(null);
     }
 
     @Override

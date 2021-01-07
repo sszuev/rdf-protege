@@ -1,11 +1,7 @@
 package org.protege.editor.owl.ui.view.rdf;
 
-import com.github.owlcs.ontapi.jena.vocabulary.RDF;
-import com.github.owlcs.ontapi.jena.vocabulary.XSD;
-import org.apache.jena.graph.BlankNodeId;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.impl.LiteralLabel;
 import org.apache.jena.shared.PrefixMapping;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
@@ -26,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Represents a {@link javax.swing.JTree}-component for rendering {@link Triple}s-tree.
@@ -209,10 +206,11 @@ public class RDFTripleTree extends ObjectTree<Triple> {
             Node p = t.getPredicate();
             Node o = t.getObject();
             PrefixMapping pm = getProvider().getPrefixes();
+            Function<Object, String> bm = getOWLModelManager().getBlankNodeMapper();
 
-            String s_txt = root ? toSubjectTxt(s, pm) : "";
+            String s_txt = root ? toSubjectTxt(s, pm, bm) : "";
             String p_txt = toPredicateTxt(p, pm);
-            String o_txt = toObjectTxt(o, pm);
+            String o_txt = toObjectTxt(o, pm, bm);
             String txt = String.format("%s %s %s", s_txt, p_txt, o_txt);
             int s_start = 0;
             int s_length = s_txt.length();
@@ -244,63 +242,20 @@ public class RDFTripleTree extends ObjectTree<Triple> {
             throw new IllegalStateException();
         }
 
-        private String toSubjectTxt(Node s, PrefixMapping pm) {
-            return s.isURI() ? toString(s.getURI(), pm) : toString(s.getBlankNodeId());
+        private String toSubjectTxt(Node s, PrefixMapping pm, Function<Object, String> bm) {
+            return PrintUtils.printSubject(s, pm, bm);
         }
 
         private String toPredicateTxt(Node p, PrefixMapping pm) {
-            return toString(p.getURI(), pm);
+            return PrintUtils.printPredicate(p, pm);
         }
 
-        private String toObjectTxt(Node o, PrefixMapping pm) {
-            if (o.isURI())
-                return toString(o.getURI(), pm);
-            if (o.isBlank())
-                return toString(o.getBlankNodeId());
-            return toString(o.getLiteral(), pm);
-        }
-
-        private String toString(String uri, PrefixMapping pm) {
-            String res = pm.shortForm(uri);
-            if (res.isEmpty() || ":".equals(res) || res.equals(uri)) {
-                return "<" + uri + ">";
-            }
-            return res;
+        private String toObjectTxt(Node o, PrefixMapping pm, Function<Object, String> bm) {
+            return PrintUtils.printObject(o, pm, bm, isWrap());
         }
 
         private String toString(Node n) {
-            if (n.isURI()) {
-                return n.getURI();
-            }
-            if (n.isBlank()) {
-                return toString(n.getBlankNodeId());
-            }
-            return n.toString();
-        }
-
-        private String toString(BlankNodeId id) {
-            return RDFTripleTree.this.getOWLModelManager().getBlankNodeMapper().apply(id);
-        }
-
-        private String toString(LiteralLabel label, PrefixMapping pm) {
-            String txt = formatMessage(label.getLexicalForm());
-            String lang = label.language();
-            String dt = label.getDatatypeURI();
-            if (lang != null && !lang.isEmpty()) {
-                return txt + "@" + lang;
-            }
-            if (RDF.PlainLiteral.getURI().equals(dt)
-                    || RDF.langString.getURI().equals(dt) || XSD.xstring.getURI().equals(dt)) {
-                return txt;
-            }
-            return txt + "^^" + toString(dt, pm);
-        }
-
-        private String formatMessage(String txt) {
-            if (!isWrap()) {
-                return txt.replace('\n', ' ').replaceAll("\\s+", " ");
-            }
-            return txt;
+            return PrintUtils.toString(n, getOWLModelManager().getBlankNodeMapper());
         }
     }
 }
