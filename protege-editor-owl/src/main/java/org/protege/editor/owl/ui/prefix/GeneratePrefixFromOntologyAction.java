@@ -7,6 +7,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -22,12 +23,18 @@ import java.util.Set;
 public class GeneratePrefixFromOntologyAction extends AbstractAction {
     private final OWLEditorKit owlEditorKit;
     private final PrefixMapperTables tables;
+    private final PrefixGenerator generator;
 
     public GeneratePrefixFromOntologyAction(OWLEditorKit owlEditorKit, PrefixMapperTables tables) {
+        this(owlEditorKit, tables, new PrefixGenerator());
+    }
+
+    public GeneratePrefixFromOntologyAction(OWLEditorKit kit, PrefixMapperTables tables, PrefixGenerator generator) {
         super("Generate from ontology URI", OWLIcons.getIcon("prefix.generate.png"));
         putValue(AbstractAction.SHORT_DESCRIPTION, "Generate prefix mappings from ontology URIs...");
-        this.owlEditorKit = owlEditorKit;
-        this.tables = tables;
+        this.owlEditorKit = Objects.requireNonNull(kit);
+        this.tables = Objects.requireNonNull(tables);
+        this.generator = Objects.requireNonNull(generator);
     }
 
     @Override
@@ -42,20 +49,7 @@ public class GeneratePrefixFromOntologyAction extends AbstractAction {
     }
 
     private void generatePrefix(String uri) {
-        // TODO: validation
-        //  see org.apache.jena.shared.impl.PrefixMappingImpl.checkLegal
-        //  see org.apache.jena.ext.xerces.util.XMLChar.isValidNCName
-        String prefix;
-        if (uri.endsWith("/")) {
-            String sub = uri.substring(0, uri.length() - 1);
-            prefix = sub.substring(sub.lastIndexOf("/") + 1);
-        } else {
-            prefix = uri.substring(uri.lastIndexOf('/') + 1);
-        }
-        if (prefix.endsWith(".owl")) {
-            prefix = prefix.substring(0, prefix.length() - 4);
-        }
-        prefix = prefix.toLowerCase();
+        String prefix = generator.generate(uri);
         if (!uri.endsWith("#") && !uri.endsWith("/")) {
             uri = uri + "#";
         }
