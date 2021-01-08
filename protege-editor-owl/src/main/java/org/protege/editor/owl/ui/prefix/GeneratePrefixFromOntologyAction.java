@@ -42,6 +42,9 @@ public class GeneratePrefixFromOntologyAction extends AbstractAction {
     }
 
     private void generatePrefix(String uri) {
+        // TODO: validation
+        //  see org.apache.jena.shared.impl.PrefixMappingImpl.checkLegal
+        //  see org.apache.jena.ext.xerces.util.XMLChar.isValidNCName
         String prefix;
         if (uri.endsWith("/")) {
             String sub = uri.substring(0, uri.length() - 1);

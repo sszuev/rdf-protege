@@ -15,7 +15,6 @@ import org.protege.editor.core.ui.view.DisposableAction;
 import org.protege.editor.core.ui.view.View;
 import org.protege.editor.core.ui.view.ViewMode;
 import org.protege.editor.owl.model.event.EventType;
-import org.protege.editor.owl.model.selection.SelectionDriver;
 import org.protege.editor.owl.ui.OWLIcons;
 import org.protege.editor.owl.ui.UIHelper;
 import org.protege.editor.owl.ui.action.AbstractOWLTreeAction;
@@ -54,8 +53,7 @@ import java.util.function.Predicate;
  * @see RDFTripleTree
  */
 public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent<Triple>
-        implements Findable<Triple>, SelectionDriver,
-        CreateNewTarget, CreateNewChildTarget, Deleteable, HasDisplayDeprecatedEntities {
+        implements Findable<Triple>, CreateNewTarget, CreateNewChildTarget, Deleteable, HasDisplayDeprecatedEntities {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TripleHierarchyViewComponent.class);
 
@@ -214,6 +212,7 @@ public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent
         tree.setPopupMenuId(new PopupMenuId("[TripleHierarchy]"));
     }
 
+    @Override
     protected RDFHierarchyProvider getHierarchyProvider() {
         return getOWLModelManager().getOWLHierarchyManager().getRDFTripleHierarchyProvider();
     }
@@ -383,16 +382,6 @@ public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent
         };
     }
 
-    @Override
-    public Component asComponent() {
-        return this;
-    }
-
-    @Override
-    public Optional<OWLObject> getSelection() {
-        return Optional.empty();
-    }
-
     public void setSelectedEntity(Triple entity) {
         getTree().setSelectedObject(entity);
     }
@@ -424,6 +413,7 @@ public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent
         return getTree().requestFocusInWindow();
     }
 
+    @Override
     protected ObjectTree<Triple> getTree() {
         Optional<ViewMode> viewMode = getView().getViewMode();
         return viewModeComponent.getComponentForViewMode(viewMode);

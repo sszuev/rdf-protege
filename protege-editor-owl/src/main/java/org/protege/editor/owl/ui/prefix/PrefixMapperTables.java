@@ -26,7 +26,7 @@ public class PrefixMapperTables extends JPanel {
 
 	private final Set<SelectedOntologyListener> listeners = new HashSet<>();
 
-	private TableModelListener editListener = new TableModelListener() {
+	private final TableModelListener editListener = new TableModelListener() {
 
 		@Override
 		public void tableChanged(TableModelEvent e) {

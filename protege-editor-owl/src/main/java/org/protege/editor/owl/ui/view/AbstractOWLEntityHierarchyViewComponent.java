@@ -191,6 +191,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
 
     protected abstract void performExtraInitialisation() throws Exception;
 
+    @Override
     protected abstract OWLHierarchyProvider<E> getHierarchyProvider();
 
     protected abstract Optional<OWLHierarchyProvider<E>> getInferredHierarchyProvider();
@@ -242,6 +243,7 @@ public abstract class AbstractOWLEntityHierarchyViewComponent<E extends OWLEntit
         return getTree().requestFocusInWindow();
     }
 
+    @Override
     protected ObjectTree<E> getTree() {
         Optional<ViewMode> viewMode= getView().getViewMode();
         return viewModeComponent.getComponentForViewMode(viewMode);
