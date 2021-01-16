@@ -22,6 +22,8 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDFS;
 import org.protege.editor.owl.model.hierarchy.HierarchyProviderListener;
 import org.protege.editor.owl.model.hierarchy.OWLHierarchyProvider;
+import org.protege.editor.owl.ui.view.rdf.utils.OWLModelUtils;
+import org.protege.editor.owl.ui.view.rdf.utils.OWLTripleUtils;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,7 +183,7 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
         this.ontology = OWLAdapter.get().asONT(o);
         // this.graph = ((Ontology) o).asGraphModel().getGraph(); // <-- concurrent union graph
         // todo: currently, only the base graph (i.e. GraphMeme) is used. for simplification. temporary ?
-        this.graph = OWLAdapter.get().asBaseModel(ontology).getBase().getBaseGraph();
+        this.graph = OWLModelUtils.getGraphModel(ontology).getBaseGraph();
         fireHierarchyChanged();
     }
 
@@ -235,7 +237,7 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
         if (o.isBlank()) {
             return Optional.of(listChildren(o));
         }
-        if (triple instanceof RootTriple) {
+        if (OWLTripleUtils.isRoot(triple)) {
             return Optional.of(listChildren(triple.getSubject()).filterDrop(triple::equals));
         }
         return Optional.empty();
@@ -261,7 +263,7 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
         if (s.isBlank()) {
             return Optional.of(listParents(s));
         }
-        if (triple instanceof RootTriple) {
+        if (OWLTripleUtils.isRoot(triple)) {
             return Optional.empty();
         }
         return findRootTriple(graph, s).filter(x -> !triple.equals(x)).map(Iter::of);
@@ -285,7 +287,7 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
     public Set<Triple> getDescendants(Triple triple) {
         Set<Triple> res = new HashSet<>();
         Set<Node> anons = new HashSet<>();
-        if (triple instanceof RootTriple) {
+        if (OWLTripleUtils.isRoot(triple)) {
             listChildren(triple.getSubject())
                     .filterDrop(triple::equals)
                     .forEachRemaining(t -> {
@@ -324,7 +326,7 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
     private Set<List<Triple>> findPathsToRoot(Triple triple, Set<Triple> seen) {
         Node s = triple.getSubject();
         Set<List<Triple>> res = new HashSet<>();
-        if (triple instanceof RootTriple || (s.isURI() || !graph.contains(Node.ANY, Node.ANY, s))) {
+        if (OWLTripleUtils.isRoot(triple) || (s.isURI() || !graph.contains(Node.ANY, Node.ANY, s))) {
             List<Triple> triples = new ArrayList<>();
             triples.add(triple);
             res.add(triples);
@@ -371,16 +373,4 @@ public class RDFHierarchyProvider implements OWLHierarchyProvider<Triple> {
         });
     }
 
-    /**
-     * A special triple to describe UI roots.
-     */
-    public static class RootTriple extends Triple {
-        protected RootTriple(Triple t) {
-            this(t.getSubject(), t.getPredicate(), t.getObject());
-        }
-
-        protected RootTriple(Node s, Node p, Node o) {
-            super(s, p, o);
-        }
-    }
 }

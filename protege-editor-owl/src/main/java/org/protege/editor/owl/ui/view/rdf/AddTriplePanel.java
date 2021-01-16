@@ -111,6 +111,12 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, LINE_INSETS);
     }
 
+    protected static void addSimpleRow(JPanel res, String label, JComponent field, int index) {
+        addLabelCell(res, label, index);
+        addDelimiterCell(res, index);
+        addIRICell(res, field, index);
+    }
+
     protected static void addLabelCell(JPanel panel, String label, int row) {
         addGridComponent(panel, new JLabel(label), 0, row, 0.0, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.NONE);
     }
@@ -202,16 +208,9 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
             t.setForeground(Color.GRAY);
             t.setEditable(false);
         });
-        addLabelCell(res, SUBJECT, 4);
-        addDelimiterCell(res, 4);
-        addIRICell(res, subjectField, 4);
-        addLabelCell(res, PREDICATE, 5);
-        addDelimiterCell(res, 5);
-        addIRICell(res, predicateField, 5);
-        addLabelCell(res, OBJECT, 6);
-        addDelimiterCell(res, 6);
-        addIRICell(res, objectField, 6);
-
+        addSimpleRow(res, SUBJECT, subjectField, 4);
+        addSimpleRow(res, PREDICATE, predicateField, 5);
+        addSimpleRow(res, OBJECT, objectField, 6);
         addLine(res, 7);
         return res;
     }

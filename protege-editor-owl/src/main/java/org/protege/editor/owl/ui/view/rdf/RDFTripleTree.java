@@ -9,6 +9,8 @@ import org.protege.editor.owl.ui.tree.OWLObjectTreeCellRenderer;
 import org.protege.editor.owl.ui.tree.OWLTreePreferences;
 import org.protege.editor.owl.ui.tree.ObjectTree;
 import org.protege.editor.owl.ui.tree.ObjectTreeNode;
+import org.protege.editor.owl.ui.view.rdf.utils.OWLTripleUtils;
+import org.protege.editor.owl.ui.view.rdf.utils.PrintUtils;
 
 import javax.swing.*;
 import javax.swing.text.StyleConstants;
@@ -201,7 +203,7 @@ public class RDFTripleTree extends ObjectTree<Triple> {
         }
 
         private void setTripleText(Triple t, StyledDocument doc) {
-            boolean root = t instanceof RDFHierarchyProvider.RootTriple;
+            boolean root = OWLTripleUtils.isRoot(t);
             Node s = t.getSubject();
             Node p = t.getPredicate();
             Node o = t.getObject();

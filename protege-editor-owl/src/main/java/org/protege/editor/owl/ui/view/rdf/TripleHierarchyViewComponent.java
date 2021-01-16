@@ -1,6 +1,5 @@
 package org.protege.editor.owl.ui.view.rdf;
 
-import com.github.owlcs.ontapi.OWLAdapter;
 import com.github.owlcs.ontapi.jena.model.OntModel;
 import org.apache.jena.graph.BlankNodeId;
 import org.apache.jena.graph.Graph;
@@ -26,6 +25,8 @@ import org.protege.editor.owl.ui.renderer.OWLCellRenderer;
 import org.protege.editor.owl.ui.tree.ObjectTree;
 import org.protege.editor.owl.ui.tree.TreeDragAndDropHandler;
 import org.protege.editor.owl.ui.view.*;
+import org.protege.editor.owl.ui.view.rdf.utils.OWLModelUtils;
+import org.protege.editor.owl.ui.view.rdf.utils.OWLTripleUtils;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,7 +187,7 @@ public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent
             }
 
             private OntModel getModel() {
-                return OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
+                return OWLModelUtils.getGraphModel(getHierarchyProvider().getOntology());
             }
         };
 
@@ -225,12 +226,12 @@ public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent
     @Override
     public boolean canCreateNewChild() {
         Triple t = getTree().getSelectedObject();
-        return t != null && (t instanceof RDFHierarchyProvider.RootTriple || t.getObject().isBlank());
+        return t != null && (OWLTripleUtils.isRoot(t) || t.getObject().isBlank());
     }
 
     @Override
     public void createNewObject() {
-        OntModel ont = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
+        OntModel ont = OWLModelUtils.getGraphModel(getHierarchyProvider().getOntology());
         AddTriplePanel panel = new AddTriplePanel(createAddTripleModel(ont, null));
         createTriple("Create Root Triple", panel, ont.getGraph());
     }
@@ -240,9 +241,9 @@ public class TripleHierarchyViewComponent extends AbstractHierarchyViewComponent
         Triple parent = getTree().getSelectedObject();
         if (parent == null)
             return;
-        OntModel ont = OWLAdapter.get().asBaseModel(getHierarchyProvider().getOntology()).getBase();
+        OntModel ont = OWLModelUtils.getGraphModel(getHierarchyProvider().getOntology());
         Node subject;
-        if (parent instanceof RDFHierarchyProvider.RootTriple) {
+        if (OWLTripleUtils.isRoot(parent)) {
             subject = parent.getSubject();
         } else if (parent.getObject().isBlank()) {
             subject = parent.getObject();

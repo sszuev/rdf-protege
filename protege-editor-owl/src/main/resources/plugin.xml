@@ -1667,16 +1667,16 @@
     </extension>
     <extension id="RDFTripleTree"
                point="org.protege.editor.core.application.ViewComponent">
-        <label value="In-memory RDF Graph"/>
+        <label value="RDF Graph"/>
         <class value="org.protege.editor.owl.ui.view.rdf.TripleHierarchyViewComponent"/>
         <headerColor value="@org.protege.rdfcolor"/>
         <category value="@org.protege.rdfcategory"/>
         <navigates value="@org.protege.rdfcategory"/>
         <help value="https://www.w3.org/TR/rdf11-concepts/"/>
     </extension>
-    <extension id="RDFTriple"
+    <extension id="OWLTriple"
                point="org.protege.editor.core.application.ViewComponent">
-        <label value="RDF Triple Description"/>
+        <label value="OWL Triple Details"/>
         <class value="org.protege.editor.owl.ui.view.rdf.TripleViewComponent"/>
         <headerColor value="@org.protege.rdfcolor"/>
         <category value="@org.protege.rdfcategory"/>
