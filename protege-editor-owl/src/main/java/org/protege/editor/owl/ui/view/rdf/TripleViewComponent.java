@@ -2,18 +2,29 @@ package org.protege.editor.owl.ui.view.rdf;
 
 import com.github.owlcs.ontapi.OWLAdapter;
 import com.github.owlcs.ontapi.Ontology;
+import com.github.owlcs.ontapi.internal.ONTObject;
 import com.github.owlcs.ontapi.jena.OntModelFactory;
+import com.github.owlcs.ontapi.jena.vocabulary.OWL;
+import com.github.owlcs.ontapi.jena.vocabulary.RDF;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.shared.PrefixMapping;
 import org.protege.editor.owl.model.selection.OWLSelectionModel;
 import org.protege.editor.owl.model.selection.OWLSelectionModelListener;
 import org.protege.editor.owl.ui.view.AbstractOWLSelectionViewComponent;
+import org.protege.editor.owl.ui.view.rdf.utils.GridBagUtils;
+import org.protege.editor.owl.ui.view.rdf.utils.OWLTripleUtils;
 import org.protege.editor.owl.ui.view.rdf.utils.PrintUtils;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.StringWriter;
+import java.util.Collection;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -27,6 +38,7 @@ public class TripleViewComponent extends AbstractOWLSelectionViewComponent {
     private final JTextField predicate = new JTextField();
     private final JTextField object = new JTextField();
     private final JTextField axiom = new JTextField();
+    private final JTextArea turtle = new JTextArea();
 
     private final OWLSelectionModelListener listener = () -> {
         Object t = getSelectionModel().getSelectedObject();
@@ -56,22 +68,21 @@ public class TripleViewComponent extends AbstractOWLSelectionViewComponent {
 
         add(panel);
 
-        JPanel p = createPanel();
-
-        panel.add(p, BorderLayout.BEFORE_FIRST_LINE);
-        refill();
+        panel.add(createDisplayPanel(), BorderLayout.BEFORE_FIRST_LINE);
     }
 
-    public JPanel createPanel() {
+    public JPanel createDisplayPanel() {
         JPanel res = new JPanel(new GridBagLayout());
-        Stream.of(subject, predicate, object, axiom).forEach(t -> {
-            t.setBackground(Color.WHITE);
-            t.setEditable(false);
+        Stream.of(subject, predicate, object, axiom, turtle).forEach(x -> {
+            x.setBackground(Color.WHITE);
+            x.setEditable(false);
         });
-        AddTriplePanel.addSimpleRow(res, "SUBJECT", subject, 1);
-        AddTriplePanel.addSimpleRow(res, "PREDICATE", predicate, 2);
-        AddTriplePanel.addSimpleRow(res, "OBJECT", object, 3);
-        AddTriplePanel.addSimpleRow(res, "AXIOM", axiom, 4);
+        turtle.setVisible(false);
+        GridBagUtils.addSimpleRow(res, "SUBJECT", " ", subject, 1);
+        GridBagUtils.addSimpleRow(res, "PREDICATE", " ", predicate, 2);
+        GridBagUtils.addSimpleRow(res, "OBJECT", " ", object, 3);
+        GridBagUtils.addSimpleRow(res, "AXIOM", " ", axiom, 4);
+        GridBagUtils.addSimpleRow(res, "CONTENT", " ", turtle, 5);
 
         return res;
     }
@@ -87,11 +98,6 @@ public class TripleViewComponent extends AbstractOWLSelectionViewComponent {
 
     @Override
     public void refreshComponent() {
-        refill();
-    }
-
-    protected void refill() {
-        // todo: no need
     }
 
     protected void refill(Triple t) {
@@ -103,7 +109,30 @@ public class TripleViewComponent extends AbstractOWLSelectionViewComponent {
         subject.setText(PrintUtils.printSubject(t.getSubject(), std, bm));
         predicate.setText(PrintUtils.printPredicate(t.getPredicate(), std));
         object.setText(PrintUtils.printObject(t.getObject(), std, bm, true));
-        axiom.setText(PrintUtils.printOWLInfo(t, getActiveOntology()));
+        turtle.setVisible(false);
+        if (t.getPredicate().equals(RDF.type.asNode()) && t.getObject().equals(OWL.Ontology.asNode())) {
+            axiom.setText("HEADER");
+            return;
+        }
+        Collection<ONTObject<? extends OWLAxiom>> axioms = OWLTripleUtils.getAxioms(t, getActiveOntology());
+        if (axioms.isEmpty()) {
+            axiom.setText("");
+            return;
+        }
+        String ax = axioms.stream().map(ONTObject::getOWLObject)
+                .map(Object::toString).collect(Collectors.joining(", "));
+        axiom.setText(ax);
+
+        Model m = OntModelFactory.createDefaultModel().setNsPrefixes(model);
+        Graph g = m.getGraph();
+        axioms.forEach(x -> x.triples().forEach(g::add));
+        if (m.size() <= 1) {
+            return;
+        }
+        StringWriter sw = new StringWriter();
+        m.write(sw, "ttl", null);
+        turtle.setText(sw.toString());
+        turtle.setVisible(true);
     }
 
     public Ontology getActiveOntology() {

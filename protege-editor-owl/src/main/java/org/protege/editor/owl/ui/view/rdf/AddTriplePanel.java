@@ -6,6 +6,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.shared.PrefixMapping;
 import org.protege.editor.core.ui.util.AugmentedJTextField;
+import org.protege.editor.owl.ui.view.rdf.utils.GridBagUtils;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -26,23 +27,23 @@ import java.util.stream.Stream;
  * Created by @ssz on 25.01.2020.
  */
 public class AddTriplePanel extends VerifiedInputEditorJPanel {
-    protected static final int FIELD_WIDTH = 60;
-    protected static final String SUBJECT = "Subject";
-    protected static final String PREDICATE = "Predicate";
-    protected static final String OBJECT = "Object";
-    protected static final String DELIMITER = "=";
-    protected static final String IRI_GHOST_TEXT = "Short name or full IRI or Prefix-Name";
-    protected static final String BLANK_NODE_PLACEHOLDER = "<anonymous>";
-    protected static final String IRI_CONTROL_OPTION = "IRI";
-    protected static final String BLANK_NODE_CONTROL_OPTION = "Blank Node";
-    protected static final String FRESH_BLANK_NODE_CONTROL_OPTION = "Fresh Blank Node";
-    protected static final String MODEL_BLANK_NODE_CONTROL_OPTION = "Model Blank Node";
-    protected static final String PLAIN_LITERAL_CONTROL_OPTION = "Plain Literal";
-    protected static final String TYPED_LITERAL_CONTROL_OPTION = "Typed Literal";
-    protected static final String LANG_LITERAL_CONTROL_OPTION = "Lang Literal";
+    public static final int FIELD_WIDTH = 60;
+    public static final String SUBJECT = "Subject";
+    public static final String PREDICATE = "Predicate";
+    public static final String OBJECT = "Object";
+    public static final String DELIMITER = "=";
+    public static final String IRI_GHOST_TEXT = "Short name or full IRI or Prefix-Name";
+    public static final String BLANK_NODE_PLACEHOLDER = "<anonymous>";
+    public static final String IRI_CONTROL_OPTION = "IRI";
+    public static final String BLANK_NODE_CONTROL_OPTION = "Blank Node";
+    public static final String FRESH_BLANK_NODE_CONTROL_OPTION = "Fresh Blank Node";
+    public static final String MODEL_BLANK_NODE_CONTROL_OPTION = "Model Blank Node";
+    public static final String PLAIN_LITERAL_CONTROL_OPTION = "Plain Literal";
+    public static final String TYPED_LITERAL_CONTROL_OPTION = "Typed Literal";
+    public static final String LANG_LITERAL_CONTROL_OPTION = "Lang Literal";
 
-    protected static final Insets CELL_INSETS = new Insets(0, 0, 2, 2);
-    protected static final Insets LINE_INSETS = new Insets(10, 2, 10, 2);
+    public static final Insets CELL_INSETS = new Insets(0, 0, 2, 2);
+    public static final Insets LINE_INSETS = new Insets(10, 2, 10, 2);
 
     protected final JTextField subjectIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
     protected final JTextField predicateIRI = new AugmentedJTextField(FIELD_WIDTH, IRI_GHOST_TEXT);
@@ -85,74 +86,25 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         add(createContentPanel());
     }
 
-    protected static boolean isEmpty(String x) {
+    public static boolean isEmpty(String x) {
         return x == null || x.isEmpty();
     }
 
     @SafeVarargs
-    protected static <X> boolean test(X x, BiPredicate<X, X> test, X... parts) {
+    public static <X> boolean test(X x, BiPredicate<X, X> test, X... parts) {
         for (X p : parts) {
             if (test.test(x, p)) return true;
         }
         return false;
     }
 
-    protected static Optional<String> findSelectedItem(JComboBox<String> selector) {
+    public static Optional<String> findSelectedItem(JComboBox<String> selector) {
         return selector.isVisible() ? Optional.ofNullable((String) selector.getSelectedItem()) : Optional.empty();
     }
 
-    protected static void changeState(JComponent selector, boolean on) {
+    public static void changeState(JComponent selector, boolean on) {
         selector.setVisible(on);
         selector.setEnabled(on);
-    }
-
-    protected static void addLine(JPanel panel, int row) {
-        addGridComponent(panel, new JSeparator(), 0, row, 4, 100.0,
-                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, LINE_INSETS);
-    }
-
-    protected static void addSimpleRow(JPanel res, String label, JComponent field, int index) {
-        addLabelCell(res, label, index);
-        addDelimiterCell(res, index);
-        addIRICell(res, field, index);
-    }
-
-    protected static void addLabelCell(JPanel panel, String label, int row) {
-        addGridComponent(panel, new JLabel(label), 0, row, 0.0, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.NONE);
-    }
-
-    protected static void addControlCell(JPanel panel, JComponent component, int row) {
-        addGridComponent(panel, component, 1, row, 0., GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL);
-    }
-
-    protected static void addIRICell(JPanel panel, JComponent area, int row) {
-        addGridComponent(panel, area, 2, row, 100., GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL);
-    }
-
-    protected static void addDelimiterCell(JPanel panel, int row) {
-        addGridComponent(panel, new JLabel(DELIMITER), 1, row, 0., GridBagConstraints.CENTER, GridBagConstraints.NONE);
-    }
-
-    protected static void addGridComponent(JPanel panel,
-                                           JComponent component,
-                                           int gridx,
-                                           int gridy,
-                                           double weightx,
-                                           int anchor,
-                                           int fill) {
-        addGridComponent(panel, component, gridx, gridy, 1, weightx, anchor, fill, CELL_INSETS);
-    }
-
-    protected static void addGridComponent(JPanel panel,
-                                           JComponent component,
-                                           int gridx,
-                                           int gridy,
-                                           int gridwidth,
-                                           double weightx,
-                                           int anchor,
-                                           int fill,
-                                           Insets insets) {
-        panel.add(component, new GridBagConstraints(gridx, gridy, gridwidth, 1, weightx, 0.0, anchor, fill, insets, 0, 0));
     }
 
     public static DocumentListener createTextFieldListener(Runnable operation) {
@@ -177,15 +129,15 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         };
     }
 
-    protected static boolean hasText(JTextField field) {
+    public static boolean hasText(JTextField field) {
         return !isEmpty(field.getText());
     }
 
-    protected static ActionListener createActionListener(Runnable operation) {
+    public static ActionListener createActionListener(Runnable operation) {
         return createActionListener(e -> operation.run());
     }
 
-    protected static ActionListener createActionListener(Consumer<ActionEvent> operation) {
+    public static ActionListener createActionListener(Consumer<ActionEvent> operation) {
         return new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -201,39 +153,39 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         addPredicateInputRow(res);
         addObjectInputRow(res);
 
-        addLine(res, 3);
+        GridBagUtils.addLine(res, 3);
 
         // result form:
         Stream.of(subjectField, predicateField, objectField).forEach(t -> {
             t.setForeground(Color.GRAY);
             t.setEditable(false);
         });
-        addSimpleRow(res, SUBJECT, subjectField, 4);
-        addSimpleRow(res, PREDICATE, predicateField, 5);
-        addSimpleRow(res, OBJECT, objectField, 6);
-        addLine(res, 7);
+        GridBagUtils.addSimpleRow(res, SUBJECT, DELIMITER, subjectField, 4);
+        GridBagUtils.addSimpleRow(res, PREDICATE, DELIMITER, predicateField, 5);
+        GridBagUtils.addSimpleRow(res, OBJECT, DELIMITER, objectField, 6);
+        GridBagUtils.addLine(res, 7);
         return res;
     }
 
     protected void addSubjectInputRow(JPanel res) {
-        addLabelCell(res, SUBJECT, 0);
-        addControlCell(res, subjectController, 0);
-        addIRICell(res, subjectIRI, 0);
+        GridBagUtils.addLabelCell(res, SUBJECT, 0);
+        GridBagUtils.addControlCell(res, subjectController, 0);
+        GridBagUtils.addIRICell(res, subjectIRI, 0);
     }
 
     protected void addPredicateInputRow(JPanel res) {
-        addLabelCell(res, PREDICATE, 1);
-        addControlCell(res, predicateController, 1);
-        addIRICell(res, predicateIRI, 1);
-        addIRICell(res, predicateSystemPropertySelector, 1);
+        GridBagUtils.addLabelCell(res, PREDICATE, 1);
+        GridBagUtils.addControlCell(res, predicateController, 1);
+        GridBagUtils.addIRICell(res, predicateIRI, 1);
+        GridBagUtils.addIRICell(res, predicateSystemPropertySelector, 1);
     }
 
     protected void addObjectInputRow(JPanel res) {
-        addLabelCell(res, OBJECT, 2);
-        addControlCell(res, objectController, 2);
-        addIRICell(res, objectIRI, 2);
-        addIRICell(res, objectBlanks, 2);
-        addIRICell(res, literalForm, 2);
+        GridBagUtils.addLabelCell(res, OBJECT, 2);
+        GridBagUtils.addControlCell(res, objectController, 2);
+        GridBagUtils.addIRICell(res, objectIRI, 2);
+        GridBagUtils.addIRICell(res, objectBlanks, 2);
+        GridBagUtils.addIRICell(res, literalForm, 2);
     }
 
     protected void initSubjectConfiguration() {
@@ -434,7 +386,7 @@ public class AddTriplePanel extends VerifiedInputEditorJPanel {
         return new Triple(getSubjectNode(), getPredicateNode(), getObjectNode());
     }
 
-    protected static class ObjectController extends JComboBox<String> {
+    public static class ObjectController extends JComboBox<String> {
         private static final long serialVersionUID = -9198960251639503015L;
 
         protected ObjectController(Collection<String> items) {

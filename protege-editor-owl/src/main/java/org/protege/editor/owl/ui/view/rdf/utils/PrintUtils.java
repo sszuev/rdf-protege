@@ -1,8 +1,5 @@
 package org.protege.editor.owl.ui.view.rdf.utils;
 
-import com.github.owlcs.ontapi.Ontology;
-import com.github.owlcs.ontapi.internal.ONTObject;
-import com.github.owlcs.ontapi.jena.vocabulary.OWL;
 import com.github.owlcs.ontapi.jena.vocabulary.RDF;
 import com.github.owlcs.ontapi.jena.vocabulary.XSD;
 import org.apache.jena.graph.BlankNodeId;
@@ -10,11 +7,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.LiteralLabel;
 import org.apache.jena.shared.PrefixMapping;
-import org.semanticweb.owlapi.model.OWLAxiom;
 
-import java.util.Collection;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Created by @ssz on 07.01.2021.
@@ -86,17 +80,5 @@ public class PrintUtils {
         }
         // inline:
         return txt.replace('\n', ' ').replaceAll("\\s+", " ");
-    }
-
-    public static String printOWLInfo(Triple t, Ontology ont) {
-        if (t.getPredicate().equals(RDF.type.asNode()) && t.getObject().equals(OWL.Ontology.asNode())) {
-            return "HEADER";
-        }
-        Collection<ONTObject<? extends OWLAxiom>> axioms = OWLTripleUtils.getAxioms(t, ont);
-        if (axioms.isEmpty()) {
-            return "";
-        }
-        return axioms.stream().map(ONTObject::getOWLObject)
-                .map(Object::toString).collect(Collectors.joining(", "));
     }
 }
